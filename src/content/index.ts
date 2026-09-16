@@ -183,6 +183,11 @@ export type Station = {
   exhibits: Exhibit[];
   sections?: StationSection[];
   heroImage?: GalleryImage;
+  /**
+   * The work hung on this station's monolith out on the deck. Leave it off and the deck
+   * picks a distinct piece from the station's own material — set it to pin a specific work.
+   */
+  deckCover?: GalleryImage;
   partners?: GalleryImage[];
 };
 
@@ -206,6 +211,9 @@ export const stations: Station[] = [
     ],
     exhibits: [],
     heroImage: imagesOf(71)[0] ?? library(/header|img_/i, 1)[0],
+    // The synced cover for this station is a wide banner header; the deck hangs PORT's own
+    // Perak creative directory instead, which reads as an institution's flagship work.
+    deckCover: library(/direktori/i, 1)[0],
     sections: [
       {
         heading: 'Objektif',
@@ -711,3 +719,50 @@ export const entranceIsCustom = Boolean(
   (import.meta.env.VITE_PORT_ENTRANCE as string | undefined)?.trim() ||
     Object.values(dropped)[0],
 );
+
+/* ------------------------------------------------------- the deck's gallery wall */
+
+/**
+ * The work hung on each station's monolith out on the deck, keyed by station id.
+ *
+ * The deck is the first space anyone stands in, and it was the only one with no artwork in
+ * it — while every station already carried a cover the sync had recorded and nothing ever
+ * showed. This hands each station a real piece, choosing in order of how specific it is:
+ * a work the owner pinned by hand, then the station's own gallery pieces, then the cover the
+ * sync recorded for it, then the wider library.
+ *
+ * The one thing that must not happen is repetition: three stations happened to be recorded
+ * against the same banner, which would have hung the same picture three times. Every pick is
+ * therefore checked against the ones already taken, so seven stations hang seven works — and
+ * because each station's material is its own, the wall comes out mixed: residency
+ * photography, exhibition posters, festival scheduling, publication covers.
+ *
+ * Change what hangs where by setting `deckCover` on a station. Nothing else needs doing.
+ */
+export const deckCovers: Map<string, GalleryImage> = (() => {
+  /** Covers that can only be known once the entrance photograph has been resolved. */
+  const lateOverrides: Record<string, GalleryImage | undefined> = {
+    // Contact & visit: the room itself, so this one shows the place you would actually go.
+    hubungi: entranceImage,
+  };
+
+  const taken = new Set<string>();
+  const chosen = new Map<string, GalleryImage>();
+
+  for (const station of stations) {
+    const candidates = [
+      station.deckCover,
+      lateOverrides[station.id],
+      ...station.exhibits.map((exhibit) => exhibit.images[0]),
+      station.heroImage,
+      ...artPool,
+    ].filter((img): img is GalleryImage => Boolean(img?.small));
+
+    const pick = candidates.find((img) => !taken.has(img.small));
+    if (!pick) continue;
+    taken.add(pick.small);
+    chosen.set(station.id, pick);
+  }
+
+  return chosen;
+})();

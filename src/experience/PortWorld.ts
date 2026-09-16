@@ -16,7 +16,7 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import boldTypeface from 'three/examples/fonts/helvetiker_bold.typeface.json';
 import type { GalleryImage, Station } from '../content';
-import { artPool, entranceImage } from '../content';
+import { artPool, deckCovers, entranceImage } from '../content';
 import { glyphDataUrl } from '../content/glyphs';
 
 export type Phase = 'entry' | 'hub' | 'warp' | 'corridor';
@@ -42,6 +42,12 @@ type Monolith = {
   group: THREE.Group;
   body: THREE.Mesh;
   ring: THREE.Mesh;
+  /** The work hung on this station's face, and the light and gold leaf that frame it. */
+  art?: THREE.Mesh;
+  haloMaterial?: THREE.MeshBasicMaterial;
+  edgeMaterial?: THREE.LineBasicMaterial;
+  /** Rises to 1 while the station is hovered, so the wall answers the pointer. */
+  hot: number;
 };
 
 /**
@@ -226,6 +232,11 @@ export class PortWorld {
 
   private monoliths: Monolith[] = [];
   private deckLabels: DeckLabel[] = [];
+  /**
+   * Covers hung on the deck keep their own textures rather than joining `textureCache`:
+   * leaving a wing releases every photograph in that cache, and the deck is still standing.
+   */
+  private deckCoverTextures: THREE.Texture[] = [];
   private font: DisplayFont | null = null;
   private frames: FrameRef[] = [];
   private starField?: THREE.Points;
@@ -357,8 +368,10 @@ export class PortWorld {
     this.canvas.removeEventListener('pointerleave', this.onPointerLeave);
     this.canvas.removeEventListener('wheel', this.onWheel);
     this.clearCorridor();
-    for (const texture of this.entryArtTextures) texture.dispose();
+    this.disposeTextures(this.entryArtTextures);
     this.entryArtTextures = [];
+    this.disposeTextures(this.deckCoverTextures);
+    this.deckCoverTextures = [];
     this.constellation.traverse((object) => {
       const mesh = object as THREE.Mesh;
       mesh.geometry?.dispose();
@@ -371,6 +384,17 @@ export class PortWorld {
     this.glowTexture.dispose();
     this.particleTexture.dispose();
     this.renderer.dispose();
+  }
+
+  /**
+   * Let go of a list of textures.
+   *
+   * Written to tolerate the list being absent: a hot reload can tear down an instance that
+   * was constructed before the field existed, and a throw in here aborts the rest of
+   * teardown and surfaces as a React error rather than as a dev-server hiccup.
+   */
+  private disposeTextures(list: THREE.Texture[] | undefined) {
+    for (const texture of list ?? []) texture.dispose();
   }
 
   setReducedMotion(reduced: boolean) {
@@ -1122,7 +1146,9 @@ export class PortWorld {
           blending: THREE.AdditiveBlending,
         }),
       );
-      bar.position.set(0, 4.42, 0.19);
+      // −Z is the face the visitor sees, so the accent line belongs there rather than
+      // hidden behind the monolith.
+      bar.position.set(0, 4.42, -0.19);
       mg.add(bar);
 
       const ring = new THREE.Mesh(
@@ -1140,8 +1166,19 @@ export class PortWorld {
       ring.position.y = 0.05;
       mg.add(ring);
 
+      const cover = this.hangDeckCover(station, mg);
+
       group.add(mg);
-      this.monoliths.push({ station, group: mg, body, ring });
+      this.monoliths.push({
+        station,
+        group: mg,
+        body,
+        ring,
+        art: cover?.art,
+        haloMaterial: cover?.haloMaterial,
+        edgeMaterial: cover?.edgeMaterial,
+        hot: 0,
+      });
     });
 
     this.buildDeckLabels(stations);
@@ -1374,6 +1411,121 @@ export class PortWorld {
     );
     this.textureCache.set(url, tex);
     return tex;
+  }
+
+  /**
+   * A cover for the deck. Same loading rules as `textureFor`, separate lifetime: these live
+   * as long as the deck does, and the corridor teardown must not reach them.
+   */
+  private coverTextureFor(url: string, onReady?: (tex: THREE.Texture) => void) {
+    const cached = this.deckCoverTextures.find((t) => t.name === url);
+    if (cached) {
+      onReady?.(cached);
+      return cached;
+    }
+    const tex = this.loader.load(
+      url,
+      (t) => {
+        t.colorSpace = THREE.SRGBColorSpace;
+        t.anisotropy = 4;
+        onReady?.(t);
+      },
+      undefined,
+      () => undefined,
+    );
+    tex.name = url;
+    this.deckCoverTextures.push(tex);
+    return tex;
+  }
+
+  /**
+   * Hang one work on a station's face: a dark board, gold leaf, and the piece itself.
+   *
+   * This is the corridor's frame, built from the same materials at a smaller size, so the
+   * deck and the wings read as one gallery rather than two ideas. The work is mounted, not
+   * cropped — it keeps its true shape and is centred in the opening, because stretching a
+   * poster of one proportion into a frame of another is the one thing that would give the
+   * whole wall away as a mock-up.
+   */
+  private hangDeckCover(station: Station, parent: THREE.Group) {
+    const image = deckCovers.get(station.id);
+    if (!image) return;
+
+    const accent = new THREE.Color(station.accent);
+    const width = 2.34;
+    const height = 1.74;
+    const openingWidth = 2.02;
+    const openingHeight = 1.42;
+    const centreY = 2.45;
+
+    /*
+     * The monolith group is turned so that its local +Z points radially *outward* — away
+     * from the visitor standing on the deck. A flat work mounted at +Z would therefore face
+     * the dark, and read mirrored from behind. Everything hangs on a mounting turned to face
+     * the deck, so the piece and its frame are built the obvious way round.
+     */
+    const mount = new THREE.Group();
+    mount.rotation.y = Math.PI;
+    parent.add(mount);
+
+    const plate = new THREE.Mesh(
+      new THREE.BoxGeometry(width, height, 0.1),
+      new THREE.MeshStandardMaterial({
+        color: 0x0e0d0b,
+        metalness: 0.7,
+        roughness: 0.4,
+        emissive: accent.clone().multiplyScalar(0.06),
+      }),
+    );
+    plate.position.set(0, centreY, 0.25);
+    mount.add(plate);
+
+    const edgeMaterial = new THREE.LineBasicMaterial({
+      color: 0xd9b978,
+      transparent: true,
+      opacity: 0.9,
+    });
+    const edge = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(width + 0.06, height + 0.06, 0.16)),
+      edgeMaterial,
+    );
+    edge.position.copy(plate.position);
+    mount.add(edge);
+
+    // A soft spill of the station's colour around the board, so each work reads as lit
+    // rather than pasted on.
+    const haloMaterial = new THREE.MeshBasicMaterial({
+      color: accent,
+      transparent: true,
+      opacity: 0.15,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const halo = new THREE.Mesh(new THREE.PlaneGeometry(width + 0.8, height + 0.86), haloMaterial);
+    halo.position.set(0, centreY, 0.2);
+    mount.add(halo);
+
+    // A unit plane, scaled once the piece's real shape is known.
+    const artMaterial = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+    const art = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), artMaterial);
+    art.position.set(0, centreY, 0.31);
+    mount.add(art);
+
+    artMaterial.map = this.coverTextureFor(image.small, (texture) => {
+      const loaded = texture.image as
+        | { naturalWidth?: number; naturalHeight?: number; width?: number; height?: number }
+        | null;
+      // The sync does not always record dimensions, so trust the pixels when it has not.
+      const w = image.width || loaded?.naturalWidth || loaded?.width || 0;
+      const h = image.height || loaded?.naturalHeight || loaded?.height || 0;
+      if (!w || !h) return;
+      const fit = Math.min(openingWidth / w, openingHeight / h);
+      art.scale.set(w * fit, h * fit, 1);
+    });
+    artMaterial.needsUpdate = true;
+
+    return { art, haloMaterial, edgeMaterial };
   }
 
   private buildCorridor(station: Station) {
@@ -1725,6 +1877,12 @@ export class PortWorld {
       constellation: { nodes: this.nodePos.length, links: this.lastLinkCount },
       monoliths: this.monoliths.length,
       deckLabels: this.deckLabels.length,
+      deckCovers: this.monoliths.map((m) => ({
+        id: m.station.id,
+        hung: Boolean(m.art),
+        artSize: m.art ? [+m.art.scale.x.toFixed(2), +m.art.scale.y.toFixed(2)] : null,
+        textureLoaded: Boolean((m.art?.material as THREE.MeshBasicMaterial | undefined)?.map?.image),
+      })),
       displayFont: this.font ? 'loaded' : 'missing',
       frames: this.frames.length,
       hovered: this.hovered,
@@ -2029,6 +2187,17 @@ export class PortWorld {
           label.hot,
         );
         label.glyphMaterial.opacity = 0.72 + label.hot * 0.28;
+      }
+    }
+
+    // The hung works answer the pointer the same way the lettering does: a still, dim wall
+    // that lifts the one you are pointing at, so the deck tells you what you are about to open.
+    if (this.phase === 'hub' || this.phase === 'warp') {
+      for (const monolith of this.monoliths) {
+        const want = this.hovered === monolith.station.id ? 1 : 0;
+        monolith.hot = THREE.MathUtils.damp(monolith.hot, want, 8, delta);
+        if (monolith.haloMaterial) monolith.haloMaterial.opacity = 0.15 + monolith.hot * 0.3;
+        if (monolith.edgeMaterial) monolith.edgeMaterial.opacity = 0.62 + monolith.hot * 0.38;
       }
     }
 

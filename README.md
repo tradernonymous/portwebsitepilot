@@ -92,6 +92,27 @@ See `src/assets/README.md` for details.
 
 Until you do, it falls back to the site's programme banner.
 
+### The artwork on the deck
+
+Every station's monolith on the deck carries a real work, so the first space you stand in
+reads as a gallery rather than seven blank slabs. You do not have to choose anything: the deck
+gives each station a different piece automatically — the station's own gallery pieces first,
+then whatever cover the sync recorded for it, then the wider library — and it makes sure no two
+stations hang the same picture.
+
+To pin a specific work to a station, set `deckCover` on it:
+
+```ts
+{
+  id: 'pameran',
+  deckCover: images[3],   // or any GalleryImage, or a /media/... path you wrote by hand
+  ...
+}
+```
+
+The work is shown at its true proportions inside a uniform frame, so a tall poster and a wide
+photograph both sit correctly rather than being stretched to fit. Nothing needs cropping.
+
 ### Colours, and how much of each station there is
 
 Each station has an `accent` colour in `src/content/index.ts` that drives its monolith, its
