@@ -1,5 +1,7 @@
 import { useDialogFocus } from '../lib/hooks';
 import type { Station } from '../content';
+import { bodyIsOriginal } from '../content/en';
+import { useLang } from '../lib/lang';
 
 type Props = {
   station: Station;
@@ -13,6 +15,7 @@ type Props = {
 export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props) {
   const exhibit = station.exhibits[index];
   const scroller = useDialogFocus<HTMLDivElement>(exhibit?.id ?? '');
+  const { t, lang } = useLang();
 
   if (!exhibit) return null;
 
@@ -41,8 +44,8 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
             type="button"
             className="icon-btn close-btn"
             onClick={onClose}
-            aria-label="Tutup"
-            title="Tutup"
+            aria-label={t('close')}
+            title={t('close')}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -62,13 +65,16 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
 
           <div className="reader-meta">
             <span>
-              <b>Kategori</b> {station.short}
+              <b>{t('category')}</b> {station.short}
             </span>
             <span>
-              <b>Tempoh</b> {exhibit.meta}
+              <b>{t('period')}</b> {exhibit.meta}
             </span>
           </div>
 
+          {bodyIsOriginal(exhibit.id, lang) ? (
+            <p className="original-language">{t('originalLanguage')}</p>
+          ) : null}
           <div className="prose">
             {exhibit.body.map((para, i) => (
               <p key={i}>{para}</p>
@@ -77,7 +83,7 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
 
           {exhibit.bullets?.length ? (
             <div className="section">
-              <h3>Butiran</h3>
+              <h3>{t('details')}</h3>
               <ul className="bullets">
                 {exhibit.bullets.map((b) => (
                   <li key={b}>{b}</li>
@@ -88,7 +94,7 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
 
           {rest.length ? (
             <div className="section">
-              <h3>Galeri</h3>
+              <h3>{t('gallery')}</h3>
               <div className="grid">
                 {rest.map((img) => (
                   <figure key={img.small} className="thumb is-static">
@@ -101,8 +107,8 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
           ) : null}
 
           {exhibit.source ? (
-            <p style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
-              Sumber asal:{' '}
+            <p className="source-note">
+              {t('originalSource')}:{' '}
               <a href={exhibit.source} target="_blank" rel="noreferrer noopener">
                 portipoh.com
               </a>
@@ -112,7 +118,7 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
 
         <div className="pager">
           <button type="button" className="btn btn-ghost" onClick={onPrev} disabled={index <= 0}>
-            ← Sebelum
+            ← {t('previous')}
           </button>
           <span className="spacer" />
           <button
@@ -121,7 +127,7 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
             onClick={onNext}
             disabled={index >= station.exhibits.length - 1}
           >
-            Seterusnya →
+            {t('next')} →
           </button>
         </div>
       </section>

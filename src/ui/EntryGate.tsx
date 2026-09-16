@@ -1,30 +1,19 @@
 import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import { entranceImage } from '../content';
+import { localizeFeatured } from '../content/en';
 import { channel, embedUrl, featuredVideo, watchUrl } from '../content/videos';
+import { useLang } from '../lib/lang';
+import { Decipher } from './fx/Decipher';
+import { LightPainting } from './fx/LightPainting';
+import { Orb } from './fx/Orb';
 import { Glyph } from './Glyph';
 
 type Props = {
-  /** The 3D space has finished building and is waiting. */
-  ready: boolean;
   reducedMotion: boolean;
-  language?: 'ms' | 'en';
   onEnter: () => void;
-  onToggleLanguage?: () => void;
-  onSkipToDeck: () => void;
   onFlat: () => void;
 };
 
-/**
- * The threshold. Held on screen until the visitor chooses to walk in, so the
- * flythrough is always something they asked for rather than something that
- * happened to them.
- *
- * Behind it, PORT's own festival film plays: the first thing anyone meets here is the
- * work, not a photograph of the building. The photograph stays underneath as the poster,
- * so the screen is never blank while the film loads and is never empty at all if YouTube
- * cannot be reached — and on a phone with a slow connection, or with data saving on, the
- * poster alone is what loads.
- */
 /**
  * How long the player is given to report a refusal before the film is shown anyway. Long
  * enough for an embed that YouTube will not serve to say so, short enough that nobody
@@ -32,24 +21,37 @@ type Props = {
  */
 const REFUSAL_GRACE_MS = 900;
 
-export function EntryGate({ ready, reducedMotion, language = 'ms', onEnter, onToggleLanguage, onSkipToDeck, onFlat }: Props) {
-  const english = language === 'en';
+/**
+ * The threshold: a dark room with PORT's festival film running on the wall, light being
+ * painted across it, and one glowing way in.
+ *
+ * The film is shown by default and hidden only on evidence that it cannot play — a player
+ * that refuses reports `onError` over postMessage, which is the one report that arrives
+ * reliably. The photograph underneath is the poster, so the screen is never blank while the
+ * film loads, and on a slow or data-saving connection the poster is all that loads.
+ */
+export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
+  const { t, lang, toggle } = useLang();
+  const film = localizeFeatured(featuredVideo, lang);
   const [filmUp, setFilmUp] = useState(false);
   const [filmLive, setFilmLive] = useState(false);
-  /** Set once the player has told us it cannot play this video at all. */
   const refused = useRef(false);
   const revealTimer = useRef<number | null>(null);
+  const enterRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (reducedMotion) return;
+    enterRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  useEffect(() => {
     const connection = (navigator as Navigator & {
       connection?: { saveData?: boolean; effectiveType?: string };
     }).connection;
     if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType ?? '')) return;
     // A beat after the gate is on screen: the welcome never waits on an embed.
-    const id = window.setTimeout(() => setFilmUp(true), 700);
+    const id = window.setTimeout(() => setFilmUp(true), 500);
     return () => window.clearTimeout(id);
-  }, [reducedMotion]);
+  }, []);
 
   useEffect(
     () => () => {
@@ -58,17 +60,6 @@ export function EntryGate({ ready, reducedMotion, language = 'ms', onEnter, onTo
     [],
   );
 
-  /*
-   * The film is shown by default, and hidden only on evidence that it cannot play.
-   *
-   * The reverse — waiting for the player to report a playing state before showing anything —
-   * was tried, and it is the wrong way round: those reports only arrive when the player is
-   * willing to talk, and where they do not the gate greeted everyone with a still photograph
-   * and no film at all, on exactly the devices this was supposed to help. What the player
-   * does report reliably, to a page that enables its API, is a refusal: an embed the owner
-   * has switched off, a blocked request, a network that will not serve YouTube. So the film
-   * comes forward once it has loaded, and steps back again if a refusal arrives first.
-   */
   useEffect(() => {
     if (!filmUp) return;
     const onMessage = (event: MessageEvent) => {
@@ -93,10 +84,6 @@ export function EntryGate({ ready, reducedMotion, language = 'ms', onEnter, onTo
     return () => window.removeEventListener('message', onMessage);
   }, [filmUp]);
 
-  /**
-   * The player has loaded something. Ask it to report itself — a refusal then arrives inside
-   * the grace period — and bring the film forward unless it has already refused.
-   */
   const onFilmLoad = (event: SyntheticEvent<HTMLIFrameElement>) => {
     event.currentTarget.contentWindow?.postMessage('{"event":"listening"}', '*');
     revealTimer.current = window.setTimeout(() => {
@@ -105,7 +92,7 @@ export function EntryGate({ ready, reducedMotion, language = 'ms', onEnter, onTo
   };
 
   return (
-    <div className="gate" role="dialog" aria-modal="true" aria-label="Masuk ke ruang PORT">
+    <div className="gate" role="dialog" aria-modal="true" aria-label={t('gateLabel')}>
       {entranceImage ? (
         <div
           className={`gate-photo${filmLive ? ' is-behind-film' : ''}`}
@@ -117,14 +104,8 @@ export function EntryGate({ ready, reducedMotion, language = 'ms', onEnter, onTo
       {filmUp ? (
         <div className={`gate-film${filmLive ? ' is-live' : ''}`} aria-hidden="true">
           <iframe
-            src={embedUrl(featuredVideo.id, {
-              autoplay: true,
-              loop: true,
-              controls: false,
-              api: true,
-            })}
-            title={featuredVideo.title}
-            loading="lazy"
+            src={embedUrl(featuredVideo.id, { autoplay: true, loop: true, controls: false, api: true })}
+            title={film.title}
             tabIndex={-1}
             allow="autoplay; encrypted-media"
             referrerPolicy="strict-origin-when-cross-origin"
@@ -133,71 +114,93 @@ export function EntryGate({ ready, reducedMotion, language = 'ms', onEnter, onTo
         </div>
       ) : null}
 
-      {/* Keeps the wordmark legible over a film that changes colour shot to shot. */}
       <div className="gate-veil" aria-hidden="true" />
-      <button
-        type="button"
-        className="gate-language"
-        onClick={onToggleLanguage}
-        aria-label={english ? 'Tukar ke Bahasa Melayu' : 'Switch to English'}
-      >
-        {english ? 'BM' : 'EN'}
-      </button>
+      <LightPainting tone="dark" painters={4} interactive reducedMotion={reducedMotion} weight={1.1} speed={0.8} />
+      <div className="gate-grid" aria-hidden="true" />
+
+      {/* HUD corners — the room's instrument panel */}
+      <div className="gate-hud" aria-hidden="true">
+        <span className="hud-corner is-tl" />
+        <span className="hud-corner is-tr" />
+        <span className="hud-corner is-bl" />
+        <span className="hud-corner is-br" />
+      </div>
+
+      <div className="gate-top">
+        <span className="hud-tag">
+          <i className="hud-dot" />
+          <Decipher text="PORT // GALERI.CAHAYA" reducedMotion={reducedMotion} duration={900} />
+        </span>
+        <button
+          type="button"
+          className="chip chip-dark"
+          onClick={toggle}
+          aria-label={t('switchLang')}
+          title={t('switchLang')}
+        >
+          <span className={lang === 'ms' ? 'is-on' : ''}>BM</span>
+          <i aria-hidden="true">/</i>
+          <span className={lang === 'en' ? 'is-on' : ''}>EN</span>
+        </button>
+      </div>
 
       <div className="gate-inner">
-        <p className="gate-kicker">Est. 2011 · Ipoh, Perak</p>
-        <h1 className="gate-mark">PORT</h1>
-        <p className="gate-sub">People Of Remarkable Talents</p>
+        <Orb className="gate-orb" rings={10} period={36} />
+        <p className="gate-kicker">
+          <Decipher text={t('est')} reducedMotion={reducedMotion} delay={200} />
+        </p>
+        <h1 className="gate-mark" data-text="PORT">
+          PORT
+        </h1>
+        <p className="gate-sub">{t('subtitle')}</p>
 
         <p className="gate-welcome">
-          {english ? <>Ready to explore the world of <em>ART</em>?</> : <>Sedia nak terokai dunia <em>SENI</em>?</>}
+          {t('welcomeBefore')}{' '}
+          <em className="spectrum-text" data-text={t('welcomeArt')}>
+            {t('welcomeArt')}
+          </em>
+          {t('welcomeAfter')}
         </p>
-        <p className="gate-line">
-          {english ? 'Come in, our doors are always open...' : 'Jemput masuk, pintu kami sentiasa terbuka...'}
-        </p>
+        <p className="gate-line">{t('line')}</p>
 
         <div className="gate-actions">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={onEnter}
-            disabled={!ready}
-          >
-            {!ready
-              ? 'Menyediakan ruang…'
-              : reducedMotion
-                ? english ? 'Enter the deck' : 'Masuk ke dek'
-                : english ? 'Enter PORT' : 'Masuk ke PORT'}
+          <button type="button" className="btn-glow" onClick={onEnter} ref={enterRef}>
+            <span className="btn-glow-fill" aria-hidden="true" />
+            <span className="btn-glow-label spectrum-text" data-text={t('enter')}>
+              {t('enter')}
+            </span>
+            <svg className="btn-glow-arrow" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M13.2 5.3 20 12l-6.8 6.7-1.4-1.4 4.3-4.3H4v-2h12.1l-4.3-4.3Z" />
+            </svg>
           </button>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={onSkipToDeck}
-            disabled={!ready}
-          >
-            {english ? 'Skip animation' : 'Langkau animasi'}
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={onFlat}>
-            {english ? 'List view' : 'Senarai biasa'}
+          <button type="button" className="btn btn-dark" onClick={onFlat}>
+            {t('listView')}
           </button>
         </div>
       </div>
 
-      {/* The film is mute and unclickable, so the credit is how anyone can reach it. */}
-      <a
-        className="gate-credit"
-        href={watchUrl(featuredVideo.id)}
-        target="_blank"
-        rel="noreferrer noopener"
-        title={`${featuredVideo.title} — ${channel.name}`}
-      >
-        <Glyph glyph="video" size={13} />
-        <span>            {featuredVideo.title}
-          <i>
-            {channel.handle} · {english ? 'watch with sound' : 'tonton dengan bunyi'}
-          </i>
+      <div className="gate-bottom">
+        <span className="hud-readout" aria-hidden="true">
+          4.5975° N · 101.0901° E
         </span>
-      </a>
+        {/* The film is mute and unclickable, so the credit is how anyone can reach it. */}
+        <a
+          className="gate-credit"
+          href={watchUrl(featuredVideo.id)}
+          target="_blank"
+          rel="noreferrer noopener"
+          title={`${film.title} — ${channel.name}`}
+        >
+          <Glyph glyph="video" size={14} />
+          <span className="gate-credit-text">
+            <small>{t('nowShowing')}</small>
+            <b>{film.title}</b>
+          </span>
+          <span className="gate-credit-sound">
+            {channel.handle} · {t('watchWithSound')} ↗
+          </span>
+        </a>
+      </div>
     </div>
   );
 }

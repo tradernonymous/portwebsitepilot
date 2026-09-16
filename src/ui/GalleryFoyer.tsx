@@ -79,7 +79,7 @@ export function GalleryFoyer({ stations, activeIndex, language, onStationChange,
   }, [activeIndex, goTo]);
 
   return (
-    <div className="page-foyer" ref={containerRef} aria-label={t(language, 'selectedRoom')}>
+    <div className="page-foyer" ref={containerRef} aria-label={t(language, 'rooms')}>
       {stations.map((s, i) => {
         const isActive = i === activeIndex;
         const coverImg = deckCovers.get(s.id) ?? s.heroImage;

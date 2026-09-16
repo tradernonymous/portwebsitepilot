@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { stationById, stations } from './content';
+import { stationById } from './content';
 import type { Phase, PortWorld } from './experience/PortWorld';
 import { detectWebGL, useHashRoute, useMediaQuery, useReducedMotion } from './lib/hooks';
+import { useLang } from './lib/lang';
+import { Warp } from './ui/fx/Warp';
 import { CorridorRail, DeckCaption, Dock, Hint, TopBar } from './ui/Hud';
 import { EntryGate } from './ui/EntryGate';
 import { ExhibitReader } from './ui/ExhibitReader';
@@ -17,9 +19,12 @@ export default function App() {
   const reducedMotion = useReducedMotion();
   const webgl = useMemo(() => detectWebGL(), []);
   const { route, navigate } = useHashRoute();
+  const { stations, t, toggle: toggleLanguage, lang: language } = useLang();
 
   const [mode, setMode] = useState<Mode>('3d');
-  const [entered, setEntered] = useState(false);
+  /** A shared link to a room is not a first visit — it skips the gate. */
+  const [entered, setEntered] = useState(() => route.kind === 'station' || route.kind === 'exhibit');
+  const [warping, setWarping] = useState(false);
   /** three.js is a big chunk; the gate stays on screen until the space is actually built. */
   const [ready, setReady] = useState(false);
   const [phase, setPhase] = useState<Phase>('entry');
@@ -29,23 +34,12 @@ export default function App() {
   const [activeExhibit, setActiveExhibit] = useState(0);
   const [corridorProgress, setCorridorProgress] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [language, setLanguage] = useState<'ms' | 'en'>('ms');
-  /** The room preview shown in the foyer before a visitor enters it. */
-  const [foyerStationId, setFoyerStationId] = useState(
-    stations[1]?.id ?? stations[0]?.id ?? null,
-  );
+  /** The room shown in the foyer. It starts on the first room, which is the page on screen. */
+  const [foyerStationId, setFoyerStationId] = useState(stations[0]?.id ?? null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const worldRef = useRef<PortWorld | null>(null);
   const openedStationRef = useRef<string | null>(null);
-  /** What the visitor asked for while the world was still loading. */
-  const pendingEntryRef = useRef<'none' | 'start' | 'skip'>('none');
-  /**
-   * Mirrors `entered` for the world-creation closure: if the visitor has already walked
-   * in once, a rebuilt world (e.g. after switching back from the list view) must land on
-   * the deck rather than parking them in the approach tunnel again.
-   */
-  const enteredRef = useRef(false);
 
   const activeStation =
     route.kind === 'station' || route.kind === 'exhibit'
@@ -79,7 +73,9 @@ export default function App() {
   /* ---------------------------------------------------------------- world lifecycle */
 
   useEffect(() => {
-    if (mode !== '3d' || !webgl) return;
+    // The 3D space is only built once the visitor has come through the gate: building it
+    // behind the gate cost the start page its smoothness for a scene nobody could see.
+    if (mode !== '3d' || !webgl || !entered) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -93,13 +89,7 @@ export default function App() {
         stations,
         reducedMotion,
         onReady: () => setReady(true),
-        onPhase: (next) => {
-          setPhase(next);
-          if (next === 'hub') {
-            enteredRef.current = true;
-            setEntered(true);
-          }
-        },
+        onPhase: (next) => setPhase(next),
         onHover: (id) => setHovered(id),
         onFacing: (id) => setFacing(id),
         onStationSelect: (id) => {
@@ -119,13 +109,8 @@ export default function App() {
         (window as unknown as { __PORT__?: PortWorld }).__PORT__ = world;
       }
 
-      // Honour a click that landed while the chunk was still in flight, or a world that
-      // is being rebuilt after the visitor already entered.
-      const pending = pendingEntryRef.current;
-      pendingEntryRef.current = 'none';
-      if (pending === 'start') world.startEntry();
-      else if (pending === 'skip') world.skipEntry();
-      else if (enteredRef.current) world.skipEntry();
+      // The gate already was the approach; the space opens straight onto the deck.
+      world.skipEntry();
     });
 
     return () => {
@@ -137,11 +122,17 @@ export default function App() {
     };
     // `reducedMotion` is handled by its own effect so toggling it never rebuilds the scene.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, webgl, navigate]);
+  }, [mode, webgl, navigate, entered]);
 
   useEffect(() => {
     worldRef.current?.setReducedMotion(reducedMotion);
   }, [reducedMotion]);
+
+  // The foyer is opaque and fills the screen: the deck behind it does not need drawing.
+  const coveredByFoyer = phase === 'hub' && route.kind === 'hub';
+  useEffect(() => {
+    worldRef.current?.setPaused(coveredByFoyer);
+  }, [coveredByFoyer, ready]);
 
   useEffect(() => {
     document.body.classList.toggle('is-flat', mode === 'flat');
@@ -157,23 +148,6 @@ export default function App() {
     else if (route.kind === 'flat') setMode('flat');
     else if (route.kind === 'hub') setMode('3d');
   }, [webgl, route.kind]);
-
-  /** The station named by a shareable link, if the visitor arrived on one. */
-  const linkedStation =
-    route.kind === 'station' || route.kind === 'exhibit' ? route.stationId : null;
-
-  // Arriving on a link to a station or a work is not a first visit: the visitor already
-  // knows where they want to be. Holding the gate over the built space hid the very thing
-  // they came for, and "Masuk ke PORT" then replayed the approach and threw the link away,
-  // leaving the URL and the breadcrumb naming a work that was no longer open.
-  useEffect(() => {
-    if (!ready || entered || mode !== '3d' || !linkedStation) return;
-    enteredRef.current = true;
-    setEntered(true);
-    // A station with no wing has nothing to walk into, so the deck stays behind its panel.
-    // One that does have a wing is opened by the route effect below, so leave it be.
-    if (stationById(linkedStation)?.kind !== 'corridor') worldRef.current?.skipEntry();
-  }, [ready, entered, mode, linkedStation]);
 
   /* ---------------------------------------------------------------- route -> world */
 
@@ -301,28 +275,7 @@ export default function App() {
 
   /* ---------------------------------------------------------------- actions */
 
-  const enterSpace = useCallback(() => {
-    enteredRef.current = true;
-    setEntered(true);
-    const world = worldRef.current;
-    if (!world) {
-      pendingEntryRef.current = reducedMotion ? 'skip' : 'start';
-      return;
-    }
-    if (reducedMotion) world.skipEntry();
-    else world.startEntry();
-  }, [reducedMotion]);
-
-  const skipToDeck = useCallback(() => {
-    enteredRef.current = true;
-    setEntered(true);
-    const world = worldRef.current;
-    if (!world) {
-      pendingEntryRef.current = 'skip';
-      return;
-    }
-    world.skipEntry();
-  }, []);
+  const enterSpace = useCallback(() => setWarping(true), []);
 
   const goFlat = useCallback(() => {
     setMode('flat');
@@ -393,7 +346,7 @@ export default function App() {
           crumb={null}
           flat
           language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === 'ms' ? 'en' : 'ms'))}
+          onToggleLanguage={toggleLanguage}
           onToggleFlat={toggleFlat}
           onHelp={() => setHelpOpen(true)}
         />
@@ -409,9 +362,7 @@ export default function App() {
         {/* Without WebGL there is nothing to switch to, so this only explains — offering
             "Cuba juga" made a promise the device could never keep. */}
         {!webgl ? (
-          <p className="notice">
-            Peranti ini tidak menyokong grafik 3D, jadi laman dipaparkan dalam bentuk senarai.
-          </p>
+          <p className="notice">{t('no3d')}</p>
         ) : null}
       </>
     );
@@ -445,22 +396,22 @@ export default function App() {
           <i />
         </div>
       ) : null}
-      {phase === 'warp' ? <div className="warp-flash" aria-hidden="true" /> : null}          {!entered ? (
-        <EntryGate
-          ready={ready}
+      {phase === 'warp' ? <div className="warp-flash" aria-hidden="true" /> : null}
+      {warping ? (
+        <Warp
           reducedMotion={reducedMotion}
-          language={language}
-          onToggleLanguage={() => setLanguage((current) => (current === 'ms' ? 'en' : 'ms'))}
-          onEnter={enterSpace}
-          onSkipToDeck={skipToDeck}
-          onFlat={goFlat}
+          onMidpoint={() => setEntered(true)}
+          onDone={() => setWarping(false)}
         />
+      ) : null}
+      {!entered ? (
+        <EntryGate reducedMotion={reducedMotion} onEnter={enterSpace} onFlat={goFlat} />
       ) : (
         <>
           <TopBar
             flat={false}
             language={language}
-            onToggleLanguage={() => setLanguage((current) => (current === 'ms' ? 'en' : 'ms'))}
+            onToggleLanguage={toggleLanguage}
             onToggleFlat={toggleFlat}
             onHelp={() => setHelpOpen(true)}
             crumb={
@@ -518,16 +469,16 @@ export default function App() {
             stations={stations}
             activeId={hovered ?? facing ?? activeStation?.id ?? null}
             onSelect={selectStation}
-            label={language === 'en' ? 'Browse rooms' : 'Pilih ruang'}
+            label={t('rooms')}
             caption={
               isGalleryHome ? (
                 <b className="dock-caption dock-caption-quiet">
-                  {language === 'en' ? 'Browse rooms' : 'Pilih ruang'}
+                  {t('rooms')}
                 </b>
               ) : (
                 <DeckCaption
                   station={captionStation}
-                  fallback={language === 'en' ? 'Choose a room' : 'Pilih stesen'}
+                  fallback={t('rooms')}
                 />
               )
             }
@@ -537,12 +488,8 @@ export default function App() {
               and the verb follows the device — a phone has no cursor to click with. */}
           <Hint retiring={taught === hintSpace} wing={inCorridor}>
             {inCorridor
-              ? coarsePointer
-                ? 'Undur / Maju untuk berjalan · Ketuk bingkai untuk membaca'
-                : 'Scroll atau ↑ ↓ untuk berjalan · Klik bingkai untuk membaca'
-              : coarsePointer
-                ? 'Seret untuk memandang · Ketuk karya untuk masuk'
-                : 'Seret untuk memandang · Klik karya untuk masuk'}
+              ? t(coarsePointer ? 'hintWalkCoarse' : 'hintWalkFine')
+              : t('scrollHint')}
           </Hint>
 
           {route.kind === 'station' && activeStation && activeStation.kind !== 'corridor' ? (

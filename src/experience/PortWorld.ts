@@ -460,11 +460,26 @@ export class PortWorld {
     }
   }
 
+  /** Set while something opaque covers the canvas: rendering an unseen scene is pure lag. */
+  private paused = false;
+
+  setPaused(paused: boolean) {
+    if (this.paused === paused) return;
+    this.paused = paused;
+    if (paused) {
+      cancelAnimationFrame(this.raf);
+      this.raf = 0;
+    } else if (this.mounted && !this.raf && !this.disposed && !document.hidden) {
+      this.clock.getDelta();
+      this.loop();
+    }
+  }
+
   private onVisibility = () => {
     if (document.hidden) {
       cancelAnimationFrame(this.raf);
       this.raf = 0;
-    } else if (this.mounted && !this.raf && !this.disposed) {
+    } else if (this.mounted && !this.raf && !this.disposed && !this.paused) {
       this.clock.getDelta();
       this.loop();
     }
@@ -2067,9 +2082,12 @@ export class PortWorld {
   /* ---------------------------------------------------------------- frame loop */
 
   private loop = () => {
-    if (this.disposed) return;
+    if (this.disposed || this.paused) return;
     this.raf = requestAnimationFrame(this.loop);
-    const delta = Math.min(this.clock.getDelta(), 0.05);
+    // Capped only against a long stall (a tab switch, a GC pause). The old 50ms cap meant a
+    // device drawing 15 frames a second played every timed motion at a third of its speed,
+    // which is what made the approach and the warps feel like they were dragging.
+    const delta = Math.min(this.clock.getDelta(), 0.12);
     const t = this.clock.elapsedTime;
 
     if (this.phase === 'entry') {

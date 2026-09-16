@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Station } from '../content';
+import { useLang } from '../lib/lang';
 import { Glyph } from './Glyph';
 
 type TopBarProps = {
@@ -19,11 +20,12 @@ export function TopBar({
   onToggleFlat,
   onHelp,
 }: TopBarProps) {
+  const { t } = useLang();
   return (
     <header className="hud-top">
       <div className="brand">
         <strong>PORT</strong>
-        <span>People Of Remarkable Talents · Perak</span>
+        <span>{t('brandLine')}</span>
       </div>
       <div className="hud-spacer" />
       {crumb ? <div className="crumb">{crumb}</div> : null}
@@ -32,8 +34,8 @@ export function TopBar({
           type="button"
           className="icon-btn language-btn"
           onClick={onToggleLanguage}
-          aria-label={language === 'ms' ? 'Switch to English' : 'Tukar ke Bahasa Melayu'}
-          title={language === 'ms' ? 'English' : 'Bahasa Melayu'}
+          aria-label={t('switchLang')}
+          title={t('switchLang')}
         >
           {language === 'ms' ? 'EN' : 'BM'}
         </button>
@@ -42,8 +44,8 @@ export function TopBar({
           className="icon-btn"
           aria-pressed={flat}
           onClick={onToggleFlat}
-          title={flat ? 'Kembali ke ruang 3D' : 'Lihat sebagai senarai biasa'}
-          aria-label={flat ? 'Kembali ke ruang 3D' : 'Lihat sebagai senarai biasa'}
+          title={flat ? t('toGallery') : t('toList')}
+          aria-label={flat ? t('toGallery') : t('toList')}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
             {flat ? (
@@ -63,8 +65,8 @@ export function TopBar({
           type="button"
           className="icon-btn"
           onClick={onHelp}
-          title="Cara menerokai ruang ini"
-          aria-label="Cara menerokai ruang ini"
+          title={t('helpTitle')}
+          aria-label={t('helpTitle')}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -97,6 +99,7 @@ type DockProps = {
  * that edge goes crisp again, so the strip never looks accidentally clipped.
  */
 export function Dock({ stations, activeId, onSelect, label, caption }: DockProps) {
+  const { t } = useLang();
   const listRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: 0 });
   const [edges, setEdges] = useState({ left: false, right: false });
@@ -169,10 +172,10 @@ export function Dock({ stations, activeId, onSelect, label, caption }: DockProps
   }, []);
 
   return (
-    <nav className="dock" aria-label="Stesen dalam ruang PORT">
+    <nav className="dock" aria-label={t('rooms')}>
       <div className="dock-head">
         <span className="dock-kicker">
-          Koleksi / {String(stations.length).padStart(2, '0')} ruang
+          {t('collection')} / {String(stations.length).padStart(2, '0')} {t('rooms').toLowerCase()}
         </span>
         {caption ?? <b className="dock-caption">{label}</b>}
       </div>
@@ -241,10 +244,13 @@ export function CorridorRail({
   onExit,
   onOpen,
 }: RailProps) {
+  const { t } = useLang();
   return (
-    <aside className="rail" aria-label={`Karya dalam ${station.label}`}>
+    <aside className="rail" aria-label={`${t('worksIn')} ${station.label}`}>
       <div className="rail-head">
-        <span className="rail-kicker">Galeri / {String(station.exhibits.length).padStart(2, '0')} karya</span>
+        <span className="rail-kicker">
+          {t('walkKicker')} / {String(station.exhibits.length).padStart(2, '0')} {t('works')}
+        </span>
         <h2>{station.label}</h2>
         <p>{station.tagline}</p>
       </div>
@@ -269,48 +275,25 @@ export function CorridorRail({
       </div>
       <div className="rail-foot">
         <button type="button" className="btn btn-ghost" onClick={() => onWalk(-6)}>
-          ← Undur
+          {t('walkBack')}
         </button>
         <button
           type="button"
           className="btn btn-primary"
           onClick={() => onOpen(activeIndex >= 0 ? activeIndex : 0)}
         >
-          Buka karya
+          {t('openWork')}
         </button>
         <button type="button" className="btn btn-ghost" onClick={() => onWalk(6)}>
-          Maju →
+          {t('walkFwd')}
         </button>
       </div>
       <div className="rail-foot">
         <button type="button" className="btn btn-ghost" onClick={onExit}>
-          ← Kembali ke dek
+          ← {t('backToHall')}
         </button>
       </div>
     </aside>
-  );
-}
-
-/**
- * The one-line gesture hint above the dock. It carries the whole first-run lesson, so it
- * stays visible on every screen size, and it fades out once the visitor has acted on it.
- */
-/**
- * The room's spoken name.
- *
- * The deck used to carry its names as lettering standing in front of every work, which
- * meant the label and the art occupied the same pixels — you could not read a station
- * without covering its picture. The naming lives in the chrome now, in one place, at the
- * bottom edge, and it lights up as you turn so the room is still named as you look around.
- */
-export function DeckGuide({ active }: { active: boolean }) {
-  if (!active) return null;
-  return (
-    <div className="deck-guide" aria-label="Panduan ruang PORT">
-      <span>PORT / KOLEKSI / 08 RUANG</span>
-      <b>Pilih satu ruang untuk bermula</b>
-      <i>Pusing untuk melihat karya · pilih stesen di bawah</i>
-    </div>
   );
 }
 

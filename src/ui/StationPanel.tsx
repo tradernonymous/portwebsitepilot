@@ -1,5 +1,6 @@
 import { useDialogFocus } from '../lib/hooks';
 import { contact, googleMapEmbedUrl, partners, type Station } from '../content';
+import { useLang } from '../lib/lang';
 import { VideoRoom } from './VideoRoom';
 
 type Props = {
@@ -9,6 +10,7 @@ type Props = {
 
 export function StationPanel({ station, onClose }: Props) {
   const scroller = useDialogFocus<HTMLDivElement>(station.id);
+  const { t } = useLang();
 
   return (
     <>
@@ -22,17 +24,15 @@ export function StationPanel({ station, onClose }: Props) {
       >
         <div className="panel-top">
           <div className="panel-title">
-            <p className="panel-kicker" style={{ color: station.accent }}>
-              Stesen
-            </p>
+            <p className="panel-kicker">{t('room')}</p>
             <h2>{station.label}</h2>
           </div>
           <button
             type="button"
             className="icon-btn close-btn"
             onClick={onClose}
-            aria-label="Tutup"
-            title="Tutup"
+            aria-label={t('close')}
+            title={t('close')}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -59,6 +59,7 @@ export function StationPanel({ station, onClose }: Props) {
  * open in a new tab, and they work without any pointer at all.
  */
 export function StationContent({ station }: { station: Station }) {
+  const { t } = useLang();
   // A shelf of films is not a list of cards, so the plain view hands the whole section
   // over to the room rather than rendering a stub of it.
   if (station.kind === 'video') return <VideoRoom station={station} />;
@@ -66,7 +67,7 @@ export function StationContent({ station }: { station: Station }) {
   return (
     <>
       {station.intro.map((para, i) => (
-        <p key={i} style={{ color: 'var(--ink-dim)', maxWidth: '74ch' }}>
+        <p key={i} className="station-intro">
           {para}
         </p>
       ))}
@@ -91,7 +92,7 @@ export function StationContent({ station }: { station: Station }) {
 
       {station.exhibits.length > 0 ? (
         <div className="section">
-          <h3>{station.kind === 'list' ? 'Senarai' : 'Karya'}</h3>
+          <h3>{station.kind === 'list' ? t('list') : t('collection')}</h3>
           <div className="exhibit-cards">
             {station.exhibits.map((ex, i) => (
               <a
@@ -122,6 +123,7 @@ export function StationContent({ station }: { station: Station }) {
 }
 
 function ContactContent() {
+  const { t } = useLang();
   const mapsQuery = encodeURIComponent(
     'PORT Ipoh, Jalan Sultan Azlan Shah, 31400 Ipoh, Perak',
   );
@@ -129,32 +131,34 @@ function ContactContent() {
   return (
     <>
       <div className="section">
-        <h3>Lokasi</h3>
+        <h3>{t('location')}</h3>
         <div className="contact-grid">
           <div className="contact-card">
-            <h4>Alamat</h4>
+            <h4>{t('address')}</h4>
             <p>{contact.name}</p>
             {contact.addressLines.map((line) => (
               <p key={line}>{line}</p>
             ))}
           </div>
           <div className="contact-card">
-            <h4>Telefon</h4>
+            <h4>{t('phone')}</h4>
             <a href={contact.phoneHref}>{contact.phone}</a>
-            <p style={{ color: 'var(--muted)', marginTop: '0.4rem' }}>Faks {contact.fax}</p>
+            <p className="contact-fax">
+              {t('fax')} {contact.fax}
+            </p>
           </div>
           <div className="contact-card">
-            <h4>E-mel</h4>
+            <h4>{t('email')}</h4>
             <a href={`mailto:${contact.email}`}>{contact.email}</a>
           </div>
           <div className="contact-card">
-            <h4>Arah</h4>
+            <h4>{t('directionsShort')}</h4>
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
               target="_blank"
               rel="noreferrer noopener"
             >
-              Buka dalam Google Maps →
+              {t('directions')} →
             </a>
           </div>
         </div>
@@ -163,7 +167,7 @@ function ContactContent() {
           {googleMapEmbedUrl ? (
             <iframe
               src={googleMapEmbedUrl}
-              title="Peta lokasi PORT Ipoh"
+              title={t('mapTitle')}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen
@@ -179,7 +183,7 @@ function ContactContent() {
                   target="_blank"
                   rel="noreferrer noopener"
                 >
-                  Lihat peta sebenar
+                  {t('viewMap')}
                 </a>
               </div>
             </>
@@ -188,7 +192,7 @@ function ContactContent() {
       </div>
 
       <div className="section">
-        <h3>Rakan Strategik</h3>
+        <h3>{t('partners')}</h3>
         <div className="partner-strip">
           {partners.map((p) => (
             <img key={p.small} src={p.small} alt={p.caption} loading="lazy" />

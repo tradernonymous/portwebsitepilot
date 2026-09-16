@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Station } from '../content';
 import { channel, embedUrl, thumbUrl, watchUrl, type PortVideo } from '../content/videos';
 import { useDialogFocus } from '../lib/hooks';
+import { useLang } from '../lib/lang';
 import { Glyph } from './Glyph';
 
 type Props = {
@@ -24,6 +25,7 @@ type Props = {
  * behind it happens to be.
  */
 export function VideoRoom({ station, onClose }: Props) {
+  const { t } = useLang();
   const shelves = station.videoShelves ?? [];
   const [openShelf, setOpenShelf] = useState(shelves[0]?.id ?? '');
   const [playing, setPlaying] = useState(shelves[0]?.videos[0]?.id ?? '');
@@ -79,9 +81,9 @@ export function VideoRoom({ station, onClose }: Props) {
     return (
       <section className="video-room">
         <p className="video-empty">
-          Rakaman sedang disusun. Sementara itu, seluruh arkib video PORT boleh ditonton di{' '}
+          {t('videoEmptyA')}{' '}
           <a href={channel.videosUrl} target="_blank" rel="noreferrer noopener">
-            saluran YouTube kami
+            {t('videoEmptyLink')}
           </a>
           .
         </p>
@@ -92,9 +94,11 @@ export function VideoRoom({ station, onClose }: Props) {
   const body = (
     <>
       <div className="screening-room-mark" aria-hidden="true">
-        <span>PORT / SALLE FILEM</span>
-        <b>Arkib bergerak</b>
-        <i>{shelf.videos.length} rakaman pilihan · pilih satu untuk ditonton</i>
+        <span>{t('screeningMark')}</span>
+        <b>{t('movingArchive')}</b>
+        <i>
+          {shelf.videos.length} {t('selectedRecordings')}
+        </i>
       </div>
       <div className="video-body">
       <div className="video-player">
@@ -118,9 +122,9 @@ export function VideoRoom({ station, onClose }: Props) {
               <div className="video-fallback-shade" />
               <div className="video-fallback-copy">
                 <Glyph glyph="video" size={18} />
-                <p>{playerState === 'loading' ? 'Menyambung ke filem…' : 'Filem ini dibuka di YouTube'}</p>
+                <p>{playerState === 'loading' ? t('connecting') : t('opensOnYoutube')}</p>
                 <a href={watchUrl(current.id)} target="_blank" rel="noreferrer noopener">
-                  Tonton di YouTube →
+                  {t('watchOnYoutube')}
                 </a>
               </div>
             </div>
@@ -140,13 +144,13 @@ export function VideoRoom({ station, onClose }: Props) {
             target="_blank"
             rel="noreferrer noopener"
           >
-            Buka di YouTube →
+            {t('openOnYoutube')}
           </a>
         </div>
       </div>
 
       <div className="video-shelf">
-        <div className="video-tabs" role="tablist" aria-label="Program video">
+        <div className="video-tabs" role="tablist" aria-label={t('videoProgrammes')}>
           {shelves.map((s) => (
             <button
               key={s.id}
@@ -178,7 +182,7 @@ export function VideoRoom({ station, onClose }: Props) {
                   <img src={thumbUrl(video.id, 'hq')} alt="" loading="lazy" />
                   <span className="video-time">{video.duration}</span>
                   <span className="video-badge" aria-hidden="true">
-                    {nowPlaying ? 'Sedang dimainkan' : 'Main'}
+                    {nowPlaying ? t('nowPlaying') : t('play')}
                   </span>
                 </span>
                 <span className="video-meta">
@@ -200,11 +204,11 @@ export function VideoRoom({ station, onClose }: Props) {
         <ShelvesIntro station={station} />
         {body}
         <p className="video-source">
-          Semua rakaman dimuatkan dari{' '}
+          {t('allRecordingsFrom')}{' '}
           <a href={channel.videosUrl} target="_blank" rel="noreferrer noopener">
             {channel.handle}
           </a>{' '}
-          di YouTube.
+          {t('onYoutube')}
         </p>
       </section>
     );
@@ -222,9 +226,7 @@ export function VideoRoom({ station, onClose }: Props) {
       >
         <div className="panel-top">
           <div className="panel-title">
-            <p className="panel-kicker" style={{ color: station.accent }}>
-              Stesen
-            </p>
+            <p className="panel-kicker">{t('room')}</p>
             <h2>
               <Glyph glyph={station.glyph} size={20} /> {station.label}
             </h2>
@@ -234,8 +236,8 @@ export function VideoRoom({ station, onClose }: Props) {
             type="button"
             className="icon-btn close-btn"
             onClick={onClose}
-            aria-label="Tutup"
-            title="Tutup"
+            aria-label={t('close')}
+            title={t('close')}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -248,11 +250,11 @@ export function VideoRoom({ station, onClose }: Props) {
         <div className="panel-body" ref={scroller} tabIndex={-1}>
           {body}
           <p className="video-source">
-            Semua rakaman dimuatkan dari{' '}
+            {t('allRecordingsFrom')}{' '}
             <a href={channel.videosUrl} target="_blank" rel="noreferrer noopener">
               {channel.handle}
             </a>{' '}
-            di YouTube.
+            {t('onYoutube')}
           </p>
         </div>
       </section>

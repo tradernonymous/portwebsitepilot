@@ -1,0 +1,85 @@
+/* ==========================================================================
+   PORT — design tokens
+
+   White is the gallery wall. Black is the dark room, where light is painted.
+   The spectrum is the light itself: it is never used for large surfaces, only
+   for the strokes, glows and signals that move across white and black.
+   ========================================================================== */
+
+@property --spin {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+:root {
+  /* the wall */
+  --white: #fcfcfa;
+  --paper: #f3f3ef;
+  --paper-2: #e9e9e4;
+  /* the dark room */
+  --void: #050507;
+  --void-2: #0d0d12;
+  --void-3: #16161d;
+
+  /* ink on white — every pair here passes WCAG AA for body text */
+  --ink: #0b0b0f;
+  --ink-2: #33333b;
+  --ink-3: #5c5c66;
+  /* ink on black */
+  --light: #f7f7fb;
+  --light-2: #c9c9d4;
+  --light-3: #9a9aa8;
+
+  --rule: rgba(11, 11, 15, 0.14);
+  --rule-strong: rgba(11, 11, 15, 0.32);
+  --rule-dark: rgba(247, 247, 251, 0.16);
+  --rule-dark-strong: rgba(247, 247, 251, 0.36);
+
+  /* the light — cyberdream-bright, for strokes and glows */
+  --lp-cyan: #3de8ff;
+  --lp-violet: #8b5cff;
+  --lp-magenta: #ff3dcb;
+  --lp-amber: #ffb13d;
+  --lp-lime: #6dff9c;
+  /* the same hues, deep enough to read as text on white */
+  --lp-cyan-ink: #006b7d;
+  --lp-violet-ink: #5a2ee0;
+  --lp-magenta-ink: #b0107c;
+
+  --spectrum: linear-gradient(
+    90deg,
+    var(--lp-cyan),
+    var(--lp-violet),
+    var(--lp-magenta),
+    var(--lp-amber),
+    var(--lp-cyan)
+  );
+  --spectrum-conic: conic-gradient(
+    from var(--spin),
+    var(--lp-cyan),
+    var(--lp-violet),
+    var(--lp-magenta),
+    var(--lp-amber),
+    var(--lp-lime),
+    var(--lp-cyan)
+  );
+
+  --font-display: 'Chakra Petch', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius: 14px;
+  --radius-sm: 8px;
+
+  /* legacy names the older components still read, mapped onto the new system */
+  --bg: var(--white);
+  --bg-2: var(--paper);
+  --ink-dim: var(--ink-2);
+  --muted: var(--ink-3);
+  --line: var(--rule);
+  --line-soft: rgba(11, 11, 15, 0.08);
+  --accent: var(--ink);
+}
