@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import { entranceImage } from '../content';
 import { channel, embedUrl, featuredVideo, watchUrl } from '../content/videos';
 import { Glyph } from './Glyph';
@@ -23,9 +23,19 @@ type Props = {
  * cannot be reached — and on a phone with a slow connection, or with data saving on, the
  * poster alone is what loads.
  */
+/**
+ * How long the player is given to report a refusal before the film is shown anyway. Long
+ * enough for an embed that YouTube will not serve to say so, short enough that nobody
+ * watches a still photograph wondering where the film went.
+ */
+const REFUSAL_GRACE_MS = 900;
+
 export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat }: Props) {
   const [filmUp, setFilmUp] = useState(false);
   const [filmLive, setFilmLive] = useState(false);
+  /** Set once the player has told us it cannot play this video at all. */
+  const refused = useRef(false);
+  const revealTimer = useRef<number | null>(null);
 
   useEffect(() => {
     if (reducedMotion) return;
@@ -38,15 +48,23 @@ export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat 
     return () => window.clearTimeout(id);
   }, [reducedMotion]);
 
+  useEffect(
+    () => () => {
+      if (revealTimer.current !== null) window.clearTimeout(revealTimer.current);
+    },
+    [],
+  );
+
   /*
-   * The film is only brought forward once the player says it is actually running.
+   * The film is shown by default, and hidden only on evidence that it cannot play.
    *
-   * Fading it in on `iframe.onload` looked right and was wrong: a player that refuses the
-   * video — embedding switched off by the owner, a blocked request, a hotel network — also
-   * fires `load`, having rendered YouTube's own "This video is unavailable" card. The gate
-   * then greeted every visitor with a black screen and an error message. Now the poster
-   * photograph stays until the player reports a playing (or buffering) state, and stays for
-   * good if it never does, which is the same screen a visitor with data saving on sees.
+   * The reverse — waiting for the player to report a playing state before showing anything —
+   * was tried, and it is the wrong way round: those reports only arrive when the player is
+   * willing to talk, and where they do not the gate greeted everyone with a still photograph
+   * and no film at all, on exactly the devices this was supposed to help. What the player
+   * does report reliably, to a page that enables its API, is a refusal: an embed the owner
+   * has switched off, a blocked request, a network that will not serve YouTube. So the film
+   * comes forward once it has loaded, and steps back again if a refusal arrives first.
    */
   useEffect(() => {
     if (!filmUp) return;
@@ -63,22 +81,25 @@ export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat 
         }
       }
       if (!payload || typeof payload !== 'object') return;
-      // An embed the owner has switched off reports itself as an error, and that card is
-      // exactly what must never be the welcome screen.
-      if ((payload as { event?: unknown }).event === 'onError') return;
-      const info = (payload as { info?: { playerState?: unknown } }).info;
-      const state = typeof info?.playerState === 'number' ? info.playerState : null;
-      // 1 playing, 2 paused, 3 buffering, 5 cued.
-      //
-      // Cued and paused count. A phone that will not autoplay parks the player on 5 with
-      // the film's own frame and a play button, and that is a film the visitor can start
-      // with one tap — refusing to show it until it plays by itself is what made the
-      // entry screen look like a still photograph on a phone.
-      if (state === 1 || state === 2 || state === 3 || state === 5) setFilmLive(true);
+      if ((payload as { event?: unknown }).event !== 'onError') return;
+      refused.current = true;
+      if (revealTimer.current !== null) window.clearTimeout(revealTimer.current);
+      setFilmLive(false);
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
   }, [filmUp]);
+
+  /**
+   * The player has loaded something. Ask it to report itself — a refusal then arrives inside
+   * the grace period — and bring the film forward unless it has already refused.
+   */
+  const onFilmLoad = (event: SyntheticEvent<HTMLIFrameElement>) => {
+    event.currentTarget.contentWindow?.postMessage('{"event":"listening"}', '*');
+    revealTimer.current = window.setTimeout(() => {
+      if (!refused.current) setFilmLive(true);
+    }, REFUSAL_GRACE_MS);
+  };
 
   return (
     <div className="gate" role="dialog" aria-modal="true" aria-label="Masuk ke ruang PORT">
@@ -104,6 +125,7 @@ export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat 
             tabIndex={-1}
             allow="autoplay; encrypted-media"
             referrerPolicy="strict-origin-when-cross-origin"
+            onLoad={onFilmLoad}
           />
         </div>
       ) : null}

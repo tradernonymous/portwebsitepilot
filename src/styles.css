@@ -247,7 +247,13 @@ button {
   inset: 0;
   overflow: hidden;
   z-index: 0;
-  pointer-events: none;
+  /*
+   * Tappable, deliberately. Every browser blocks a soundtrack nobody asked for, and a phone
+   * that will not autoplay even a muted film parks the player on its own play button — so the
+   * one gesture that can start the film has to reach it. The veil above is decoration and
+   * takes no clicks of its own, so a tap on the backdrop lands on the player.
+   */
+  pointer-events: auto;
   opacity: 0;
   transition: opacity 1.2s var(--ease);
 }
@@ -277,6 +283,7 @@ button {
   position: absolute;
   inset: 0;
   z-index: 1;
+  pointer-events: none;
   background:
     radial-gradient(
       ellipse 60% 52% at 50% 46%,
