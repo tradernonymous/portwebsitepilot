@@ -90,7 +90,13 @@ export function VideoRoom({ station, onClose }: Props) {
   }
 
   const body = (
-    <div className="video-body">
+    <>
+      <div className="screening-room-mark" aria-hidden="true">
+        <span>PORT / SALLE FILEM</span>
+        <b>Arkib bergerak</b>
+        <i>{shelf.videos.length} rakaman pilihan · pilih satu untuk ditonton</i>
+      </div>
+      <div className="video-body">
       <div className="video-player">
         <div className={`video-stage is-${playerState}`}>
           {/* Keyed on the id so switching films mounts a fresh player rather than
@@ -185,6 +191,7 @@ export function VideoRoom({ station, onClose }: Props) {
         </div>
       </div>
     </div>
+    </>
   );
 
   if (!modal) {

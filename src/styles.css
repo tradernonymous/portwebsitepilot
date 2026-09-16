@@ -820,7 +820,7 @@ button {
 .gallery-foyer {
   position: fixed;
   left: clamp(1rem, 3vw, 3rem);
-  bottom: calc(max(1.2rem, env(safe-area-inset-bottom)) + 7.9rem);
+  bottom: calc(max(1.2rem, env(safe-area-inset-bottom)) + 11.5rem);
   z-index: 12;
   display: grid;
   grid-template-columns: 86px minmax(0, 250px);
@@ -1367,6 +1367,52 @@ button {
   gap: 1.4rem;
 }
 
+.screening-room-mark {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0 0.2rem 0.85rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.screening-room-mark span,
+.screening-room-mark i {
+  font-family: var(--font-display);
+  font-size: 0.54rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-style: normal;
+}
+
+.screening-room-mark b {
+  font-family: var(--font-display);
+  font-size: 0.86rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.screening-room-mark i {
+  text-align: right;
+  letter-spacing: 0.08em;
+  text-transform: none;
+}
+
+.video-stage {
+  box-shadow: 0 18px 46px rgba(17, 17, 17, 0.16);
+}
+
+.video-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: inherit;
+}
+
+
 .video-room.is-inline {
   max-width: 1100px;
 }
@@ -1715,6 +1761,15 @@ button {
 }
 
 @media (max-width: 860px) {
+  .screening-room-mark {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .screening-room-mark i {
+    text-align: left;
+  }
+
   .video-body {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -2596,7 +2651,7 @@ button {
 
 @media (max-height: 560px) {
   .gallery-foyer {
-    bottom: calc(max(0.5rem, env(safe-area-inset-bottom)) + 4.4rem);
+    bottom: calc(max(0.5rem, env(safe-area-inset-bottom)) + 5.6rem);
     grid-template-columns: 70px minmax(0, 1fr);
   }
 
