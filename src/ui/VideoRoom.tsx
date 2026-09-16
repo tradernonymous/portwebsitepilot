@@ -41,12 +41,12 @@ export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
   const shelf = shelves.find((s) => s.id === openShelf) ?? shelves[0];
   const current: PortVideo | undefined = shelf?.videos.find((v) => v.id === playing) ?? shelf?.videos[0];
 
-  // Keep YouTube's own error card out of PORT: a working player reports a usable state, a
-  // refused embed reports onError, and a silent player gets a branded fallback.
+  // The player is always shown once it has loaded — a visitor presses play inside it, and
+  // YouTube sends no "playing" report before that, so waiting for one hid a working film.
+  // The branded fallback replaces it only when YouTube explicitly refuses (onError).
   useEffect(() => {
     setPlayerState('loading');
     if (!current) return;
-    const fallbackTimer = window.setTimeout(() => setPlayerState('fallback'), 4500);
     const onMessage = (event: MessageEvent) => {
       if (typeof event.origin !== 'string' || !/youtube\.com$/.test(event.origin)) return;
       let payload: unknown = event.data;
@@ -62,12 +62,10 @@ export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
         setPlayerState('fallback');
         return;
       }
-      const state = (payload as { info?: { playerState?: unknown } }).info?.playerState;
-      if (state === 1 || state === 2 || state === 3 || state === 5) setPlayerState('ready');
+      setPlayerState((prev) => (prev === 'fallback' ? prev : 'ready'));
     };
     window.addEventListener('message', onMessage);
     return () => {
-      window.clearTimeout(fallbackTimer);
       window.removeEventListener('message', onMessage);
     };
   }, [current?.id]);
@@ -114,7 +112,10 @@ export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
-              onLoad={(event) => event.currentTarget.contentWindow?.postMessage('{"event":"listening"}', '*')}
+              onLoad={(event) => {
+                event.currentTarget.contentWindow?.postMessage('{"event":"listening"}', '*');
+                setPlayerState((prev) => (prev === 'fallback' ? prev : 'ready'));
+              }}
             />
             {playerState !== 'ready' ? (
               <div className="video-fallback">

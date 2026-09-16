@@ -109,9 +109,9 @@
   visibility: hidden;
 }
 
-/* while loading, a film shows through only once it is truly ready — the iframe stays clickable when shown */
-.video-stage:not(.is-ready) .video-fallback {
-  pointer-events: auto;
+/* while the player loads, the poster sits over it but never blocks a click through to it */
+.video-stage.is-loading .video-fallback {
+  pointer-events: none;
 }
 
 .video-under {
