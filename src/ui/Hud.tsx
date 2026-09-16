@@ -152,7 +152,12 @@ export function Dock({ stations, activeId, onSelect, label, caption }: DockProps
 
   return (
     <nav className="dock" aria-label="Stesen dalam ruang PORT">
-      <div className="dock-head">{caption ?? <b className="dock-caption">{label}</b>}</div>
+      <div className="dock-head">
+        <span className="dock-kicker">
+          Koleksi / {String(stations.length).padStart(2, '0')} ruang
+        </span>
+        {caption ?? <b className="dock-caption">{label}</b>}
+      </div>
       <div
         className={`dock-list${edges.left ? ' can-left' : ''}${edges.right ? ' can-right' : ''}`}
         ref={listRef}
@@ -180,6 +185,9 @@ export function Dock({ stations, activeId, onSelect, label, caption }: DockProps
               }}
               title={station.tagline}
             >
+              <i className="dock-index" aria-hidden="true">
+                {String(stations.indexOf(station) + 1).padStart(2, '0')}
+              </i>
               <Glyph glyph={station.glyph} size={16} />
               {/* both forms ship, and the stylesheet picks one: the full name where there
                   is room, the short one on a phone, where every tab costs a swipe */}
@@ -218,6 +226,7 @@ export function CorridorRail({
   return (
     <aside className="rail" aria-label={`Karya dalam ${station.label}`}>
       <div className="rail-head">
+        <span className="rail-kicker">Galeri / {String(station.exhibits.length).padStart(2, '0')} karya</span>
         <h2>{station.label}</h2>
         <p>{station.tagline}</p>
       </div>
@@ -276,7 +285,24 @@ export function CorridorRail({
  * without covering its picture. The naming lives in the chrome now, in one place, at the
  * bottom edge, and it lights up as you turn so the room is still named as you look around.
  */
-export function DeckCaption({ station, fallback }: { station?: Station | null; fallback: string }) {
+export function DeckGuide({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <div className="deck-guide" aria-label="Panduan ruang PORT">
+      <span>PORT / KOLEKSI / 08 RUANG</span>
+      <b>Pilih satu ruang untuk bermula</b>
+      <i>Pusing untuk melihat karya · pilih stesen di bawah</i>
+    </div>
+  );
+}
+
+export function DeckCaption({
+  station,
+  fallback,
+}: {
+  station?: Station | null;
+  fallback: string;
+}) {
   if (!station) return <b className="dock-caption">{fallback}</b>;
   return (
     // Keyed on the station so the glow replays each time the name changes.

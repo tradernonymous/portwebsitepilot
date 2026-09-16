@@ -102,6 +102,9 @@ export function VideoRoom({ station, onClose }: Props) {
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerPolicy="strict-origin-when-cross-origin"
             allowFullScreen
+            onLoad={(event) =>
+              event.currentTarget.contentWindow?.postMessage('{"event":"listening"}', '*')
+            }
           />
           {playerState !== 'ready' ? (
             <div className="video-fallback">

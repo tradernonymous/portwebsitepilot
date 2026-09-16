@@ -481,15 +481,9 @@ export class PortWorld {
 
   private buildEnvironment() {
     // gradient backdrop
-    const bg = canvasTexture(32, 512, (ctx) => {
-      const g = ctx.createLinearGradient(0, 0, 0, 512);
-      g.addColorStop(0, '#ffffff');
-      g.addColorStop(0.5, '#f2f2ef');
-      g.addColorStop(1, '#ffffff');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, 32, 512);
-    });
-    this.scene.background = bg;
+    // Keep the architectural field explicitly white; photographs and black frames provide
+    // the contrast, while the lightpaintings remain a restrained atmospheric layer.
+    this.scene.background = new THREE.Color(0xf7f7f4);
 
     // White gallery lighting: black frames and real work carry the contrast.
     this.scene.add(new THREE.AmbientLight(0xffffff, 1.15));
@@ -568,7 +562,7 @@ export class PortWorld {
           color: PIGMENTS[(c + b) % PIGMENTS.length],
           transparent: true,
           opacity: 0,
-          blending: THREE.AdditiveBlending,
+          blending: THREE.NormalBlending,
           depthWrite: false,
           side: THREE.DoubleSide,
         });
@@ -593,7 +587,7 @@ export class PortWorld {
           color: PIGMENTS[(c + b) % PIGMENTS.length],
           transparent: true,
           opacity: 0,
-          blending: THREE.AdditiveBlending,
+          blending: THREE.NormalBlending,
           depthWrite: false,
           side: THREE.DoubleSide,
         });
@@ -1022,10 +1016,8 @@ export class PortWorld {
     // deck floor
     const floor = new THREE.Mesh(
       new THREE.CircleGeometry(26, 72),
-      new THREE.MeshStandardMaterial({
-        color: 0xf0f0ed,
-        roughness: 0.5,
-        metalness: 0.28,
+      new THREE.MeshBasicMaterial({
+        color: 0xf7f7f4,
       }),
     );
     floor.rotation.x = -Math.PI / 2;

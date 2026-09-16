@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { stationById, stations } from './content';
 import type { Phase, PortWorld } from './experience/PortWorld';
 import { detectWebGL, useHashRoute, useMediaQuery, useReducedMotion } from './lib/hooks';
-import { CorridorRail, DeckCaption, Dock, Hint, TopBar } from './ui/Hud';
+import { CorridorRail, DeckCaption, DeckGuide, Dock, Hint, TopBar } from './ui/Hud';
 import { EntryGate } from './ui/EntryGate';
 import { ExhibitReader } from './ui/ExhibitReader';
 import { FlatView } from './ui/FlatView';
@@ -485,6 +485,7 @@ export default function App() {
            * with no way to reach another station — the one control that is always there had
            * silently gone. The wing rail is a second, local control and now sits beside it.
            */}
+          <DeckGuide active={phase === 'hub' && !activeStation} />
           <Dock
             stations={stations}
             activeId={hovered ?? facing ?? activeStation?.id ?? null}
