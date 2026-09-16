@@ -1,0 +1,21 @@
+# Keep the build context down to what the build actually reads.
+#
+# Everything here is either regenerated inside the image (node_modules, dist) or is
+# local-only tooling and editor noise. public/media and src/content are deliberately
+# NOT excluded — the site is built from them.
+
+node_modules
+dist
+.cache
+.git
+.gitattributes
+.github
+.freebuff
+.vscode
+.idea
+.editorconfig
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.*
