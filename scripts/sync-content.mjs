@@ -14,7 +14,7 @@
  * Safe to re-run at any time: the site never reads portipoh.com at runtime.
  */
 
-import { mkdir, writeFile, access, stat, rm } from 'node:fs/promises';
+import { mkdir, writeFile, access, stat, rm, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -498,6 +498,32 @@ async function main() {
 
   await writeFile(path.join(CONTENT_DIR, 'site.json'), `${JSON.stringify(payload, null, 2)}\n`);
   log(`wrote src/content/site.json (${pages.length} pages, ${images.length} images)`);
+
+  /* ---- prune derivatives left behind by earlier runs ----
+     Image filenames are index-based, so if the selection order ever shifts, a re-run
+     writes the same slot under a new name and the old file becomes dead weight in the
+     repo and the deploy. Only files matching our own naming pattern are ever removed,
+     so anything placed in public/media by hand is safe. */
+  const produced = new Set(
+    images.flatMap((i) => [path.basename(i.large), path.basename(i.small)]),
+  );
+  const OWNED_BY_SYNC = /^port-\d{3}-.*-(lg|sm)\.webp$/;
+  let pruned = 0;
+  let prunedBytes = 0;
+  for (const file of await readdir(MEDIA_DIR)) {
+    if (!OWNED_BY_SYNC.test(file) || produced.has(file)) continue;
+    try {
+      const info = await stat(path.join(MEDIA_DIR, file));
+      await rm(path.join(MEDIA_DIR, file), { force: true });
+      prunedBytes += info.size;
+      pruned++;
+    } catch {
+      // already gone; nothing to do
+    }
+  }
+  if (pruned) {
+    log(`pruned ${pruned} stale derivatives (${(prunedBytes / 1024 / 1024).toFixed(2)} MB)`);
+  }
 
   // A short index so a human can eyeball what came through.
   const report = pages
