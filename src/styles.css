@@ -1467,9 +1467,13 @@ button {
 
 .notice {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  /* Centred by offsets, not `left: 50%` + translate: a fixed box's shrink-to-fit width is
+     capped by (containing block − left), so that pattern silently halves it. */
+  left: 0;
+  right: 0;
   bottom: 1.4rem;
+  margin-inline: auto;
+  width: fit-content;
   z-index: 35;
   max-width: min(560px, calc(100vw - 2rem));
   padding: 0.85rem 1.2rem;

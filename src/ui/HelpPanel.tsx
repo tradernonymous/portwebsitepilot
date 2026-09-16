@@ -4,10 +4,13 @@ import { useDialogFocus } from '../lib/hooks';
 type Props = {
   onClose: () => void;
   reducedMotion: boolean;
+  /** A phone has no cursor, so "klik" and "skrol" are the wrong words on it entirely. */
+  coarsePointer: boolean;
 };
 
-export function HelpPanel({ onClose, reducedMotion }: Props) {
+export function HelpPanel({ onClose, reducedMotion, coarsePointer }: Props) {
   const scroller = useDialogFocus<HTMLDivElement>('help');
+  const tap = coarsePointer ? 'Ketuk' : 'Klik';
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -56,7 +59,7 @@ export function HelpPanel({ onClose, reducedMotion }: Props) {
             <div>
               <h4>Dek utama</h4>
               <p style={{ color: 'var(--ink-dim)', fontSize: '0.88rem' }}>
-                <span className="kbd">Seret</span> untuk memandang sekeliling. Klik mana-mana
+                <span className="kbd">Seret</span> untuk memandang sekeliling. {tap} mana-mana
                 monolit untuk memasuki stesennya. Dock di bawah juga membawa anda ke stesen
                 yang sama.
               </p>
@@ -64,16 +67,26 @@ export function HelpPanel({ onClose, reducedMotion }: Props) {
             <div>
               <h4>Di dalam galeri</h4>
               <p style={{ color: 'var(--ink-dim)', fontSize: '0.88rem' }}>
-                <span className="kbd">Scroll</span> atau <span className="kbd">↑</span>
-                <span className="kbd">↓</span> untuk berjalan. Klik mana-mana bingkai karya
-                untuk membacanya. Panel kiri memecutkan perjalanan anda.
+                {coarsePointer ? (
+                  <>
+                    <span className="kbd">Undur</span> dan <span className="kbd">Maju</span>{' '}
+                    untuk berjalan. {tap} mana-mana bingkai karya untuk membacanya. Senarai karya
+                    mempercepatkan perjalanan anda.
+                  </>
+                ) : (
+                  <>
+                    <span className="kbd">Scroll</span> atau <span className="kbd">↑</span>
+                    <span className="kbd">↓</span> untuk berjalan. {tap} mana-mana bingkai karya
+                    untuk membacanya. Senarai karya mempercepatkan perjalanan anda.
+                  </>
+                )}
               </p>
             </div>
             <div>
               <h4>Pintu keluar</h4>
               <p style={{ color: 'var(--ink-dim)', fontSize: '0.88rem' }}>
-                Berjalan ke hujung koridor dan klik portal bercahaya, atau tekan{' '}
-                <span className="kbd">Esc</span> untuk kembali ke dek.
+                Berjalan ke hujung koridor dan {coarsePointer ? 'ketuk' : 'klik'} portal
+                bercahaya, atau tekan <span className="kbd">Esc</span> untuk kembali ke dek.
               </p>
             </div>
             <div>

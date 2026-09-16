@@ -113,7 +113,14 @@ export function useHashRoute() {
   );
 
   useEffect(() => {
-    const onHash = () => setRoute(parse(window.location.hash));
+    const onHash = () => {
+      // The app writes every route as `#/…`, so a bare fragment is the plain-list view's
+      // own section navigation (`#tentang`) telling the browser to scroll the document.
+      // Reading those as the hub route used to throw a reader out of the list and back
+      // into the 3D space mid-page.
+      if (window.location.hash && !window.location.hash.startsWith('#/')) return;
+      setRoute(parse(window.location.hash));
+    };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);

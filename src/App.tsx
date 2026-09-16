@@ -137,10 +137,33 @@ export default function App() {
     document.body.classList.toggle('is-flat', mode === 'flat');
   }, [mode]);
 
-  // No WebGL, or someone arrived on a flat deep link: honour it before anything else.
+  // Only the two views that name themselves switch the view: `#/senarai` is the plain list
+  // and `#/` is the 3D home. Setting `flat` but never clearing it meant that leaving the
+  // list with the browser's Back button left the list on screen while the URL said home —
+  // Back looked broken. A link to a station or a work is content, not a view, so it stays
+  // in whichever one the visitor is already reading.
   useEffect(() => {
-    if (!webgl || route.kind === 'flat') setMode('flat');
+    if (!webgl) setMode('flat');
+    else if (route.kind === 'flat') setMode('flat');
+    else if (route.kind === 'hub') setMode('3d');
   }, [webgl, route.kind]);
+
+  /** The station named by a shareable link, if the visitor arrived on one. */
+  const linkedStation =
+    route.kind === 'station' || route.kind === 'exhibit' ? route.stationId : null;
+
+  // Arriving on a link to a station or a work is not a first visit: the visitor already
+  // knows where they want to be. Holding the gate over the built space hid the very thing
+  // they came for, and "Masuk ke PORT" then replayed the approach and threw the link away,
+  // leaving the URL and the breadcrumb naming a work that was no longer open.
+  useEffect(() => {
+    if (!ready || entered || mode !== '3d' || !linkedStation) return;
+    enteredRef.current = true;
+    setEntered(true);
+    // A station with no wing has nothing to walk into, so the deck stays behind its panel.
+    // One that does have a wing is opened by the route effect below, so leave it be.
+    if (stationById(linkedStation)?.kind !== 'corridor') worldRef.current?.skipEntry();
+  }, [ready, entered, mode, linkedStation]);
 
   /* ---------------------------------------------------------------- route -> world */
 
@@ -317,18 +340,56 @@ export default function App() {
 
   /* ---------------------------------------------------------------- render */
 
+  /**
+   * The work reader, shared by both views. Every work in the plain list is a real link to
+   * `#/s/<station>/<index>`, so without it here those links went nowhere for the readers the
+   * list exists for — a device with no WebGL, or anyone who simply prefers reading.
+   */
+  const reader =
+    route.kind === 'exhibit' && activeStation ? (
+      <ExhibitReader
+        station={activeStation}
+        index={route.index}
+        onClose={() =>
+          mode === 'flat'
+            ? navigate({ kind: 'flat' })
+            : navigate({ kind: 'station', stationId: activeStation.id })
+        }
+        onPrev={() =>
+          navigate({
+            kind: 'exhibit',
+            stationId: activeStation.id,
+            index: Math.max(0, route.index - 1),
+          })
+        }
+        onNext={() =>
+          navigate({
+            kind: 'exhibit',
+            stationId: activeStation.id,
+            index: Math.min(activeStation.exhibits.length - 1, route.index + 1),
+          })
+        }
+      />
+    ) : null;
+
   if (mode === 'flat') {
     return (
       <>
         <TopBar crumb={null} flat onToggleFlat={toggleFlat} onHelp={() => setHelpOpen(true)} />
         <FlatView />
-        {helpOpen ? <HelpPanel onClose={() => setHelpOpen(false)} reducedMotion={reducedMotion} /> : null}
+        {reader}
+        {helpOpen ? (
+          <HelpPanel
+            onClose={() => setHelpOpen(false)}
+            reducedMotion={reducedMotion}
+            coarsePointer={coarsePointer}
+          />
+        ) : null}
+        {/* Without WebGL there is nothing to switch to, so this only explains — offering
+            "Cuba juga" made a promise the device could never keep. */}
         {!webgl ? (
           <p className="notice">
             Peranti ini tidak menyokong grafik 3D, jadi laman dipaparkan dalam bentuk senarai.
-            <button type="button" onClick={toggleFlat}>
-              Cuba juga
-            </button>
           </p>
         ) : null}
       </>
@@ -427,32 +488,16 @@ export default function App() {
             <StationPanel station={activeStation} onClose={closeStation} />
           ) : null}
 
-          {route.kind === 'exhibit' && activeStation ? (
-            <ExhibitReader
-              station={activeStation}
-              index={route.index}
-              onClose={() => navigate({ kind: 'station', stationId: activeStation.id })}
-              onPrev={() =>
-                navigate({
-                  kind: 'exhibit',
-                  stationId: activeStation.id,
-                  index: Math.max(0, route.index - 1),
-                })
-              }
-              onNext={() =>
-                navigate({
-                  kind: 'exhibit',
-                  stationId: activeStation.id,
-                  index: Math.min(activeStation.exhibits.length - 1, route.index + 1),
-                })
-              }
-            />
-          ) : null}
+          {reader}
         </>
       )}
 
       {helpOpen ? (
-        <HelpPanel onClose={() => setHelpOpen(false)} reducedMotion={reducedMotion} />
+        <HelpPanel
+          onClose={() => setHelpOpen(false)}
+          reducedMotion={reducedMotion}
+          coarsePointer={coarsePointer}
+        />
       ) : null}
     </>
   );
