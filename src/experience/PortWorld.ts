@@ -17,7 +17,6 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import boldTypeface from 'three/examples/fonts/helvetiker_bold.typeface.json';
 import type { GalleryImage, Station } from '../content';
 import { artPool, deckCovers, entranceImage } from '../content';
-import { glyphDataUrl } from '../content/glyphs';
 
 export type Phase = 'entry' | 'hub' | 'warp' | 'corridor';
 
@@ -29,6 +28,11 @@ export type WorldOptions = {
   onEntryProgress?: (progress: number) => void;
   /** Which monolith the pointer is over, or null. */
   onHover?: (stationId: string | null) => void;
+  /**
+   * The station the visitor is looking at, as they turn. On the deck the naming lives in
+   * the chrome rather than floating over the works, so this is what keeps the room named.
+   */
+  onFacing?: (stationId: string | null) => void;
   onStationSelect?: (stationId: string) => void;
   /** An exhibit frame was clicked inside the corridor. */
   onExhibitSelect?: (index: number) => void;
@@ -51,22 +55,32 @@ type Monolith = {
 };
 
 /**
- * The floating name plate for a station: extruded 3D lettering that turns to face the
- * visitor. This is the deck's wayfinding — from anywhere on the deck you can read where
- * each station is without hunting for it.
+ * One painted band of light: a sliver of translucent colour that hangs in the black and is
+ * drawn additively, the way a coated shard of glass throws its own spectrum onto a wall.
+ * Never a sprite and never a dot — a broad, soft-edged streak, which is what reads as paint.
  */
-type DeckLabel = {
-  station: Station;
-  group: THREE.Group;
-  name: THREE.Mesh;
-  nameMaterial: THREE.MeshStandardMaterial;
-  nameBase: THREE.Color;
-  nameHot: THREE.Color;
-  glyph: THREE.Mesh;
-  glyphMaterial: THREE.MeshBasicMaterial;
-  baseY: number;
-  hot: number;
+type LightShard = {
+  mesh: THREE.Object3D;
+  material: THREE.MeshBasicMaterial;
+  /**
+   * The hot centre of the band. A soft additive glow rather than a drawn outline: an
+   * outline on a translucent rectangle is what made the field read as a wireframe, and
+   * light never has an edge.
+   */
+  core: THREE.MeshBasicMaterial;
+  /** Its own copy of the streak, so the highlight can travel along the band. */
+  flow: THREE.Texture;
+  /** Where it sits when nothing stirs it, and how far it is allowed to wander. */
+  origin: THREE.Vector3;
+  drift: THREE.Vector3;
+  rate: number;
   phase: number;
+  baseOpacity: number;
+  /** How far the highlight slides along the band, and how fast. */
+  travel: number;
+  scroll: number;
+  /** Local axis the shard leans on when the pointer sweeps close to it. */
+  lean: THREE.Vector3;
 };
 
 type FrameRef = {
@@ -80,6 +94,24 @@ type FrameRef = {
 const ACCENT_DIM = '#141210';
 const HUB_CAMERA = new THREE.Vector3(0, 1.72, 0);
 const HUB_RADIUS = 8.1;
+
+/**
+ * The deck's chrome, in one place.
+ *
+ * Colour used to be spent on the stations — every monolith carried its own tint — which
+ * left the room busy and the work competing with its own label. The deck is now black,
+ * champagne and nothing else, so the only colour in it comes off the hung pieces and the
+ * light behind them. Station accents still exist, but only where they are information: in
+ * the panels and the list view.
+ */
+const GOLD = 0xd9b978;
+const GOLD_LEAF = 0xe8d7ac;
+
+/**
+ * The light paintings' palette. Four pigments, held back with low opacity so the wall
+ * reads as coloured light rather than as a rainbow.
+ */
+const PIGMENTS = [0x3f4fd8, 0xc0397f, 0xd8a24a, 0x2f9fa8];
 
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -137,15 +169,38 @@ function labelTexture(
   });
 }
 
-/** Soft round sprite, used for particles and the floor glow. */
-function dotTexture() {
-  return canvasTexture(128, 128, (ctx) => {
-    const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-    g.addColorStop(0, 'rgba(255,255,255,1)');
-    g.addColorStop(0.35, 'rgba(190,235,255,0.55)');
-    g.addColorStop(1, 'rgba(120,190,255,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 128, 128);
+/**
+ * One band of painted light.
+ *
+ * Plain white on transparent — the pigment comes from the material's own colour, so three
+ * of these textures cover the whole field. `core` moves the bright line off centre, which
+ * is what stops eighteen bands from looking like eighteen copies of one shape.
+ */
+function streakTexture(core: number) {
+  const w = 512;
+  const h = 128;
+  return canvasTexture(w, h, (ctx) => {
+    // A shard, not a smear: the pigment fills its shape and stops. Only the two ends
+    // dissolve, so a band fades out of the dark rather than ending on a cut line.
+    const across = ctx.createLinearGradient(0, 0, w, 0);
+    across.addColorStop(0, 'rgba(255,255,255,0)');
+    across.addColorStop(0.16, 'rgba(255,255,255,0.9)');
+    across.addColorStop(0.84, 'rgba(255,255,255,0.9)');
+    across.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = across;
+    ctx.fillRect(0, 0, w, h);
+
+    // Across the band's width: a broad, mostly even body with a soft shoulder at each
+    // edge — the give of glass, not the falloff of a glow.
+    ctx.globalCompositeOperation = 'destination-in';
+    const along = ctx.createLinearGradient(0, 0, 0, h);
+    along.addColorStop(0, 'rgba(255,255,255,0.06)');
+    along.addColorStop(Math.max(0.06, core - 0.3), 'rgba(255,255,255,0.96)');
+    along.addColorStop(Math.min(0.94, core + 0.3), 'rgba(255,255,255,0.96)');
+    along.addColorStop(1, 'rgba(255,255,255,0.06)');
+    ctx.fillStyle = along;
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'source-over';
   });
 }
 
@@ -231,7 +286,6 @@ export class PortWorld {
   private readonly corridorGroup = new THREE.Group();
 
   private monoliths: Monolith[] = [];
-  private deckLabels: DeckLabel[] = [];
   /**
    * Covers hung on the deck keep their own textures rather than joining `textureCache`:
    * leaving a wing releases every photograph in that cache, and the deck is still standing.
@@ -239,7 +293,6 @@ export class PortWorld {
   private deckCoverTextures: THREE.Texture[] = [];
   private font: DisplayFont | null = null;
   private frames: FrameRef[] = [];
-  private starField?: THREE.Points;
   private entryGate = new THREE.Group();
   private gateLogo?: THREE.Mesh;
   private hubLogo?: THREE.Mesh;
@@ -271,25 +324,23 @@ export class PortWorld {
   private currentStation: Station | null = null;
   private focusedExhibit = -1;
   private glowTexture: THREE.Texture;
-  private particleTexture: THREE.Texture;
   private disposed = false;
   /** Textures for the works hung in the approach — owned by the entry scene, not the corridor. */
   private entryArtTextures: THREE.Texture[] = [];
 
-  /* the ambient constellation */
-  private readonly constellation = new THREE.Group();
-  private nodeBase: THREE.Vector3[] = [];
-  private nodePos: THREE.Vector3[] = [];
-  private nodeVel: THREE.Vector3[] = [];
-  private nodeAttributes?: THREE.BufferAttribute;
-  private linkAttributes?: THREE.BufferAttribute;
-  private linkColors?: THREE.BufferAttribute;
-  private linkGeometry?: THREE.BufferGeometry;
-  private maxLinks = 0;
-  private lastLinkCount = 0;
+  /* the deck's own light: a pool under the room and a ring turning in it */
+  private deckPool: THREE.Mesh | null = null;
+  private deckRing: THREE.Mesh | null = null;
+
+  /* the ambient light field */
+  private readonly paintings = new THREE.Group();
+  private shards: LightShard[] = [];
+  private paintingTextures: THREE.Texture[] = [];
   private hasPointer = false;
   private readonly cursorWorld = new THREE.Vector3();
   private readonly cursorLocal = new THREE.Vector3();
+  /** The station the visitor is looking at; only changes are reported to React. */
+  private facing: string | null = null;
 
   constructor(canvas: HTMLCanvasElement, opts: WorldOptions) {
     this.canvas = canvas;
@@ -314,15 +365,15 @@ export class PortWorld {
     this.scene.add(this.rig);
 
     this.glowTexture = radialGlowTexture('rgba(240,228,205,0.5)', 'rgba(130,110,82,0.12)');
-    this.particleTexture = dotTexture();
 
-    this.scene.fog = new THREE.FogExp2(0x000000, 0.017);
+    // Light on a far wall must still read as light, so the fog only just touches the black.
+    this.scene.fog = new THREE.FogExp2(0x000000, 0.009);
 
     this.font = loadDisplayFont();
 
     this.scene.add(this.entryGroup, this.hubGroup, this.corridorGroup);
     this.buildEnvironment();
-    this.buildConstellation();
+    this.buildPaintings();
     this.buildEntry();
     this.buildHub(opts.stations);
     // Applied silently: the entry gate is still on screen at this point, so the
@@ -372,17 +423,18 @@ export class PortWorld {
     this.entryArtTextures = [];
     this.disposeTextures(this.deckCoverTextures);
     this.deckCoverTextures = [];
-    this.constellation.traverse((object) => {
+    this.paintings.traverse((object) => {
       const mesh = object as THREE.Mesh;
       mesh.geometry?.dispose();
       const material = mesh.material as THREE.Material | THREE.Material[] | undefined;
       if (Array.isArray(material)) material.forEach((m) => m.dispose());
       else material?.dispose();
     });
+    for (const tex of this.paintingTextures) tex.dispose();
+    this.paintingTextures = [];
     for (const tex of this.textureCache.values()) tex.dispose();
     this.textureCache.clear();
     this.glowTexture.dispose();
-    this.particleTexture.dispose();
     this.renderer.dispose();
   }
 
@@ -449,199 +501,248 @@ export class PortWorld {
     rim.position.set(0, 7, 0);
     this.scene.add(rim);
 
-    // starfield
-    const count = this.reduced ? 500 : 1400;
-    const positions = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
-    for (let i = 0; i < count; i++) {
-      const r = 60 + Math.random() * 120;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = r * Math.cos(phi) * 0.6;
-      positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
-      sizes[i] = 0.5 + Math.random() * 1.6;
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-    const stars = new THREE.Points(
-      geo,
-      new THREE.PointsMaterial({
-        map: this.particleTexture,
-        size: 0.85,
-        transparent: true,
-        depthWrite: false,
-        opacity: 0.5,
-        blending: THREE.AdditiveBlending,
-        color: 0xe6dfd2,
-      }),
-    );
-    this.starField = stars;
-    this.scene.add(stars);
+    // There was a starfield here. It is the single strongest reason the room read as
+    // outer space rather than as a gallery, so the ambient field is now only the light
+    // paintings — see `buildPaintings`.
   }
 
   /**
-   * The ambient field: a constellation of nodes that drift, link to whichever neighbours
-   * come close, and lean toward the pointer. Hairlines only appear where nodes meet, so
-   * the black stays black and the field reads as depth rather than decoration.
+   * The ambient field: light paintings.
+   *
+   * The room used to be filled with a particle constellation — twinkling points and
+   * hairlines drawn between them — and it read as outer space, which is exactly what a
+   * gallery must not read as. A light painting is the opposite idea: no dots, no lines,
+   * just broad soft-edged bands of colour hanging in the dark, lit from nowhere, the way
+   * coated glass throws its own spectrum onto a wall.
+   *
+   * They are made here from three canvas gradients and no image files at all, so the whole
+   * field costs a few kilobytes and nothing has to be licensed or credited.
    */
-  private buildConstellation() {
-    const count = this.reduced ? 44 : 116;
-    const spread = 54;
+  private buildPaintings() {
+    // Three streak shapes, reused across every band: one long and thin like a thrown
+    // highlight, one broad wash, one short and bright.
+    const streaks = [
+      streakTexture(1.0),
+      streakTexture(0.55),
+      streakTexture(0.34),
+    ];
+    this.paintingTextures = streaks;
 
-    for (let i = 0; i < count; i++) {
-      const base = new THREE.Vector3(
-        THREE.MathUtils.randFloatSpread(spread),
-        THREE.MathUtils.randFloatSpread(20),
-        THREE.MathUtils.randFloatSpread(spread),
-      );
-      // keep the middle of the deck clear so the stations stay unobstructed
-      if (base.length() < 11) base.setLength(11 + Math.random() * 7);
-      this.nodeBase.push(base.clone());
-      this.nodePos.push(base.clone());
-      this.nodeVel.push(
-        new THREE.Vector3(
-          THREE.MathUtils.randFloatSpread(0.05),
-          THREE.MathUtils.randFloatSpread(0.04),
-          THREE.MathUtils.randFloatSpread(0.05),
-        ),
-      );
+    /*
+     * Hung as compositions rather than as a scatter of bands.
+     *
+     * A real light painting is a fan of angled shards that overlap, so each piece holds
+     * together as one composition when you turn to face it. Six of them are arranged
+     * around the room at eye level and above, and the visitor meets one at a time.
+     */
+    const clusters = this.reduced ? 3 : 5;
+    const barsPerCluster = this.reduced ? 2 : 3;
+    const geometry = new THREE.PlaneGeometry(1, 1);
+
+    for (let c = 0; c < clusters; c++) {
+      const bearing = (c / clusters) * Math.PI * 2 + 0.35;
+      const distance = 22 + Math.random() * 16;
+      // Kept above the horizon line on purpose: the floor stays black, so the works sit in
+      // a lit room rather than in a tank of colour.
+      const centreY = 3.5 + Math.random() * 11;
+      const tilt = Math.random() * Math.PI;
+      // Staggered along the piece's own long axis too, so the cluster spreads out.
+      const span = 14 + Math.random() * 12;
+
+      for (let b = 0; b < barsPerCluster; b++) {
+        const angle = tilt + b * 0.14 - barsPerCluster * 0.07;
+        // Offsets run along the piece's short axis, which is what makes the bars overlap.
+        const offset = (b - (barsPerCluster - 1) / 2) * 3.4;
+        const along = (b - (barsPerCluster - 1) / 2) * span * 0.24;
+        const origin = new THREE.Vector3(
+          Math.cos(bearing) * distance + Math.cos(tilt) * along,
+          centreY + Math.sin(angle) * offset + Math.sin(tilt) * along * 0.4,
+          Math.sin(bearing) * distance + Math.sin(tilt) * along,
+        );
+
+        const shape = (c + b) % streaks.length;
+        const length = (16 + Math.random() * 26) * (shape === 1 ? 1.5 : shape === 2 ? 0.7 : 1);
+        const breadth = length * (shape === 1 ? 0.34 : shape === 2 ? 0.5 : 0.16);
+
+        const material = new THREE.MeshBasicMaterial({
+          map: streaks[shape],
+          color: PIGMENTS[(c + b) % PIGMENTS.length],
+          transparent: true,
+          opacity: 0,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        });
+
+        /*
+         * Its own copy of the streak so its highlight can slide independently of the
+         * others. Sharing one texture would move every band in lockstep, which reads as a
+         * scrolling pattern rather than as light travelling through glass — and the copy
+         * shares the same pixels, so it costs a texture upload and no new art.
+         */
+        const flow = streaks[shape].clone();
+        flow.needsUpdate = true;
+        // The band no longer fills its plate: it occupies part of it and slides back and
+        // forth inside the remainder, which is what a highlight travelling along glass
+        // looks like. Clamped edges keep the ends dissolving rather than tiling.
+        flow.repeat.x = 0.68 + Math.random() * 0.24;
+        this.paintingTextures.push(flow);
+        material.map = flow;
+
+        const core = new THREE.MeshBasicMaterial({
+          map: this.glowTexture,
+          color: PIGMENTS[(c + b) % PIGMENTS.length],
+          transparent: true,
+          opacity: 0,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        });
+
+        /*
+         * Each shard is a band of pigment with a hot core inside it. Where two bands cross
+         * their brightness adds, exactly as it would on a wall — and because the core is a
+         * radial falloff and not an outline, nothing in the field has a hard edge to read
+         * as a grid.
+         */
+        const shard = new THREE.Group();
+        const plate = new THREE.Mesh(geometry, material);
+        plate.scale.set(length, breadth, 1);
+        shard.add(plate);
+        const heart = new THREE.Mesh(geometry, core);
+        // Set inside the band, and short enough that the pigment still runs past it.
+        heart.scale.set(length * 0.62, breadth * 0.74, 1);
+        shard.add(heart);
+        shard.position.copy(origin);
+        // Held at the piece's own tilt and turned to face the room, never lying flat.
+        shard.rotation.z = angle;
+        this.paintings.add(shard);
+
+        this.shards.push({
+          mesh: shard,
+          material,
+          core,
+          flow,
+          origin,
+          drift: new THREE.Vector3(
+            THREE.MathUtils.randFloatSpread(1.6),
+            THREE.MathUtils.randFloatSpread(2.4),
+            THREE.MathUtils.randFloatSpread(1.6),
+          ),
+          rate: 0.03 + Math.random() * 0.05,
+          phase: Math.random() * Math.PI * 2,
+          baseOpacity: 0.13 + Math.random() * 0.11,
+          travel: 0.05 + Math.random() * 0.16,
+          scroll: 0.04 + Math.random() * 0.1,
+          lean: new THREE.Vector3(
+            THREE.MathUtils.randFloatSpread(1),
+            THREE.MathUtils.randFloatSpread(1),
+            THREE.MathUtils.randFloatSpread(1),
+          ).normalize(),
+        });
+      }
     }
 
-    const nodeGeo = new THREE.BufferGeometry();
-    this.nodeAttributes = new THREE.BufferAttribute(new Float32Array(count * 3), 3);
-    nodeGeo.setAttribute('position', this.nodeAttributes);
-    this.constellation.add(
-      new THREE.Points(
-        nodeGeo,
-        new THREE.PointsMaterial({
-          map: this.particleTexture,
-          size: 0.42,
+    // Wide, very faint colour washes in every direction, so the black is tinted rather
+    // than merely empty — this is what makes the wall behind the work feel lit.
+    const washes: [number, number, number][] = [
+      [PIGMENTS[0], 0.045, 0],
+      [PIGMENTS[1], 0.035, Math.PI * 0.66],
+      [PIGMENTS[3], 0.03, Math.PI * 1.33],
+    ];
+    // The washes sit at head height so their glow lands behind the cards, not across them.
+    for (const [pigment, opacity, angle] of washes) {
+      const mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(120, 70),
+        new THREE.MeshBasicMaterial({
+          map: this.glowTexture,
+          color: pigment,
           transparent: true,
-          opacity: 0.7,
-          depthWrite: false,
-          blending: THREE.AdditiveBlending,
-          color: 0xd9c9a4,
-        }),
-      ),
-    );
-
-    this.maxLinks = count * 5;
-    this.linkAttributes = new THREE.BufferAttribute(new Float32Array(this.maxLinks * 6), 3);
-    this.linkColors = new THREE.BufferAttribute(new Float32Array(this.maxLinks * 6), 3);
-    this.linkGeometry = new THREE.BufferGeometry();
-    this.linkGeometry.setAttribute('position', this.linkAttributes);
-    this.linkGeometry.setAttribute('color', this.linkColors);
-    this.linkGeometry.setDrawRange(0, 0);
-    this.constellation.add(
-      new THREE.LineSegments(
-        this.linkGeometry,
-        new THREE.LineBasicMaterial({
-          vertexColors: true,
-          transparent: true,
-          opacity: 0.5,
+          opacity,
           blending: THREE.AdditiveBlending,
           depthWrite: false,
+          side: THREE.DoubleSide,
         }),
-      ),
-    );
+      );
+      mesh.position.set(Math.cos(angle) * 42, 4, Math.sin(angle) * 42);
+      mesh.rotation.y = -angle + Math.PI / 2;
+      this.paintings.add(mesh);
+    }
 
-    this.scene.add(this.constellation);
+    this.scene.add(this.paintings);
   }
 
   /**
-   * Advance the field. The whole constellation rides with the visitor, so it works in the
-   * approach, on the deck and inside a gallery wing without any special casing.
+   * Advance the field. The paintings ride with the visitor, so they fill the approach, the
+   * deck and a wing without any special casing — and each band turns to keep facing the
+   * room, so it is never caught edge-on and never blinks out.
    */
-  private updateConstellation(delta: number) {
-    const nodes = this.nodePos;
-    const total = nodes.length;
-    if (!total || !this.nodeAttributes || !this.linkAttributes || !this.linkColors || !this.linkGeometry) {
-      return;
-    }
+  private updatePaintings(delta: number, t: number) {
+    const total = this.shards.length;
+    if (!total) return;
 
-    this.constellation.position.copy(this.rig.position);
+    this.paintings.position.copy(this.rig.position);
 
-    // The pointer becomes a point out in the field; nodes near it are drawn toward it and
-    // their links brighten, which is what makes the background feel alive under the cursor.
     let reaching = false;
     if (this.hasPointer) {
       this.ray.setFromCamera(this.ndc.set(this.pointer.x, this.pointer.y), this.camera);
-      this.ray.ray.at(16, this.cursorWorld);
-      this.cursorLocal.copy(this.cursorWorld).sub(this.constellation.position);
+      // Far enough out to sit among the bands rather than in front of the glass.
+      this.ray.ray.at(26, this.cursorWorld);
+      this.cursorLocal.copy(this.cursorWorld).sub(this.paintings.position);
       reaching = true;
     }
 
-    const positions = this.nodeAttributes.array as Float32Array;
-    const pull = Math.min(1, delta * 0.9);
-    for (let i = 0; i < total; i++) {
-      const node = nodes[i];
-      const base = this.nodeBase[i];
-      const velocity = this.nodeVel[i];
+    const camX = this.camera.getWorldPosition(new THREE.Vector3()).x;
+    const camZ = this.camera.getWorldPosition(new THREE.Vector3()).z;
+    const lean = Math.min(1, delta * 1.6);
 
-      node.addScaledVector(velocity, delta * 6);
-      node.lerp(base, Math.min(1, delta * 0.5));
+    for (const shard of this.shards) {
+      const { mesh, material, core, flow, origin, drift, rate, phase, baseOpacity } = shard;
+      const sway = Math.sin(t * rate + phase);
+      const lift = Math.cos(t * rate * 0.7 + phase);
+
+      mesh.position.set(
+        origin.x + drift.x * sway,
+        origin.y + drift.y * lift,
+        origin.z + drift.z * sway,
+      );
+
+      // Face the room from wherever the visitor is standing, keeping the shard's own tilt.
+      // The field's own yaw is subtracted because this rotation is local to it.
+      mesh.rotation.y =
+        Math.atan2(camX - mesh.position.x, camZ - mesh.position.z) - this.paintings.rotation.y;
+
+      // The highlight walks along the band and back, so the field is never a still image.
+      flow.offset.x = (1 - flow.repeat.x) * (0.5 + 0.5 * Math.sin(t * shard.scroll + phase * 1.7));
+
+      // A slow breath in size, so the bands open and close like lit glass turning.
+      const breath = 1 + 0.05 * lift;
+      mesh.scale.set(breath, 1 + 0.08 * sway, 1);
+
+      let brightness = baseOpacity + baseOpacity * 0.35 * sway;
+      // A lit heart even when nothing is near, so every band has a hot centre.
+      let coreTarget = brightness * 0.5;
 
       if (reaching) {
-        const distance = node.distanceTo(this.cursorLocal);
-        if (distance < 11) {
-          node.lerp(this.cursorLocal, (1 - distance / 11) * pull * 0.5);
+        const distance = mesh.position.distanceTo(this.cursorLocal);
+        if (distance < 30) {
+          const near = 1 - distance / 30;
+          // The pigment closest to the pointer lifts, as if the light gathered there.
+          brightness += near * 0.16;
+          mesh.position.addScaledVector(shard.lean, near * 1.2 * lean * 6);
+          // Only the bands the pointer is near get the full glare; near-squared keeps the
+          // rest of the field from turning into one wall of light.
+          coreTarget += near * near * 0.5;
         }
       }
 
-      positions[i * 3] = node.x;
-      positions[i * 3 + 1] = node.y;
-      positions[i * 3 + 2] = node.z;
-    }
-    this.nodeAttributes.needsUpdate = true;
-
-    const linkDistance = 6.4;
-    const points = this.linkAttributes.array as Float32Array;
-    const colours = this.linkColors.array as Float32Array;
-    let vertex = 0;
-    let links = 0;
-
-    for (let i = 0; i < total && links < this.maxLinks; i++) {
-      const a = nodes[i];
-      const aNear = reaching ? a.distanceTo(this.cursorLocal) : Infinity;
-      for (let j = i + 1; j < total && links < this.maxLinks; j++) {
-        const b = nodes[j];
-        const distance = a.distanceTo(b);
-        if (distance > linkDistance) continue;
-
-        const proximity = 1 - distance / linkDistance;
-        let strength = proximity * 0.45;
-        if (reaching) {
-          const near = Math.min(aNear, b.distanceTo(this.cursorLocal));
-          if (near < 13) strength += (1 - near / 13) * 0.55;
-        }
-
-        points[vertex * 3] = a.x;
-        points[vertex * 3 + 1] = a.y;
-        points[vertex * 3 + 2] = a.z;
-        points[(vertex + 1) * 3] = b.x;
-        points[(vertex + 1) * 3 + 1] = b.y;
-        points[(vertex + 1) * 3 + 2] = b.z;
-
-        // dim gold where nodes only just reach each other, chrome-white where the pointer
-        // is pulling them together
-        for (let end = 0; end < 2; end++) {
-          const at = (vertex + end) * 3;
-          colours[at] = 0.4 + strength * 0.58;
-          colours[at + 1] = 0.34 + strength * 0.62;
-          colours[at + 2] = 0.24 + strength * 0.72;
-        }
-
-        vertex += 2;
-        links++;
-      }
+      material.opacity += (brightness - material.opacity) * Math.min(1, delta * 1.1);
+      core.opacity += (coreTarget - core.opacity) * Math.min(1, delta * 1.2);
     }
 
-    this.linkAttributes.needsUpdate = true;
-    this.linkColors.needsUpdate = true;
-    this.linkGeometry.setDrawRange(0, vertex);
-    this.lastLinkCount = links;
+    // The whole field turns, very slowly. Standing still should still feel like being in a
+    // room with light moving through it.
+    this.paintings.rotation.y = t * 0.008;
   }
 
   /**
@@ -932,6 +1033,45 @@ export class PortWorld {
     floor.rotation.x = -Math.PI / 2;
     group.add(floor);
 
+    /*
+     * The deck's own light.
+     *
+     * A hard black floor with a grid on it reads as a technical drawing. A warm pool
+     * lying on the deck, with one slow gold ring turning inside it, is what makes the
+     * room feel lit and occupied — and it is the same light the paintings are made of,
+     * so the deck and the field agree.
+     */
+    const pool = new THREE.Mesh(
+      new THREE.CircleGeometry(30, 64),
+      new THREE.MeshBasicMaterial({
+        map: radialGlowTexture('rgba(232,215,172,0.30)', 'rgba(120,96,64,0.05)'),
+        transparent: true,
+        opacity: 0.5,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    pool.rotation.x = -Math.PI / 2;
+    pool.position.y = 0.02;
+    group.add(pool);
+    this.deckPool = pool;
+
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(9.2, 9.5, 96),
+      new THREE.MeshBasicMaterial({
+        color: GOLD_LEAF,
+        transparent: true,
+        opacity: 0.16,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.03;
+    group.add(ring);
+    this.deckRing = ring;
+
     // concentric rings + radial spokes
     const linePositions: number[] = [];
     for (let r = 2; r <= 24; r += 2) {
@@ -1038,33 +1178,6 @@ export class PortWorld {
       );
     }
 
-    // drift particles
-    const pCount = this.reduced ? 90 : 320;
-    const pPos = new Float32Array(pCount * 3);
-    for (let i = 0; i < pCount; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = Math.random() * 22;
-      pPos[i * 3] = Math.cos(a) * r;
-      pPos[i * 3 + 1] = 0.4 + Math.random() * 9;
-      pPos[i * 3 + 2] = Math.sin(a) * r;
-    }
-    const pGeo = new THREE.BufferGeometry();
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-    group.add(
-      new THREE.Points(
-        pGeo,
-        new THREE.PointsMaterial({
-          map: this.particleTexture,
-          size: 0.34,
-          transparent: true,
-          depthWrite: false,
-          opacity: 0.75,
-          blending: THREE.AdditiveBlending,
-          color: 0xeae3d5,
-        }),
-      ),
-    );
-
     // PORT wordmark hanging over the deck, facing down
     const logo = new THREE.Mesh(
       new THREE.PlaneGeometry(11, 2.75),
@@ -1104,57 +1217,52 @@ export class PortWorld {
       mg.position.set(Math.cos(angle) * HUB_RADIUS, 0, Math.sin(angle) * HUB_RADIUS);
       mg.rotation.y = -angle + Math.PI / 2;
 
-      const accent = new THREE.Color(station.accent);
-
+      /*
+       * One card, one size, every station — a landscape board the work fills.
+       *
+       * The board used to be a tall slab with a small picture inside it, its edges tinted
+       * with the station's own colour, and a floating name plate in front of the whole
+       * thing. The plate covered the art, the tint made a mixed wall look busy, and the
+       * slab said nothing the work was not already saying. What is left is the card, the
+       * gold leaf around it, and the piece.
+       */
       const body = new THREE.Mesh(
-        new THREE.BoxGeometry(2.6, 4.2, 0.34),
+        new THREE.BoxGeometry(2.94, 2.42, 0.26),
         new THREE.MeshStandardMaterial({
           color: new THREE.Color(ACCENT_DIM),
-          emissive: accent.clone().multiplyScalar(0.1),
-          roughness: 0.32,
-          metalness: 0.85,
+          emissive: new THREE.Color(GOLD).multiplyScalar(0.03),
+          roughness: 0.52,
+          metalness: 0.55,
         }),
       );
-      body.position.y = 2.3;
+      body.position.y = 2.05;
       body.userData.stationId = station.id;
       mg.add(body);
 
+      const edgeMaterial = new THREE.LineBasicMaterial({
+        color: GOLD_LEAF,
+        transparent: true,
+        opacity: 0.42,
+      });
       const edges = new THREE.LineSegments(
         new THREE.EdgesGeometry(body.geometry),
-        new THREE.LineBasicMaterial({
-          color: accent,
-          transparent: true,
-          opacity: 0.85,
-        }),
+        edgeMaterial,
       );
       edges.position.copy(body.position);
       mg.add(edges);
 
       const pedestal = new THREE.Mesh(
-        new THREE.BoxGeometry(2.4, 0.22, 0.8),
+        new THREE.BoxGeometry(2.6, 0.24, 0.9),
         new THREE.MeshStandardMaterial({ color: 0x121110, metalness: 0.9, roughness: 0.3 }),
       );
-      pedestal.position.y = 0.11;
+      pedestal.position.y = 0.12;
       mg.add(pedestal);
 
-      const bar = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.2, 0.045),
-        new THREE.MeshBasicMaterial({
-          color: accent,
-          transparent: true,
-          opacity: 0.95,
-          blending: THREE.AdditiveBlending,
-        }),
-      );
-      // −Z is the face the visitor sees, so the accent line belongs there rather than
-      // hidden behind the monolith.
-      bar.position.set(0, 4.42, -0.19);
-      mg.add(bar);
-
+      // The pool of light the card stands in, which the work lifts when it is hovered.
       const ring = new THREE.Mesh(
-        new THREE.RingGeometry(1.35, 1.45, 40),
+        new THREE.RingGeometry(1.5, 1.6, 40),
         new THREE.MeshBasicMaterial({
-          color: accent,
+          color: GOLD,
           transparent: true,
           opacity: 0,
           side: THREE.DoubleSide,
@@ -1176,133 +1284,8 @@ export class PortWorld {
         ring,
         art: cover?.art,
         haloMaterial: cover?.haloMaterial,
-        edgeMaterial: cover?.edgeMaterial,
+        edgeMaterial,
         hot: 0,
-      });
-    });
-
-    this.buildDeckLabels(stations);
-  }
-
-  /**
-   * A floating name plate in front of every monolith, carrying the station glyph, its
-   * number and its name in extruded type. Each plate turns to face the visitor every
-   * frame, so the deck is legible wherever you are standing — and brightens when you
-   * point at it.
-   */
-  private buildDeckLabels(stations: Station[]) {
-    const n = Math.max(1, stations.length);
-    const inward = 1.5;
-    const font = this.font;
-
-    stations.forEach((station, i) => {
-      const angle = (i / n) * Math.PI * 2 + Math.PI / n;
-      const group = new THREE.Group();
-      group.position.set(
-        Math.cos(angle) * (HUB_RADIUS - inward),
-        2.75,
-        Math.sin(angle) * (HUB_RADIUS - inward),
-      );
-      group.userData.stationId = station.id;
-      this.hubGroup.add(group);
-
-      const accent = new THREE.Color(station.accent);
-
-      // glyph
-      const glyphMaterial = new THREE.MeshBasicMaterial({
-        map: this.loader.load(glyphDataUrl(station.glyph, station.accent)),
-        transparent: true,
-        opacity: 0.9,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
-      const glyph = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.86), glyphMaterial);
-      glyph.position.y = 0.88;
-      group.add(glyph);
-
-      // number
-      const numeral = this.text3D(String(i + 1).padStart(2, '0'), {
-        size: 0.34,
-        depth: 0.05,
-        color: accent,
-        emissive: 0.55,
-      });
-      if (numeral) {
-        numeral.position.y = 0.34;
-        group.add(numeral);
-      }
-
-      // name
-      const maxWidth = 3.5;
-      let name: THREE.Mesh;
-      let nameMaterial: THREE.MeshStandardMaterial;
-      let nameWidth = maxWidth;
-
-      if (font) {
-        nameMaterial = new THREE.MeshStandardMaterial({
-          color: 0xf3ece0,
-          emissive: new THREE.Color(0xf3ece0).multiplyScalar(0.16),
-          roughness: 0.34,
-          metalness: 0.6,
-        });
-        const nameGeo = new TextGeometry(station.label, {
-          font,
-          size: 0.28,
-          depth: 0.055,
-          curveSegments: 2,
-          bevelEnabled: true,
-          bevelThickness: 0.005,
-          bevelSize: 0.004,
-          bevelSegments: 1,
-        });
-        nameGeo.computeBoundingBox();
-        const box = nameGeo.boundingBox;
-        nameWidth = box ? box.max.x - box.min.x : maxWidth;
-        nameGeo.center();
-        name = new THREE.Mesh(nameGeo, nameMaterial);
-        // squeeze only when a long name would crowd its neighbours around the ring
-        if (nameWidth > maxWidth) name.scale.setScalar(maxWidth / nameWidth);
-      } else {
-        // If the display face ever fails to parse, fall back to a flat placard. It still
-        // turns to face the visitor, so the deck stays navigable either way.
-        nameMaterial = new THREE.MeshStandardMaterial({
-          map: labelTexture(station.label, { colour: '#f3ece0', size: 58, spacing: 6 }),
-          transparent: true,
-          roughness: 0.5,
-          metalness: 0.2,
-        });
-        name = new THREE.Mesh(new THREE.PlaneGeometry(maxWidth, 0.58), nameMaterial);
-      }
-
-      name.position.y = -0.12;
-      group.add(name);
-
-      // a short accent rule under the name
-      const rule = new THREE.Mesh(
-        new THREE.PlaneGeometry(Math.min(maxWidth, nameWidth || maxWidth) * 0.92, 0.022),
-        new THREE.MeshBasicMaterial({
-          color: accent,
-          transparent: true,
-          opacity: 0.6,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        }),
-      );
-      rule.position.y = -0.42;
-      group.add(rule);
-
-      this.deckLabels.push({
-        station,
-        group,
-        name,
-        nameMaterial,
-        nameBase: new THREE.Color(0xf3ece0),
-        nameHot: new THREE.Color(0xffffff),
-        glyph,
-        glyphMaterial,
-        baseY: group.position.y,
-        hot: 0,
-        phase: i * 0.9,
       });
     });
   }
@@ -1439,24 +1422,23 @@ export class PortWorld {
   }
 
   /**
-   * Hang one work on a station's face: a dark board, gold leaf, and the piece itself.
+   * Mount one work on a station's card: the piece, its true shape, and the light it sits in.
    *
-   * This is the corridor's frame, built from the same materials at a smaller size, so the
-   * deck and the wings read as one gallery rather than two ideas. The work is mounted, not
-   * cropped — it keeps its true shape and is centred in the opening, because stretching a
-   * poster of one proportion into a frame of another is the one thing that would give the
-   * whole wall away as a mock-up.
+   * The card itself is the monolith's own board, so the deck has one frame design and the
+   * wings share it. The work is mounted, not cropped — it keeps its true proportions and is
+   * centred in the same opening on every station, because stretching a poster of one shape
+   * into a frame of another is the one thing that would give the whole wall away as a
+   * mock-up. Uniform cards, unique works.
    */
   private hangDeckCover(station: Station, parent: THREE.Group) {
     const image = deckCovers.get(station.id);
     if (!image) return;
 
-    const accent = new THREE.Color(station.accent);
-    const width = 2.34;
-    const height = 1.74;
-    const openingWidth = 2.02;
-    const openingHeight = 1.42;
-    const centreY = 2.45;
+    const width = 2.66;
+    const height = 2.14;
+    const openingWidth = 2.4;
+    const openingHeight = 1.86;
+    const centreY = 2.05;
 
     /*
      * The monolith group is turned so that its local +Z points radially *outward* — away
@@ -1468,34 +1450,10 @@ export class PortWorld {
     mount.rotation.y = Math.PI;
     parent.add(mount);
 
-    const plate = new THREE.Mesh(
-      new THREE.BoxGeometry(width, height, 0.1),
-      new THREE.MeshStandardMaterial({
-        color: 0x0e0d0b,
-        metalness: 0.7,
-        roughness: 0.4,
-        emissive: accent.clone().multiplyScalar(0.06),
-      }),
-    );
-    plate.position.set(0, centreY, 0.25);
-    mount.add(plate);
-
-    const edgeMaterial = new THREE.LineBasicMaterial({
-      color: 0xd9b978,
-      transparent: true,
-      opacity: 0.9,
-    });
-    const edge = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(width + 0.06, height + 0.06, 0.16)),
-      edgeMaterial,
-    );
-    edge.position.copy(plate.position);
-    mount.add(edge);
-
-    // A soft spill of the station's colour around the board, so each work reads as lit
-    // rather than pasted on.
+    // A soft champagne spill around the board, so each work reads as lit rather than
+    // pasted on — the station's own colour no longer touches the deck.
     const haloMaterial = new THREE.MeshBasicMaterial({
-      color: accent,
+      color: GOLD,
       transparent: true,
       opacity: 0.15,
       blending: THREE.AdditiveBlending,
@@ -1503,13 +1461,14 @@ export class PortWorld {
       side: THREE.DoubleSide,
     });
     const halo = new THREE.Mesh(new THREE.PlaneGeometry(width + 0.8, height + 0.86), haloMaterial);
-    halo.position.set(0, centreY, 0.2);
+    halo.position.set(0, centreY, 0.16);
     mount.add(halo);
 
-    // A unit plane, scaled once the piece's real shape is known.
+    // A unit plane, scaled once the piece's real shape is known. It sits just proud of the
+    // board's front face, which is at +0.13 once the mount is turned to face the deck.
     const artMaterial = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
     const art = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), artMaterial);
-    art.position.set(0, centreY, 0.31);
+    art.position.set(0, centreY, 0.23);
     mount.add(art);
 
     artMaterial.map = this.coverTextureFor(image.small, (texture) => {
@@ -1525,7 +1484,7 @@ export class PortWorld {
     });
     artMaterial.needsUpdate = true;
 
-    return { art, haloMaterial, edgeMaterial };
+    return { art, haloMaterial };
   }
 
   private buildCorridor(station: Station) {
@@ -1874,9 +1833,15 @@ export class PortWorld {
     return {
       phase: this.phase,
       station: this.currentStation?.id ?? null,
-      constellation: { nodes: this.nodePos.length, links: this.lastLinkCount },
       monoliths: this.monoliths.length,
-      deckLabels: this.deckLabels.length,
+      paintings: {
+        shards: this.shards.length,
+        visible: this.shards.filter((s) => s.material.opacity > 0.001).length,
+        opacity: this.shards.length
+          ? +(this.shards.reduce((sum, s) => sum + s.material.opacity, 0) / this.shards.length).toFixed(3)
+          : 0,
+      },
+      facing: this.facing,
       deckCovers: this.monoliths.map((m) => ({
         id: m.station.id,
         hung: Boolean(m.art),
@@ -1890,12 +1855,6 @@ export class PortWorld {
       camY: Number(this.rig.position.y.toFixed(2)),
       walk: Number(this.corridorWalk.toFixed(2)),
       progress: Number(this.getWalkProgress().toFixed(3)),
-      labels: this.deckLabels.map((l) => ({
-        id: l.station.id,
-        glyphs: l.name.geometry.attributes.position?.count ?? 0,
-        rotY: Number(l.group.rotation.y.toFixed(3)),
-        hot: Number(l.hot.toFixed(2)),
-      })),
       frontageOpacity: this.frontPanels.map((p) =>
         Number((p.mesh.material as THREE.MeshBasicMaterial).opacity.toFixed(3)),
       ),
@@ -2125,8 +2084,7 @@ export class PortWorld {
     this.pitch.rotation.x = this.look.pitch;
 
     // ambient motion
-    this.updateConstellation(delta);
-    if (this.starField) this.starField.rotation.y = t * 0.008;
+    this.updatePaintings(delta, t);
     if (this.hubLogo) this.hubLogo.rotation.z = Math.sin(t * 0.25) * 0.03;
     if (this.entryGate && this.phase === 'entry') {
       this.entryGate.rotation.z = Math.sin(t * 0.4) * 0.03;
@@ -2153,6 +2111,26 @@ export class PortWorld {
     }
     if (this.phase === 'hub') this.updateHover();
 
+    // The deck's light: one ring turning slowly, and a pool that breathes and leans
+    // towards the pointer, so standing still on the deck is never standing in a still
+    // image.
+    if (this.deckRing) {
+      this.deckRing.rotation.z = t * 0.045;
+      const ringMat = this.deckRing.material as THREE.MeshBasicMaterial;
+      ringMat.opacity = 0.12 + 0.06 * Math.sin(t * 0.22);
+    }
+    if (this.deckPool) {
+      const poolMat = this.deckPool.material as THREE.MeshBasicMaterial;
+      let target = 0.42 + 0.1 * Math.sin(t * 0.16);
+      if (this.hasPointer && (this.phase === 'hub' || this.phase === 'warp')) {
+        // The pool drifts a little towards wherever the visitor is looking.
+        this.deckPool.position.x = THREE.MathUtils.damp(this.deckPool.position.x, this.pointer.x * 3.2, 1.6, delta);
+        this.deckPool.position.z = THREE.MathUtils.damp(this.deckPool.position.z, -this.pointer.y * 3.2, 1.6, delta);
+        target += 0.1;
+      }
+      poolMat.opacity = THREE.MathUtils.damp(poolMat.opacity, target, 2, delta);
+    }
+
     // monolith hover feedback
     for (const m of this.monoliths) {
       const isHovered = this.hovered === m.station.id;
@@ -2166,28 +2144,29 @@ export class PortWorld {
       );
     }
 
-    // Deck lettering: every plate turns to face the visitor, so the stations stay
-    // readable from wherever you are standing. `warp` keeps it working mid-transition.
+    // Which station is in front of the visitor, reported only when it changes: this is
+    // what names the room now that the naming is not written across the artworks.
     if (this.phase === 'hub' || this.phase === 'warp') {
-      const camX = this.rig.position.x;
-      const camZ = this.rig.position.z;
-      for (const label of this.deckLabels) {
-        const { x, z } = label.group.position;
-        label.group.rotation.y = Math.atan2(camX - x, camZ - z);
-        label.group.position.y =
-          label.baseY + Math.sin(t * 1.1 + label.phase) * 0.035;
-
-        const isHovered = this.hovered === label.station.id;
-        label.hot = THREE.MathUtils.damp(label.hot, isHovered ? 1 : 0, 8, delta);
-        const scale = 1 + label.hot * 0.12;
-        label.group.scale.setScalar(scale);
-        label.nameMaterial.color.lerpColors(
-          label.nameBase,
-          label.nameHot,
-          label.hot,
-        );
-        label.glyphMaterial.opacity = 0.72 + label.hot * 0.28;
+      const forward = this.camera.getWorldDirection(new THREE.Vector3());
+      let bestId: string | null = null;
+      let bestDot = -Infinity;
+      for (const monolith of this.monoliths) {
+        const dx = monolith.group.position.x - this.rig.position.x;
+        const dz = monolith.group.position.z - this.rig.position.z;
+        const length = Math.hypot(dx, dz) || 1;
+        const dot = (dx / length) * forward.x + (dz / length) * forward.z;
+        if (dot > bestDot) {
+          bestDot = dot;
+          bestId = monolith.station.id;
+        }
       }
+      if (bestId !== this.facing) {
+        this.facing = bestId;
+        this.opts.onFacing?.(bestId);
+      }
+    } else if (this.facing) {
+      this.facing = null;
+      this.opts.onFacing?.(null);
     }
 
     // The hung works answer the pointer the same way the lettering does: a still, dim wall

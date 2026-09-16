@@ -10,6 +10,7 @@
  */
 
 import data from './site.json';
+import { featuredVideo, thumbUrl, videoPlaylists, type VideoPlaylist } from './videos';
 
 /* ------------------------------------------------------------------ raw types */
 
@@ -118,12 +119,39 @@ export function imagesOf(id: number, limit = 99): GalleryImage[] {
   }));
 }
 
-/** Standalone library assets (portraits, posters, partner logos, artwork shots). */
+/**
+ * Standalone library assets (portraits, posters, partner logos, artwork shots).
+ *
+ * A call takes the *least-used* images from its match set, not the first ones.
+ *
+ * Two dozen works ask the same broad patterns for their galleries — "any photograph",
+ * "any poster" — and always slicing from the top meant every one of them opened on the
+ * same picture and closed with the same two. The scrape holds only seven general
+ * photographs, so some repetition is arithmetic rather than oversight; what is fixable is
+ * that it was the *same* repetition in the same order everywhere. Counting how often each
+ * image has been handed out spreads them evenly instead: ties keep the pool's own order,
+ * so the result is stable, and the images that were doing all the work now share it.
+ */
+const timesUsed = new Map<string, number>();
+
 export function library(pattern: RegExp, limit = 8): GalleryImage[] {
-  return raw.images
-    .filter((i) => (i.kind === 'library' || !i.pageIds?.length) && pattern.test(i.caption))
-    .slice(0, limit)
-    .map(({ small, large, caption, width, height }) => ({ small, large, caption, width, height }));
+  const pool = raw.images.filter(
+    (i) => (i.kind === 'library' || !i.pageIds?.length) && pattern.test(i.caption),
+  );
+  if (!pool.length) return [];
+
+  const picked = [...pool]
+    .sort((a, b) => (timesUsed.get(a.small) ?? 0) - (timesUsed.get(b.small) ?? 0))
+    .slice(0, limit);
+  for (const img of picked) timesUsed.set(img.small, (timesUsed.get(img.small) ?? 0) + 1);
+
+  return picked.map(({ small, large, caption, width, height }) => ({
+    small,
+    large,
+    caption,
+    width,
+    height,
+  }));
 }
 
 /** Everything, de-duplicated — used for the welcome-stage backdrop. */
@@ -149,7 +177,8 @@ export type GlyphKey =
   | 'frame'
   | 'wave'
   | 'beacon'
-  | 'pin';
+  | 'pin'
+  | 'video';
 
 export type Exhibit = {
   id: string;
@@ -169,7 +198,7 @@ export type StationSection = {
   bullets?: string[];
 };
 
-export type StationKind = 'corridor' | 'list' | 'about' | 'contact';
+export type StationKind = 'corridor' | 'list' | 'video' | 'about' | 'contact';
 
 export type Station = {
   id: string;
@@ -189,6 +218,11 @@ export type Station = {
    */
   deckCover?: GalleryImage;
   partners?: GalleryImage[];
+  /**
+   * A video station's shelf. Its works are films rather than photographs, so they are
+   * curated separately in `videos.ts` and are neither pinned nor indexed like exhibits.
+   */
+  videoShelves?: VideoPlaylist[];
 };
 
 const ORG = 'https://portipoh.com';
@@ -370,7 +404,7 @@ export const stations: Station[] = [
         meta: 'Sesi 1 · 17 Mac — 17 Jun 2021',
         tagline: 'Izzat Aziz dan Khalil Muhsain.',
         body: body(456, 0, 3),
-        images: library(/_mg_|_dsc|hafizuddin/i, 5),
+        images: library(/_mg_|_dsc|hafizuddin/i, 3),
         source: `${ORG}/residensi-seni/residensi-2021/`,
       },
       {
@@ -379,7 +413,7 @@ export const stations: Station[] = [
         meta: 'Sesi 2 · 23 Mei — 19 Ogos 2022',
         tagline: 'Fadhli Ariffin dan Hafizuddin Azman.',
         body: body(487, 0, 3),
-        images: library(/hafizuddin|_dsc|_mg_/i, 6),
+        images: library(/hafizuddin|_dsc|_mg_/i, 3),
         source: `${ORG}/residensi-seni/residensi-2022/`,
       },
       {
@@ -388,7 +422,7 @@ export const stations: Station[] = [
         meta: 'Artis & Kurator · 10 Feb — 24 Mac 2022',
         tagline: 'Artis-kurator Malaysia yang menetap di Denmark sejak 2002.',
         body: body(583, 0, 3),
-        images: library(/hafizuddin|_dsc/i, 4),
+        images: library(/hafizuddin|_dsc/i, 3),
         source: `${ORG}/residensi-seni/artis-international/`,
       },
       {
@@ -397,7 +431,7 @@ export const stations: Station[] = [
         meta: 'Residen 2021',
         tagline: 'Bahan tanah liat dan permukaan batuan di Gunung Lang, Ipoh.',
         body: body(555, 0, 3),
-        images: library(/_mg_|_dsc/i, 4),
+        images: library(/_mg_|_dsc/i, 3),
         source: `${ORG}/residensi-seni/residensi-2021/khalil-muhsain/`,
       },
       {
@@ -406,7 +440,7 @@ export const stations: Station[] = [
         meta: 'Residen 2021',
         tagline: 'Plastik terbuang dari Pantai Pasir Bogak dijadikan naratif baharu.',
         body: body(509, 0, 3),
-        images: library(/_dsc|_mg_/i, 4),
+        images: library(/_dsc|_mg_/i, 3),
         source: `${ORG}/residensi-seni/residensi-2021/izat-aziz/`,
       },
       {
@@ -415,7 +449,7 @@ export const stations: Station[] = [
         meta: 'Residen 2022',
         tagline: 'Instalasi-performans tentang ritual mandi penawar di Kuala Kangsar.',
         body: body(568, 0, 3),
-        images: library(/hafizuddin|_dsc/i, 4),
+        images: library(/hafizuddin|_dsc/i, 3),
         source: `${ORG}/residensi-seni/residensi-2022/fadhli-ariffin/`,
       },
       {
@@ -424,7 +458,7 @@ export const stations: Station[] = [
         meta: 'Residen 2022',
         tagline: 'Dua belas catan cat minyak diselang-seli perca audio orang awam.',
         body: body(574, 0, 3),
-        images: library(/hafizuddin/i, 6),
+        images: library(/hafizuddin/i, 3),
         source: `${ORG}/residensi-seni/residensi-2022/hafizuddin-azman/`,
       },
     ],
@@ -501,7 +535,7 @@ export const stations: Station[] = [
         meta: 'Arkib · Muzik',
         tagline: 'Sumber rujukan kepelbagaian genre muzik negeri Perak.',
         body: body(614, 0, 3),
-        images: library(/poster|_mg_/i, 4),
+        images: library(/poster|_mg_/i, 3),
         source: `${ORG}/program-utama/arkib-muzik-perak/`,
       },
       {
@@ -523,7 +557,7 @@ export const stations: Station[] = [
         body: [
           'Buku digital PORT menyimpan rekod pameran, karya dan nota kuratorial supaya ekosistem seni negeri ini dapat diakses oleh generasi akan datang.',
         ],
-        images: library(/poster|direktori|kembali/i, 5),
+        images: library(/poster|direktori|kembali/i, 3),
         source: `${ORG}/buku-digital/`,
       },
       {
@@ -532,13 +566,37 @@ export const stations: Station[] = [
         meta: 'Video · Temu Bual',
         tagline: 'Pendokumentasian video berdasarkan bahan simpanan Arkib Muzik Perak.',
         body: body(821, 0, 2),
-        images: library(/poster_ims|_mg_/i, 4),
+        images: library(/poster_ims|_mg_/i, 3),
         source: `${ORG}/program-utama/port-cast/`,
       },
     ],
   },
 
-  /* ---------------------------------------------------------------- 6. PROGRAM TERKINI */
+  /* ---------------------------------------------------------------- 6. PORTCAST & VIDEO */
+  {
+    id: 'video',
+    label: 'PORTCAST & VIDEO',
+    short: 'Video',
+    glyph: 'video',
+    accent: '#e0b464',
+    tagline: 'Temu bual, simposium dan persembahan — arkib video PORT.',
+    kind: 'video',
+    intro: [
+      'PORT merakam kerjanya. Temu bual panjang bersama pengkarya, kertas kerja simposium dan persembahan langsung dari pentas kami sendiri — semuanya disimpan di saluran YouTube rasmi PORT.',
+      'Rakaman di bawah disusun mengikut program asalnya, bukan mengikut tarikh muat naik: pilih satu program, kemudian pilih satu rakaman.',
+    ],
+    exhibits: [],
+    // The deck hangs a still from the festival film this station opens with, so the one
+    // station whose works are films still shows a frame of one out on the deck.
+    deckCover: {
+      small: thumbUrl(featuredVideo.id, 'hq'),
+      large: thumbUrl(featuredVideo.id, 'sd'),
+      caption: featuredVideo.title,
+    },
+    videoShelves: videoPlaylists,
+  },
+
+  /* ---------------------------------------------------------------- 7. PROGRAM TERKINI */
   {
     id: 'terkini',
     label: 'PROGRAM TERKINI',
@@ -562,7 +620,7 @@ export const stations: Station[] = [
           'Pendaftaran dalam Pengkalan Data Seni Kreatif Perak adalah wajib bagi semua pencalonan. Imbas kod QR pada poster rasmi untuk mendaftar.',
           'Dianjurkan oleh PORT bagi pihak Kerajaan Negeri Perak dengan kerjasama Dewan Bahasa dan Pustaka.',
         ],
-        images: library(/hsdr9|dbp/i, 6),
+        images: library(/hsdr9|dbp/i, 3),
       },
       {
         id: 'ims-2023',
@@ -572,7 +630,7 @@ export const stations: Station[] = [
         body: [
           'IMS mengumpulkan input dan pelbagai perspektif mengenai bidang muzik melalui pembentangan makalah oleh panelis jemputan — membuka perbincangan tentang kesan seni muzik ke atas masyarakat.',
         ],
-        images: library(/ims|jadual/i, 6),
+        images: library(/ims|jadual/i, 3),
       },
       {
         id: 'praktikal',

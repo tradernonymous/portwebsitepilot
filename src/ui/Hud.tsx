@@ -65,6 +65,8 @@ type DockProps = {
   activeId?: string | null;
   onSelect: (id: string) => void;
   label: string;
+  /** The live line above the tabs. Falls back to the plain label when nothing is named. */
+  caption?: ReactNode;
 };
 
 /**
@@ -76,7 +78,7 @@ type DockProps = {
  * that still has stations beyond it, is what signals there is more to see. Reach an end and
  * that edge goes crisp again, so the strip never looks accidentally clipped.
  */
-export function Dock({ stations, activeId, onSelect, label }: DockProps) {
+export function Dock({ stations, activeId, onSelect, label, caption }: DockProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: 0 });
   const [edges, setEdges] = useState({ left: false, right: false });
@@ -150,7 +152,7 @@ export function Dock({ stations, activeId, onSelect, label }: DockProps) {
 
   return (
     <nav className="dock" aria-label="Stesen dalam ruang PORT">
-      <p className="dock-head">{label}</p>
+      <div className="dock-head">{caption ?? <b className="dock-caption">{label}</b>}</div>
       <div
         className={`dock-list${edges.left ? ' can-left' : ''}${edges.right ? ' can-right' : ''}`}
         ref={listRef}
@@ -266,6 +268,26 @@ export function CorridorRail({
  * The one-line gesture hint above the dock. It carries the whole first-run lesson, so it
  * stays visible on every screen size, and it fades out once the visitor has acted on it.
  */
+/**
+ * The room's spoken name.
+ *
+ * The deck used to carry its names as lettering standing in front of every work, which
+ * meant the label and the art occupied the same pixels — you could not read a station
+ * without covering its picture. The naming lives in the chrome now, in one place, at the
+ * bottom edge, and it lights up as you turn so the room is still named as you look around.
+ */
+export function DeckCaption({ station, fallback }: { station?: Station | null; fallback: string }) {
+  if (!station) return <b className="dock-caption">{fallback}</b>;
+  return (
+    // Keyed on the station so the glow replays each time the name changes.
+    <span className="dock-caption is-live" key={station.id}>
+      <Glyph glyph={station.glyph} size={15} />
+      <b>{station.label}</b>
+      <i>{station.tagline}</i>
+    </span>
+  );
+}
+
 export function Hint({ children, retiring }: { children: ReactNode; retiring?: boolean }) {
   return (
     <p className={`hint${retiring ? ' is-done' : ''}`} aria-hidden={retiring ? true : undefined}>

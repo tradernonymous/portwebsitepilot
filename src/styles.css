@@ -233,6 +233,105 @@ button {
   }
 }
 
+/*
+ * The festival film, filling the screen behind the welcome.
+ *
+ * The iframe is scaled to cover, so the film's own 16:9 always overflows a portrait phone
+ * and a wide desktop alike with no letterboxing. Explicit size plus the translate is what
+ * makes that safe here — unlike the dock and the hint, nothing about this box is
+ * shrink-to-fit. It takes no pointer events and holds no focus: it is a backdrop, and the
+ * only way to watch the film properly is the credit link.
+ */
+.gate-film {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s var(--ease);
+}
+
+.gate-film.is-live {
+  opacity: 0.58;
+}
+
+.gate-film iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100vw;
+  height: 56.25vw;
+  min-width: 177.78vh;
+  min-height: 100vh;
+  border: 0;
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+/* The photograph steps back once the film is actually playing. */
+.gate-photo.is-behind-film {
+  opacity: 0.16;
+}
+
+.gate-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(
+      ellipse 60% 52% at 50% 46%,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.52) 52%,
+      rgba(0, 0, 0, 0.82) 100%
+    ),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, transparent 26%, transparent 62%, rgba(0, 0, 0, 0.88) 100%);
+}
+
+.gate-credit {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: max(1.1rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: rgba(8, 8, 7, 0.6);
+  backdrop-filter: blur(10px);
+  max-width: min(560px, calc(100vw - 2rem));
+  transition: all 0.24s var(--ease);
+}
+
+.gate-credit svg {
+  color: var(--gold);
+  flex: 0 0 auto;
+}
+
+.gate-credit span {
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gate-credit i {
+  display: inline;
+  font-style: normal;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+.gate-credit:hover {
+  border-color: color-mix(in srgb, var(--gold) 46%, transparent);
+}
+
 .gate-inner {
   position: relative;
   z-index: 2;
@@ -519,6 +618,137 @@ button {
   border-color: var(--accent);
 }
 
+/*
+ * The light paintings, at the bottom of the screen.
+ *
+ * The room itself is filled with painted light (see `buildPaintings` in PortWorld.ts);
+ * this is the same idea in CSS, so the station dock stands in the same light the space
+ * does. It is one fixed strip of drifting additive bands and a gold hairline along the
+ * bottom edge — no new assets, no image files, and nothing for a slow device to decode.
+ */
+.lightbed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: min(38vh, 420px);
+  z-index: 4;
+  pointer-events: none;
+  overflow: hidden;
+  /* Fades upward into the room, so the strip has no top edge of its own. */
+  mask-image: linear-gradient(to top, #000 24%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, #000 24%, transparent 100%);
+}
+
+.lightbed i {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  /* Screen blending is what makes overlapping bands add up to light rather than to mud. */
+  mix-blend-mode: screen;
+  filter: blur(38px);
+  will-change: transform, opacity;
+}
+
+.lightbed i:nth-child(1) {
+  left: 2%;
+  bottom: -34%;
+  width: 46vw;
+  height: 46vh;
+  background: radial-gradient(
+    closest-side,
+    rgba(63, 79, 216, 0.5),
+    rgba(63, 79, 216, 0.14) 55%,
+    transparent
+  );
+  animation: light-drift-a 34s var(--ease) infinite alternate;
+}
+
+.lightbed i:nth-child(2) {
+  left: 34%;
+  bottom: -46%;
+  width: 54vw;
+  height: 52vh;
+  background: radial-gradient(
+    closest-side,
+    rgba(192, 57, 127, 0.42),
+    rgba(216, 162, 74, 0.16) 58%,
+    transparent
+  );
+  animation: light-drift-b 41s var(--ease) infinite alternate;
+}
+
+.lightbed i:nth-child(3) {
+  right: 0;
+  bottom: -30%;
+  width: 40vw;
+  height: 44vh;
+  background: radial-gradient(
+    closest-side,
+    rgba(47, 159, 168, 0.4),
+    rgba(47, 159, 168, 0.12) 56%,
+    transparent
+  );
+  animation: light-drift-c 29s var(--ease) infinite alternate;
+}
+
+/* A gold hairline in the light, so the bottom of the screen keeps the room's metal. */
+.lightbed::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(232, 215, 172, 0.34) 28%,
+    rgba(232, 215, 172, 0.5) 50%,
+    rgba(232, 215, 172, 0.34) 72%,
+    transparent
+  );
+}
+
+@keyframes light-drift-a {
+  0% {
+    transform: translate3d(-6%, 8%, 0) scale(1);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate3d(16%, -6%, 0) scale(1.22);
+    opacity: 1;
+  }
+}
+
+@keyframes light-drift-b {
+  0% {
+    transform: translate3d(10%, 4%, 0) scale(1.14);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(-14%, -8%, 0) scale(1);
+    opacity: 0.66;
+  }
+}
+
+@keyframes light-drift-c {
+  0% {
+    transform: translate3d(6%, -4%, 0) scale(1.08);
+    opacity: 0.68;
+  }
+  100% {
+    transform: translate3d(-10%, 6%, 0) scale(1);
+    opacity: 0.98;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbed i {
+    animation: none;
+  }
+}
+
 .dock {
   position: fixed;
   /*
@@ -543,13 +773,71 @@ button {
 }
 
 .dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.75rem;
+  padding: 0.3rem 0.7rem 0.45rem;
+  text-align: center;
+  overflow: hidden;
+}
+
+/*
+ * The room's name, in one place. It is the only text that changes as you turn, so it is
+ * the only thing here that gets to glow — everything else on the deck stays quiet and lets
+ * the works be the bright thing.
+ */
+.dock-caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   font-family: var(--font-display);
-  font-size: 0.58rem;
-  letter-spacing: 0.3em;
+  font-size: 0.62rem;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--muted);
-  padding: 0.35rem 0.7rem 0.5rem;
-  text-align: center;
+  white-space: nowrap;
+}
+
+.dock-caption b {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.dock-caption.is-live {
+  animation: caption-in 0.55s var(--ease) both;
+}
+
+.dock-caption.is-live b {
+  color: #fff;
+  text-shadow:
+    0 0 10px rgba(217, 185, 120, 0.55),
+    0 0 28px rgba(217, 185, 120, 0.22);
+}
+
+.dock-caption.is-live svg {
+  color: var(--gold);
+  filter: drop-shadow(0 0 6px rgba(217, 185, 120, 0.55));
+}
+
+.dock-caption i {
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0.05em;
+  color: color-mix(in srgb, var(--muted) 78%, transparent);
+}
+
+@keyframes caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
 }
 
 .dock-list {
@@ -640,8 +928,14 @@ button {
 }
 
 .dock-item svg {
-  color: var(--item-accent, var(--accent));
-  opacity: 0.85;
+  color: var(--muted);
+  opacity: 0.9;
+  transition: color 0.24s var(--ease);
+}
+
+.dock-item:hover svg,
+.dock-item.is-active svg {
+  color: var(--gold);
 }
 
 /* the long name by default; the short one takes over on small screens, below */
@@ -653,15 +947,22 @@ button {
   display: none;
 }
 
+/*
+ * One colour for the whole row.
+ *
+ * Each tab used to be tinted with its own station's accent, which put eight colours along
+ * the bottom of a gallery whose entire argument is the work. The tabs are champagne now
+ * and the hover is the only thing that lights.
+ */
 .dock-item:hover,
 .dock-item.is-active {
   color: #fff;
-  border-color: color-mix(in srgb, var(--item-accent) 45%, transparent);
-  background: color-mix(in srgb, var(--item-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--gold) 42%, transparent);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
 .dock-item.is-active {
-  box-shadow: inset 0 0 22px color-mix(in srgb, var(--item-accent) 18%, transparent);
+  box-shadow: inset 0 0 22px color-mix(in srgb, var(--gold) 16%, transparent);
 }
 
 .hint {
@@ -818,6 +1119,306 @@ button {
   box-shadow: 0 0 10px var(--accent);
   transition: transform 0.2s var(--ease);
   transform-origin: left;
+}
+
+/* --------------------------------------------------------------- screening room */
+
+.video-room {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.video-room.is-inline {
+  max-width: 1100px;
+}
+
+.video-lede {
+  color: var(--ink-dim);
+  max-width: 74ch;
+  margin: 0 0 0.4rem;
+}
+
+.video-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.85fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.video-player {
+  min-width: 0;
+}
+
+/* A film is always 16:9, so the room never crops one to fit a column. */
+.video-stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+}
+
+.video-stage iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.video-under {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0.2rem 0;
+}
+
+.video-kicker {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  margin: 0 0 0.35rem;
+}
+
+.video-under h3 {
+  font-size: 1.06rem;
+  margin: 0 0 0.3rem;
+  color: #fff;
+}
+
+.video-note {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.86rem;
+  max-width: 60ch;
+}
+
+.video-shelf {
+  min-width: 0;
+}
+
+.video-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.6rem;
+}
+
+.video-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: all 0.22s var(--ease);
+}
+
+.video-tab i {
+  font-style: normal;
+  opacity: 0.6;
+}
+
+.video-tab:hover {
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.video-tab.is-active {
+  color: #fff;
+  border-color: color-mix(in srgb, var(--gold) 46%, transparent);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+}
+
+.video-tagline {
+  margin: 0 0 0.8rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+/* Every card the same shape and size, whatever the footage behind it looks like. */
+.video-list {
+  display: grid;
+  gap: 0.5rem;
+  max-height: min(58vh, 620px);
+  overflow-y: auto;
+  padding-right: 0.2rem;
+  overscroll-behavior: contain;
+}
+
+.video-card {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.4rem;
+  /*
+   * One height for every card.
+   *
+   * The thumbnails are all 16:9 and the column is fixed, so the only thing that used to
+   * change a card's height was its title wrapping to a second or third line — which left
+   * a list of cards at four different heights, since YouTube titles are very uneven
+   * lengths. The text is clamped instead, so the size of a card tells the visitor nothing
+   * about how long its name is.
+   */
+  /* Tall enough that the 148px thumbnail keeps its true 16:9, and no taller. */
+  height: 6rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  text-align: left;
+  transition: all 0.22s var(--ease);
+}
+
+.video-card:hover {
+  border-color: var(--line-soft);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.video-card.is-playing {
+  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+
+.video-thumb {
+  position: relative;
+  display: block;
+  /* Fills the card's fixed height rather than setting it, so the thumb can never be the
+     thing that makes one card taller than another. */
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0b0b0a;
+}
+
+.video-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.85;
+  transition: opacity 0.22s var(--ease);
+}
+
+.video-card:hover .video-thumb img,
+.video-card.is-playing .video-thumb img {
+  opacity: 1;
+}
+
+.video-time,
+.video-badge {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  padding: 0.1rem 0.35rem;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.72);
+  color: var(--ink);
+}
+
+.video-time {
+  right: 0.35rem;
+  bottom: 0.35rem;
+}
+
+.video-badge {
+  left: 0.35rem;
+  bottom: 0.35rem;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.22s var(--ease);
+}
+
+.video-card:hover .video-badge,
+.video-card.is-playing .video-badge {
+  opacity: 1;
+  transform: none;
+}
+
+.video-card.is-playing .video-badge {
+  color: #fff;
+}
+
+.video-meta {
+  display: block;
+  min-width: 0;
+}
+
+.video-meta b {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  margin-bottom: 0.2rem;
+}
+
+.video-card.is-playing .video-meta b {
+  color: #fff;
+}
+
+.video-meta i {
+  display: block;
+  font-style: normal;
+  font-size: 0.74rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.video-source,
+.video-empty {
+  margin: 1rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.video-source a,
+.video-empty a {
+  color: var(--gold);
+}
+
+/* The film station gets the room it needs: 16:9 inside a narrow slide-over is a compromise. */
+@media (min-width: 1000px) {
+  .video-panel {
+    width: min(1240px, 94vw);
+  }
+}
+
+@media (max-width: 860px) {
+  .video-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .video-list {
+    max-height: none;
+  }
+
+  .video-card {
+    grid-template-columns: 118px minmax(0, 1fr);
+  }
+
+  .video-under {
+    flex-direction: column;
+  }
 }
 
 /* --------------------------------------------------------------- panels */

@@ -1,5 +1,6 @@
 import { useDialogFocus } from '../lib/hooks';
 import { contact, googleMapEmbedUrl, partners, type Station } from '../content';
+import { VideoRoom } from './VideoRoom';
 
 type Props = {
   station: Station;
@@ -58,6 +59,10 @@ export function StationPanel({ station, onClose }: Props) {
  * open in a new tab, and they work without any pointer at all.
  */
 export function StationContent({ station }: { station: Station }) {
+  // A shelf of films is not a list of cards, so the plain view hands the whole section
+  // over to the room rather than rendering a stub of it.
+  if (station.kind === 'video') return <VideoRoom station={station} />;
+
   return (
     <>
       {station.intro.map((para, i) => (

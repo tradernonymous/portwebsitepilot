@@ -15,17 +15,20 @@ photographs, artist texts and contact details are synced from `portipoh.com`.
 
 ## What a visitor actually does
 
-1. **The gate.** PORT's frontage, blended into the dark, with the wordmark over it. Two ways
-   in: *Masuk ke PORT* (plays the approach) or *Langkau animasi* (straight to the deck).
+1. **The gate.** PORT's frontage, blended into the dark, with the wordmark over it, and the
+   channel's festival film playing behind the words once it is running. Two ways in: *Masuk ke
+   PORT* (plays the approach) or *Langkau animasi* (straight to the deck).
 2. **The approach.** You fly along a lit corridor of rings, the building resolving ahead of
    you, and step through the doorway into the space.
-3. **The deck.** Seven monoliths stand in a ring. Drag to look around, click one to enter, or
-   use the dock along the bottom.
+3. **The deck.** Eight monoliths stand in a ring, each fronted by a real work. Drag to look
+   around, click one to enter, or use the dock along the bottom.
 4. **The gallery wings.** *Program Utama*, *Residensi Seni* and *Pameran* open into a corridor
    with real photographs framed on the walls. Scroll or press ↑ ↓ to walk. Click a frame to
-   read the whole work.
+   read the whole work. The station dock stays on screen here too, so you are never left
+   inside a wing with no way to reach another station.
 5. **Station panels.** *Tentang Kami*, *Arkib & Media*, *Program Terkini* and *Hubungi &
-   Kunjungi* open as panels over the deck, with the space dimmed behind.
+   Kunjungi* open as panels over the deck, with the space dimmed behind — and *PORTCAST &
+   VIDEO* opens a screening room instead, with the recordings on shelves.
 6. **The plain list.** The icon at the top right shows the entire site as an ordinary
    document — same content, no 3D. This is what phones-with-no-WebGL, screen readers and
    search engines get, and it is one click away at all times.
@@ -112,6 +115,37 @@ To pin a specific work to a station, set `deckCover` on it:
 
 The work is shown at its true proportions inside a uniform frame, so a tall poster and a wide
 photograph both sit correctly rather than being stretched to fit. Nothing needs cropping.
+
+### The films
+
+One station is a screening room rather than a wall: **PORTCAST & VIDEO** holds the channel's
+uploads, grouped into the programmes they came from — the interview series, the music
+symposium, the festival highlights — so a visitor picks a programme and then a recording,
+instead of scrolling a hundred uploads in reverse date order.
+
+Everything it shows lives in `src/content/videos.ts`. To add an upload, append it to the
+playlist it belongs to — the tabs, the player, the deck and the plain list view all read from
+there. The film behind the entry screen is `featuredVideo` in the same file.
+
+Those embeds are YouTube's own players, so a video always needs embedding allowed in its
+settings on YouTube, and the room keeps a link out to the channel for anything that cannot
+play in place. The film on the entry screen only appears once the player reports that it is
+really running; if YouTube will not serve it — embedding switched off, a blocked request, a
+slow connection — the PORT photograph stays as the backdrop instead of an error card.
+
+### The light in the room
+
+The space is lit with light paintings: broad, soft-edged bands of colour hanging in the black,
+the kind a long exposure of a moving light produces. They are generated in code from canvas
+gradients (`buildPaintings` in `src/experience/PortWorld.ts`) — no photographs, nothing to
+license, and a few kilobytes. Each band carries its own highlight that travels along it, the
+whole field turns very slowly, and the bands the pointer is near brighten and lean towards it.
+
+The deck has its own light in the same palette: a warm pool with one gold ring turning inside
+it, which drifts a little towards wherever you are looking. At the bottom of the screen the
+same idea is drawn in CSS (`.lightbed` in `src/styles.css`), so the station dock stands in the
+light the room is made of. To change the palette, edit `PIGMENTS` in `PortWorld.ts` and the
+three gradients in `.lightbed`.
 
 ### Colours, and how much of each station there is
 

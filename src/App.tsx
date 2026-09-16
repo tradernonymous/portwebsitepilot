@@ -2,12 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { stationById, stations } from './content';
 import type { Phase, PortWorld } from './experience/PortWorld';
 import { detectWebGL, useHashRoute, useMediaQuery, useReducedMotion } from './lib/hooks';
-import { CorridorRail, Dock, Hint, TopBar } from './ui/Hud';
+import { CorridorRail, DeckCaption, Dock, Hint, TopBar } from './ui/Hud';
 import { EntryGate } from './ui/EntryGate';
 import { ExhibitReader } from './ui/ExhibitReader';
 import { FlatView } from './ui/FlatView';
 import { HelpPanel } from './ui/HelpPanel';
 import { StationPanel } from './ui/StationPanel';
+import { VideoRoom } from './ui/VideoRoom';
 
 type Mode = '3d' | 'flat';
 
@@ -22,6 +23,8 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [phase, setPhase] = useState<Phase>('entry');
   const [hovered, setHovered] = useState<string | null>(null);
+  /** Which station the visitor is turning towards — the deck's name for the room. */
+  const [facing, setFacing] = useState<string | null>(null);
   const [activeExhibit, setActiveExhibit] = useState(0);
   const [corridorProgress, setCorridorProgress] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -92,6 +95,7 @@ export default function App() {
           }
         },
         onHover: (id) => setHovered(id),
+        onFacing: (id) => setFacing(id),
         onStationSelect: (id) => {
           setHovered(id);
           navigate({ kind: 'station', stationId: id });
@@ -398,6 +402,8 @@ export default function App() {
 
   const inCorridor = hintSpace === 'corridor';
   const dimmed = route.kind === 'station' && activeStation?.kind !== 'corridor';
+  /** Pointing at a station wins over merely facing it; otherwise the room names itself. */
+  const captionStation = stationById(hovered ?? facing ?? '');
   const crumbExhibit =
     route.kind === 'exhibit' && activeStation ? activeStation.exhibits[route.index] : undefined;
 
@@ -408,6 +414,19 @@ export default function App() {
       </div>
       <div className="vignette" aria-hidden="true" />
       <div className="scanlines" aria-hidden="true" />
+      {/*
+       * The same light paintings the room is filled with, laid along the bottom of the
+       * screen, so the chrome stands in the same light as the space instead of on a strip
+       * of grey. Three drifting bands, drawn in CSS: it costs no extra WebGL work and
+       * cannot fail on a device that has none.
+       */}
+      {entered ? (
+        <div className="lightbed" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </div>
+      ) : null}
       {phase === 'warp' ? <div className="warp-flash" aria-hidden="true" /> : null}
 
       {!entered ? (
@@ -458,34 +477,43 @@ export default function App() {
               }
               onExit={closeStation}
             />
-          ) : (
-            <>
-              <Dock
-                stations={stations}
-                activeId={hovered ?? activeStation?.id ?? null}
-                onSelect={selectStation}
-                label="Pilih stesen"
-              />
-              {/* The dock names the stations; the hint teaches the gesture. One line each,
-                  and the verb follows the device — a phone has no cursor to click with. */}
-              <Hint retiring={taught === hintSpace}>
-                {coarsePointer
-                  ? 'Seret untuk memandang · Ketuk monolit untuk masuk'
-                  : 'Seret untuk memandang · Klik monolit untuk masuk'}
-              </Hint>
-            </>
-          )}
-
-          {inCorridor ? (
-            <Hint retiring={taught === hintSpace}>
-              {coarsePointer
-                ? 'Undur / Maju untuk berjalan · Ketuk bingkai untuk membaca'
-                : 'Scroll atau ↑ ↓ untuk berjalan · Klik bingkai untuk membaca'}
-            </Hint>
           ) : null}
 
+          {/*
+           * The station dock stands in every part of the space, not only on the deck. It
+           * used to be swapped out for the wing rail, which left a visitor inside a wing
+           * with no way to reach another station — the one control that is always there had
+           * silently gone. The wing rail is a second, local control and now sits beside it.
+           */}
+          <Dock
+            stations={stations}
+            activeId={hovered ?? facing ?? activeStation?.id ?? null}
+            onSelect={selectStation}
+            label="Pilih stesen"
+            caption={<DeckCaption station={captionStation} fallback="Pilih stesen" />}
+          />
+
+          {/* The dock names the stations; the hint teaches the gesture. One line each,
+              and the verb follows the device — a phone has no cursor to click with. */}
+          <Hint retiring={taught === hintSpace}>
+            {inCorridor
+              ? coarsePointer
+                ? 'Undur / Maju untuk berjalan · Ketuk bingkai untuk membaca'
+                : 'Scroll atau ↑ ↓ untuk berjalan · Klik bingkai untuk membaca'
+              : coarsePointer
+                ? 'Seret untuk memandang · Ketuk karya untuk masuk'
+                : 'Seret untuk memandang · Klik karya untuk masuk'}
+          </Hint>
+
           {route.kind === 'station' && activeStation && activeStation.kind !== 'corridor' ? (
-            <StationPanel station={activeStation} onClose={closeStation} />
+            // The film station opens as a room of its own rather than as a slide-over:
+            // sixteen-by-nine video inside a narrow panel is the one thing a screening
+            // room must not be.
+            activeStation.kind === 'video' ? (
+              <VideoRoom station={activeStation} onClose={closeStation} />
+            ) : (
+              <StationPanel station={activeStation} onClose={closeStation} />
+            )
           ) : null}
 
           {reader}

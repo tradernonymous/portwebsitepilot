@@ -27,6 +27,9 @@ export const glyphPaths: Record<GlyphKey, string> = {
   // pin — visit / contact
   pin:
     'M12 1.6a7.6 7.6 0 0 0-7.6 7.6c0 5.4 6.4 12.6 7 13.3a.85.85 0 0 0 1.24 0c.6-.7 7-7.9 7-13.3A7.6 7.6 0 0 0 12 1.6Zm0 10.5A2.9 2.9 0 1 1 14.9 9.2 2.9 2.9 0 0 1 12 12.1Z',
+  // video — the film and interview shelf
+  video:
+    'M2.6 3.6h18.8a1.6 1.6 0 0 1 1.6 1.6v13.6a1.6 1.6 0 0 1-1.6 1.6H2.6a1.6 1.6 0 0 1-1.6-1.6V5.2a1.6 1.6 0 0 1 1.6-1.6Zm1.7 1.7v13.4h15.4V5.3Zm5.3 2.9l7 3.8-7 3.8Z',
 };
 
 /** Ready-to-use inline SVG for the React HUD. */

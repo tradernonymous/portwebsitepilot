@@ -1,4 +1,5 @@
 import { contentMeta, stations } from '../content';
+import { videoCount } from '../content/videos';
 import { Glyph } from './Glyph';
 import { StationContent } from './StationPanel';
 
@@ -41,9 +42,11 @@ export function FlatView() {
             <Glyph glyph={station.glyph} size={22} />
             <h2>{station.label}</h2>
             <span>
-              {station.exhibits.length > 0
-                ? `${station.exhibits.length} karya`
-                : 'Profil'}
+              {station.kind === 'video'
+                ? `${videoCount()} rakaman`
+                : station.exhibits.length > 0
+                  ? `${station.exhibits.length} karya`
+                  : 'Profil'}
             </span>
           </header>
           <StationContent station={station} />
