@@ -16,7 +16,7 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import boldTypeface from 'three/examples/fonts/helvetiker_bold.typeface.json';
 import type { GalleryImage, Station } from '../content';
-import { entranceImage } from '../content';
+import { artPool, entranceImage } from '../content';
 import { glyphDataUrl } from '../content/glyphs';
 
 export type Phase = 'entry' | 'hub' | 'warp' | 'corridor';
@@ -229,13 +229,11 @@ export class PortWorld {
   private font: DisplayFont | null = null;
   private frames: FrameRef[] = [];
   private starField?: THREE.Points;
-  private entryRings: THREE.Mesh[] = [];
   private entryGate = new THREE.Group();
   private gateLogo?: THREE.Mesh;
   private hubLogo?: THREE.Mesh;
   private hoverRing?: THREE.Mesh;
   private corridorDoor?: THREE.Mesh;
-  private corridorStrip?: THREE.Mesh;
   /** Photographic frontage planes in the approach, faded in as the visitor arrives. */
   private frontPanels: { mesh: THREE.Mesh; baseOpacity: number }[] = [];
   private farBackdrop?: THREE.Mesh;
@@ -264,6 +262,23 @@ export class PortWorld {
   private glowTexture: THREE.Texture;
   private particleTexture: THREE.Texture;
   private disposed = false;
+  /** Textures for the works hung in the approach — owned by the entry scene, not the corridor. */
+  private entryArtTextures: THREE.Texture[] = [];
+
+  /* the ambient constellation */
+  private readonly constellation = new THREE.Group();
+  private nodeBase: THREE.Vector3[] = [];
+  private nodePos: THREE.Vector3[] = [];
+  private nodeVel: THREE.Vector3[] = [];
+  private nodeAttributes?: THREE.BufferAttribute;
+  private linkAttributes?: THREE.BufferAttribute;
+  private linkColors?: THREE.BufferAttribute;
+  private linkGeometry?: THREE.BufferGeometry;
+  private maxLinks = 0;
+  private lastLinkCount = 0;
+  private hasPointer = false;
+  private readonly cursorWorld = new THREE.Vector3();
+  private readonly cursorLocal = new THREE.Vector3();
 
   constructor(canvas: HTMLCanvasElement, opts: WorldOptions) {
     this.canvas = canvas;
@@ -296,6 +311,7 @@ export class PortWorld {
 
     this.scene.add(this.entryGroup, this.hubGroup, this.corridorGroup);
     this.buildEnvironment();
+    this.buildConstellation();
     this.buildEntry();
     this.buildHub(opts.stations);
     // Applied silently: the entry gate is still on screen at this point, so the
@@ -341,6 +357,15 @@ export class PortWorld {
     this.canvas.removeEventListener('pointerleave', this.onPointerLeave);
     this.canvas.removeEventListener('wheel', this.onWheel);
     this.clearCorridor();
+    for (const texture of this.entryArtTextures) texture.dispose();
+    this.entryArtTextures = [];
+    this.constellation.traverse((object) => {
+      const mesh = object as THREE.Mesh;
+      mesh.geometry?.dispose();
+      const material = mesh.material as THREE.Material | THREE.Material[] | undefined;
+      if (Array.isArray(material)) material.forEach((m) => m.dispose());
+      else material?.dispose();
+    });
     for (const tex of this.textureCache.values()) tex.dispose();
     this.textureCache.clear();
     this.glowTexture.dispose();
@@ -383,18 +408,20 @@ export class PortWorld {
     const bg = canvasTexture(32, 512, (ctx) => {
       const g = ctx.createLinearGradient(0, 0, 0, 512);
       g.addColorStop(0, '#000000');
-      g.addColorStop(0.45, '#0f0d0b');
+      g.addColorStop(0.5, '#050505');
       g.addColorStop(1, '#000000');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, 32, 512);
     });
     this.scene.background = bg;
 
-    this.scene.add(new THREE.AmbientLight(0x6b6152, 0.7));
-    const key = new THREE.DirectionalLight(0xf2ead9, 0.85);
+    // Restrained gallery lighting: enough to give the lettering and frames an edge,
+    // never enough to lift the black off zero.
+    this.scene.add(new THREE.AmbientLight(0x5a5348, 0.5));
+    const key = new THREE.DirectionalLight(0xf0e8d8, 0.7);
     key.position.set(6, 12, 8);
     this.scene.add(key);
-    const rim = new THREE.PointLight(0x8a7355, 34, 60, 2);
+    const rim = new THREE.PointLight(0x8a7355, 18, 60, 2);
     rim.position.set(0, 7, 0);
     this.scene.add(rim);
 
@@ -418,64 +445,76 @@ export class PortWorld {
       geo,
       new THREE.PointsMaterial({
         map: this.particleTexture,
-        size: 1.1,
+        size: 0.85,
         transparent: true,
         depthWrite: false,
+        opacity: 0.5,
         blending: THREE.AdditiveBlending,
-        color: 0xf2ede2,
+        color: 0xe6dfd2,
       }),
     );
     this.starField = stars;
     this.scene.add(stars);
   }
 
-  /** POV approach: a tunnel of gate rings with a PORT portal at the end. */
-  private buildEntry() {
-    const group = this.entryGroup;
-    const ringCount = this.reduced ? 8 : 26;
+  /**
+   * The ambient field: a constellation of nodes that drift, link to whichever neighbours
+   * come close, and lean toward the pointer. Hairlines only appear where nodes meet, so
+   * the black stays black and the field reads as depth rather than decoration.
+   */
+  private buildConstellation() {
+    const count = this.reduced ? 44 : 116;
+    const spread = 54;
 
-    for (let i = 0; i < ringCount; i++) {
-      const t = i / ringCount;
-      const radius = 7.5 - t * 3.4;
-      const geo = new THREE.TorusGeometry(radius, 0.045 + t * 0.05, 8, 64);
-      // warm amber at the mouth of the approach, resolving to near-white at the door
-      const tone = new THREE.Color().setHSL(0.09, 0.5 * (1 - t), 0.52 + t * 0.34);
-      const mat = new THREE.MeshBasicMaterial({
-        color: tone,
-        transparent: true,
-        opacity: 0.28 + t * 0.5,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
-      const ring = new THREE.Mesh(geo, mat);
-      ring.position.z = 74 - i * 3.1;
-      ring.rotation.z = t * Math.PI * 0.6;
-      this.entryRings.push(ring);
-      group.add(ring);
+    for (let i = 0; i < count; i++) {
+      const base = new THREE.Vector3(
+        THREE.MathUtils.randFloatSpread(spread),
+        THREE.MathUtils.randFloatSpread(20),
+        THREE.MathUtils.randFloatSpread(spread),
+      );
+      // keep the middle of the deck clear so the stations stay unobstructed
+      if (base.length() < 11) base.setLength(11 + Math.random() * 7);
+      this.nodeBase.push(base.clone());
+      this.nodePos.push(base.clone());
+      this.nodeVel.push(
+        new THREE.Vector3(
+          THREE.MathUtils.randFloatSpread(0.05),
+          THREE.MathUtils.randFloatSpread(0.04),
+          THREE.MathUtils.randFloatSpread(0.05),
+        ),
+      );
     }
 
-    // light streaks
-    const streakCount = this.reduced ? 40 : 220;
-    const pos = new Float32Array(streakCount * 6);
-    for (let i = 0; i < streakCount; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const r = 3 + Math.random() * 9;
-      const z = -Math.random() * 120 + 40;
-      const len = 3 + Math.random() * 9;
-      pos[i * 6] = Math.cos(a) * r;
-      pos[i * 6 + 1] = Math.sin(a) * r;
-      pos[i * 6 + 2] = z;
-      pos[i * 6 + 3] = Math.cos(a) * r;
-      pos[i * 6 + 4] = Math.sin(a) * r;
-      pos[i * 6 + 5] = z - len;
-    }
-    const streakGeo = new THREE.BufferGeometry();
-    streakGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    group.add(
+    const nodeGeo = new THREE.BufferGeometry();
+    this.nodeAttributes = new THREE.BufferAttribute(new Float32Array(count * 3), 3);
+    nodeGeo.setAttribute('position', this.nodeAttributes);
+    this.constellation.add(
+      new THREE.Points(
+        nodeGeo,
+        new THREE.PointsMaterial({
+          map: this.particleTexture,
+          size: 0.42,
+          transparent: true,
+          opacity: 0.7,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          color: 0xd9c9a4,
+        }),
+      ),
+    );
+
+    this.maxLinks = count * 5;
+    this.linkAttributes = new THREE.BufferAttribute(new Float32Array(this.maxLinks * 6), 3);
+    this.linkColors = new THREE.BufferAttribute(new Float32Array(this.maxLinks * 6), 3);
+    this.linkGeometry = new THREE.BufferGeometry();
+    this.linkGeometry.setAttribute('position', this.linkAttributes);
+    this.linkGeometry.setAttribute('color', this.linkColors);
+    this.linkGeometry.setDrawRange(0, 0);
+    this.constellation.add(
       new THREE.LineSegments(
-        streakGeo,
+        this.linkGeometry,
         new THREE.LineBasicMaterial({
-          color: 0xefe4cf,
+          vertexColors: true,
           transparent: true,
           opacity: 0.5,
           blending: THREE.AdditiveBlending,
@@ -483,6 +522,146 @@ export class PortWorld {
         }),
       ),
     );
+
+    this.scene.add(this.constellation);
+  }
+
+  /**
+   * Advance the field. The whole constellation rides with the visitor, so it works in the
+   * approach, on the deck and inside a gallery wing without any special casing.
+   */
+  private updateConstellation(delta: number) {
+    const nodes = this.nodePos;
+    const total = nodes.length;
+    if (!total || !this.nodeAttributes || !this.linkAttributes || !this.linkColors || !this.linkGeometry) {
+      return;
+    }
+
+    this.constellation.position.copy(this.rig.position);
+
+    // The pointer becomes a point out in the field; nodes near it are drawn toward it and
+    // their links brighten, which is what makes the background feel alive under the cursor.
+    let reaching = false;
+    if (this.hasPointer) {
+      this.ray.setFromCamera(this.ndc.set(this.pointer.x, this.pointer.y), this.camera);
+      this.ray.ray.at(16, this.cursorWorld);
+      this.cursorLocal.copy(this.cursorWorld).sub(this.constellation.position);
+      reaching = true;
+    }
+
+    const positions = this.nodeAttributes.array as Float32Array;
+    const pull = Math.min(1, delta * 0.9);
+    for (let i = 0; i < total; i++) {
+      const node = nodes[i];
+      const base = this.nodeBase[i];
+      const velocity = this.nodeVel[i];
+
+      node.addScaledVector(velocity, delta * 6);
+      node.lerp(base, Math.min(1, delta * 0.5));
+
+      if (reaching) {
+        const distance = node.distanceTo(this.cursorLocal);
+        if (distance < 11) {
+          node.lerp(this.cursorLocal, (1 - distance / 11) * pull * 0.5);
+        }
+      }
+
+      positions[i * 3] = node.x;
+      positions[i * 3 + 1] = node.y;
+      positions[i * 3 + 2] = node.z;
+    }
+    this.nodeAttributes.needsUpdate = true;
+
+    const linkDistance = 6.4;
+    const points = this.linkAttributes.array as Float32Array;
+    const colours = this.linkColors.array as Float32Array;
+    let vertex = 0;
+    let links = 0;
+
+    for (let i = 0; i < total && links < this.maxLinks; i++) {
+      const a = nodes[i];
+      const aNear = reaching ? a.distanceTo(this.cursorLocal) : Infinity;
+      for (let j = i + 1; j < total && links < this.maxLinks; j++) {
+        const b = nodes[j];
+        const distance = a.distanceTo(b);
+        if (distance > linkDistance) continue;
+
+        const proximity = 1 - distance / linkDistance;
+        let strength = proximity * 0.45;
+        if (reaching) {
+          const near = Math.min(aNear, b.distanceTo(this.cursorLocal));
+          if (near < 13) strength += (1 - near / 13) * 0.55;
+        }
+
+        points[vertex * 3] = a.x;
+        points[vertex * 3 + 1] = a.y;
+        points[vertex * 3 + 2] = a.z;
+        points[(vertex + 1) * 3] = b.x;
+        points[(vertex + 1) * 3 + 1] = b.y;
+        points[(vertex + 1) * 3 + 2] = b.z;
+
+        // dim gold where nodes only just reach each other, chrome-white where the pointer
+        // is pulling them together
+        for (let end = 0; end < 2; end++) {
+          const at = (vertex + end) * 3;
+          colours[at] = 0.4 + strength * 0.58;
+          colours[at + 1] = 0.34 + strength * 0.62;
+          colours[at + 2] = 0.24 + strength * 0.72;
+        }
+
+        vertex += 2;
+        links++;
+      }
+    }
+
+    this.linkAttributes.needsUpdate = true;
+    this.linkColors.needsUpdate = true;
+    this.linkGeometry.setDrawRange(0, vertex);
+    this.lastLinkCount = links;
+  }
+
+  /**
+   * The approach: a gallery you walk up to, not a tunnel you fly down.
+   *
+   * Black on black, with two gold hairlines converging on the door and works hung either
+   * side, so the eye settles on art and then on the entrance rather than on glowing rings.
+   */
+  private buildEntry() {
+    const group = this.entryGroup;
+    const railZ = 78;
+    const railEnd = -16;
+
+    for (const rail of [
+      { y: -1.7, opacity: 0.3 },
+      { y: 5.6, opacity: 0.2 },
+    ]) {
+      const positions: number[] = [];
+      const segments = 64;
+      const spread = (z: number) => Math.max(1.9, 1.9 + (z - railEnd) * 0.052);
+      for (let s = 0; s < segments; s++) {
+        const z0 = railZ - (s / segments) * (railZ - railEnd);
+        const z1 = railZ - ((s + 1) / segments) * (railZ - railEnd);
+        const x0 = spread(z0);
+        const x1 = spread(z1);
+        positions.push(-x0, rail.y, z0, -x1, rail.y, z1, x0, rail.y, z0, x1, rail.y, z1);
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      group.add(
+        new THREE.LineSegments(
+          geometry,
+          new THREE.LineBasicMaterial({
+            color: 0xd9b978,
+            transparent: true,
+            opacity: rail.opacity,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          }),
+        ),
+      );
+    }
+
+    this.hangApproachWorks();
 
     // the gate at the end of the approach
     const gateGlow = new THREE.Mesh(
@@ -498,23 +677,32 @@ export class PortWorld {
     this.entryGate.add(gateGlow);
 
     const portal = new THREE.Mesh(
-      new THREE.TorusGeometry(4.2, 0.16, 12, 96),
-      new THREE.MeshBasicMaterial({ color: 0xfff2dc, blending: THREE.AdditiveBlending }),
+      new THREE.TorusGeometry(4.2, 0.085, 12, 96),
+      new THREE.MeshBasicMaterial({
+        color: 0xe8dcc0,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+      }),
     );
     portal.position.z = 0;
     this.entryGate.add(portal);
 
-    for (let i = 0; i < 3; i++) {
+    // A gold arch around the doorway with a faint chrome lip behind it — a frame, not a halo.
+    for (const arch of [
+      { radius: 4.6, colour: 0xd9b978, opacity: 0.5, z: -0.1 },
+      { radius: 5.7, colour: 0xc3c9d4, opacity: 0.16, z: -0.6 },
+    ]) {
       const halo = new THREE.Mesh(
-        new THREE.TorusGeometry(5 + i * 1.5, 0.045, 8, 96),
+        new THREE.TorusGeometry(arch.radius, 0.032, 8, 96),
         new THREE.MeshBasicMaterial({
-          color: i === 1 ? 0xffb457 : 0xe9dcc2,
+          color: arch.colour,
           transparent: true,
-          opacity: 0.4 - i * 0.08,
+          opacity: arch.opacity,
           blending: THREE.AdditiveBlending,
         }),
       );
-      halo.position.z = -i * 0.3;
+      halo.position.z = arch.z;
       this.entryGate.add(halo);
     }
 
@@ -550,6 +738,56 @@ export class PortWorld {
     group.add(this.entryGate);
 
     this.buildFrontage();
+  }
+
+  /**
+   * Works hung along the approach, angled toward the visitor as they walk up: black walls,
+   * a gold leaf edge, and just enough light for the image to read.
+   */
+  private hangApproachWorks() {
+    const pool = artPool;
+    if (!pool.length) return;
+    const perSide = Math.min(6, Math.max(2, Math.floor(pool.length / 2)));
+
+    for (let i = 0; i < perSide * 2; i++) {
+      const image = pool[i % pool.length];
+      const side = i % 2 === 0 ? -1 : 1;
+      const rank = Math.floor(i / 2);
+      const ratio = image.height && image.width ? image.height / image.width : 1.2;
+      const height = clamp(1.85 * ratio, 1.5, 2.9);
+      const width = clamp(height * 0.78, 1.2, 2.1);
+
+      const piece = new THREE.Group();
+      piece.position.set(side * 7.4, 2.35, 34 - rank * 9 - (side === 1 ? 4 : 0));
+      piece.rotation.y = side * -0.5;
+
+      const frame = new THREE.Mesh(
+        new THREE.BoxGeometry(width + 0.16, height + 0.16, 0.07),
+        new THREE.MeshStandardMaterial({ color: 0x0b0a09, metalness: 0.8, roughness: 0.35 }),
+      );
+      piece.add(frame);
+
+      const leaf = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(width + 0.2, height + 0.2, 0.1)),
+        new THREE.LineBasicMaterial({ color: 0xd9b978, transparent: true, opacity: 0.8 }),
+      );
+      piece.add(leaf);
+
+      const texture = this.loader.load(image.small, (t) => {
+        t.colorSpace = THREE.SRGBColorSpace;
+        t.anisotropy = 4;
+      });
+      this.entryArtTextures.push(texture);
+
+      const art = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, height),
+        new THREE.MeshBasicMaterial({ map: texture, color: 0xefe8db, side: THREE.DoubleSide }),
+      );
+      art.position.z = 0.05;
+      piece.add(art);
+
+      this.entryGroup.add(piece);
+    }
   }
 
   /**
@@ -662,9 +900,9 @@ export class PortWorld {
     const floor = new THREE.Mesh(
       new THREE.CircleGeometry(26, 72),
       new THREE.MeshStandardMaterial({
-        color: 0x050504,
-        roughness: 0.55,
-        metalness: 0.65,
+        color: 0x030303,
+        roughness: 0.5,
+        metalness: 0.7,
       }),
     );
     floor.rotation.x = -Math.PI / 2;
@@ -696,9 +934,9 @@ export class PortWorld {
       new THREE.LineSegments(
         gridGeo,
         new THREE.LineBasicMaterial({
-          color: 0x3d372c,
+          color: 0x4a4234,
           transparent: true,
-          opacity: 0.55,
+          opacity: 0.3,
           blending: THREE.AdditiveBlending,
         }),
       ),
@@ -710,6 +948,7 @@ export class PortWorld {
       new THREE.MeshBasicMaterial({
         map: this.glowTexture,
         transparent: true,
+        opacity: 0.45,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
@@ -723,7 +962,7 @@ export class PortWorld {
       new THREE.MeshBasicMaterial({
         color: 0xfff6e6,
         transparent: true,
-        opacity: 0.05,
+        opacity: 0.03,
         side: THREE.DoubleSide,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
@@ -748,13 +987,32 @@ export class PortWorld {
       new THREE.Line(
         rimGeo,
         new THREE.LineBasicMaterial({
-          color: 0xe9dcc2,
+          color: 0xd9b978,
           transparent: true,
-          opacity: 0.8,
+          opacity: 0.6,
           blending: THREE.AdditiveBlending,
         }),
       ),
     );
+
+    // a brass medallion inlaid at the centre of the deck
+    for (const radius of [3.1, 3.35]) {
+      const points: THREE.Vector3[] = [];
+      for (let i = 0; i <= 128; i++) {
+        const angle = (i / 128) * Math.PI * 2;
+        points.push(new THREE.Vector3(Math.cos(angle) * radius, 0.02, Math.sin(angle) * radius));
+      }
+      group.add(
+        new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(points),
+          new THREE.LineBasicMaterial({
+            color: 0xd9b978,
+            transparent: true,
+            opacity: radius === 3.1 ? 0.4 : 0.18,
+          }),
+        ),
+      );
+    }
 
     // drift particles
     const pCount = this.reduced ? 90 : 320;
@@ -1091,7 +1349,6 @@ export class PortWorld {
     this.releasePhotoTextures();
     this.frames = [];
     this.corridorDoor = undefined;
-    this.corridorStrip = undefined;
   }
 
   /**
@@ -1128,7 +1385,6 @@ export class PortWorld {
     this.corridorWalk = 0;
     this.corridorTarget = 0;
 
-    const accent = new THREE.Color(station.accent);
     const group = this.corridorGroup;
 
     // floor + ceiling
@@ -1166,21 +1422,32 @@ export class PortWorld {
       group.add(wall);
     }
 
-    // guiding light strip down the middle
-    const strip = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.35, length + 12),
-      new THREE.MeshBasicMaterial({
-        color: accent,
-        transparent: true,
-        opacity: 0.4,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    );
-    strip.rotation.x = -Math.PI / 2;
-    strip.position.set(0, 0.02, -length / 2 + 6);
-    this.corridorStrip = strip;
-    group.add(strip);
+    // Brass inlay beside the walkway and brass skirting along the walls — the only lines in
+    // the room, and neither of them glows. Gallery detailing, not starship lighting.
+    const lineDetails: { positions: number[]; opacity: number }[] = [
+      {
+        positions: [-1.7, 0.015, 6, -1.7, 0.015, -length - 2, 1.7, 0.015, 6, 1.7, 0.015, -length - 2],
+        opacity: 0.2,
+      },
+      {
+        positions: [-4.55, 0.11, 6, -4.55, 0.11, -length - 2, 4.55, 0.11, 6, 4.55, 0.11, -length - 2],
+        opacity: 0.14,
+      },
+    ];
+    for (const detail of lineDetails) {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(detail.positions, 3));
+      group.add(
+        new THREE.LineSegments(
+          geometry,
+          new THREE.LineBasicMaterial({
+            color: 0xd9b978,
+            transparent: true,
+            opacity: detail.opacity,
+          }),
+        ),
+      );
+    }
 
     // ceiling lights
     for (let i = 0; i < Math.ceil(length / 6); i++) {
@@ -1211,9 +1478,10 @@ export class PortWorld {
       );
       fg.add(plate);
 
+      // gold leaf around the frame
       const border = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxGeometry(3.5, 2.5, 0.2)),
-        new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.6 }),
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(3.56, 2.56, 0.2)),
+        new THREE.LineBasicMaterial({ color: 0xd9b978, transparent: true, opacity: 0.9 }),
       );
       fg.add(border);
 
@@ -1259,11 +1527,11 @@ export class PortWorld {
       fg.add(meta);
 
       const spotlight = new THREE.Mesh(
-        new THREE.PlaneGeometry(4.4, 3.2),
+        new THREE.PlaneGeometry(3.9, 2.9),
         new THREE.MeshBasicMaterial({
           map: this.glowTexture,
           transparent: true,
-          opacity: 0.35,
+          opacity: 0.26,
           blending: THREE.AdditiveBlending,
           depthWrite: false,
         }),
@@ -1454,6 +1722,7 @@ export class PortWorld {
     return {
       phase: this.phase,
       station: this.currentStation?.id ?? null,
+      constellation: { nodes: this.nodePos.length, links: this.lastLinkCount },
       monoliths: this.monoliths.length,
       deckLabels: this.deckLabels.length,
       displayFont: this.font ? 'loaded' : 'missing',
@@ -1542,6 +1811,7 @@ export class PortWorld {
 
   private onPointerMove = (event: PointerEvent) => {
     this.setPointer(event);
+    this.hasPointer = true;
     if (this.dragging) {
       this.moved += Math.abs(event.movementX) + Math.abs(event.movementY);
       const speed = this.phase === 'entry' ? 0.0008 : 0.0032;
@@ -1560,6 +1830,7 @@ export class PortWorld {
 
   private onPointerLeave = () => {
     this.dragging = false;
+    this.hasPointer = false;
     this.setHovered(null);
   };
 
@@ -1696,6 +1967,7 @@ export class PortWorld {
     this.pitch.rotation.x = this.look.pitch;
 
     // ambient motion
+    this.updateConstellation(delta);
     if (this.starField) this.starField.rotation.y = t * 0.008;
     if (this.hubLogo) this.hubLogo.rotation.z = Math.sin(t * 0.25) * 0.03;
     if (this.entryGate && this.phase === 'entry') {
@@ -1774,11 +2046,6 @@ export class PortWorld {
           hovered.group.position.z,
         );
       }
-    }
-
-    if (this.corridorStrip) {
-      (this.corridorStrip.material as THREE.MeshBasicMaterial).opacity =
-        0.28 + Math.sin(t * 1.6) * 0.12;
     }
 
     this.renderer.render(this.scene, this.camera);

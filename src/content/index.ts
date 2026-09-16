@@ -197,7 +197,7 @@ export const stations: Station[] = [
     label: 'TENTANG KAMI',
     short: 'Tentang',
     glyph: 'compass',
-    accent: '#e9dcc2',
+    accent: '#efe3cf',
     tagline: 'Siapa kami, dan mengapa kami ada.',
     kind: 'about',
     intro: [
@@ -252,7 +252,7 @@ export const stations: Station[] = [
     label: 'PROGRAM UTAMA',
     short: 'Program',
     glyph: 'stage',
-    accent: '#ffb457',
+    accent: '#d9b978',
     tagline: 'Tujuh program yang membentuk ekosistem seni Perak.',
     kind: 'corridor',
     intro: [
@@ -347,7 +347,7 @@ export const stations: Station[] = [
     label: 'RESIDENSI SENI',
     short: 'Residensi',
     glyph: 'brush',
-    accent: '#8b7bff',
+    accent: '#9d7fb0',
     tagline: 'Ruang studio dan kamar rehat untuk pengkarya muda.',
     kind: 'corridor',
     intro: [
@@ -428,7 +428,7 @@ export const stations: Station[] = [
     label: 'PAMERAN & BUKU DIGITAL',
     short: 'Pameran',
     glyph: 'frame',
-    accent: '#ff7ad9',
+    accent: '#d99a94',
     tagline: 'Pameran yang telah berlangsung, dibukukan secara digital.',
     kind: 'corridor',
     intro: [
@@ -479,7 +479,7 @@ export const stations: Station[] = [
     label: 'ARKIB & MEDIA',
     short: 'Arkib',
     glyph: 'wave',
-    accent: '#5df2c0',
+    accent: '#7fae95',
     tagline: 'Bahan rujukan, liputan media dan buku digital.',
     kind: 'list',
     intro: [
@@ -536,7 +536,7 @@ export const stations: Station[] = [
     label: 'PROGRAM TERKINI',
     short: 'Terkini',
     glyph: 'beacon',
-    accent: '#ff6b6b',
+    accent: '#c07f52',
     tagline: 'Apa yang sedang berjalan sekarang.',
     kind: 'list',
     intro: ['Pencalonan, jadual acara dan pengumuman terkini daripada PORT.'],
@@ -591,7 +591,7 @@ export const stations: Station[] = [
     label: 'HUBUNGI & KUNJUNGI',
     short: 'Hubungi',
     glyph: 'pin',
-    accent: '#ffe066',
+    accent: '#c3c9d4',
     tagline: 'Datang ke Black House, atau hubungi kami terus.',
     kind: 'contact',
     intro: [
@@ -605,6 +605,39 @@ export const stations: Station[] = [
 
 export function stationById(id: string): Station | undefined {
   return stations.find((s) => s.id === id);
+}
+
+/**
+ * Artwork to hang in the space — drawings, works, portraits and covers rather than
+ * photographs of events, so the approach and the deck read as a gallery you are entering
+ * rather than a programme archive you are reading.
+ *
+ * To lead with different pieces, reorder this list: the first items are hung first, and
+ * the approach uses the opening entries.
+ */
+export const artPool: GalleryImage[] = dedupe([
+  // works by resident artists
+  ...library(/hafizuddin/i, 6),
+  // exhibition posters and covers
+  ...library(/kembali/i, 2),
+  ...library(/direktori/i, 2),
+  ...library(/portfest/i, 6),
+  ...library(/hsdr9/i, 3),
+  ...library(/poster_ims/i, 2),
+  // festival works
+  ...imagesOf(626, 6),
+  ...imagesOf(799, 6),
+  // portraits — the people of PORT, hung as portraits
+  ...portraits(10),
+]);
+
+/** Portrait-orientation images: the people and the upright pieces. */
+function portraits(limit: number): GalleryImage[] {
+  return raw.images
+    .filter((i) => typeof i.width === 'number' && typeof i.height === 'number')
+    .filter((i) => i.height! > i.width! * 1.12)
+    .slice(0, limit)
+    .map(({ small, large, caption, width, height }) => ({ small, large, caption, width, height }));
 }
 
 /** Contact details, kept in one place so the HUD and the station agree. */

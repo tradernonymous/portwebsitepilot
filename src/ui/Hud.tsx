@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Station } from '../content';
 import { Glyph } from './Glyph';
 
@@ -67,29 +67,124 @@ type DockProps = {
   label: string;
 };
 
-/** The station dock — the DOM twin of the monolith ring, for pointer, keyboard and touch. */
+/**
+ * The station dock — the DOM twin of the monolith ring, for pointer, keyboard and touch.
+ *
+ * It is one row that always keeps scrolling: touch pans it natively, a mouse can drag it,
+ * a wheel over it scrolls it sideways, and the active station is always brought back into
+ * view. There is deliberately no visible scrollbar — a soft fade, shown only on the side
+ * that still has stations beyond it, is what signals there is more to see. Reach an end and
+ * that edge goes crisp again, so the strip never looks accidentally clipped.
+ */
 export function Dock({ stations, activeId, onSelect, label }: DockProps) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: 0 });
+  const [edges, setEdges] = useState({ left: false, right: false });
+
+  // Fades are measured from real overflow, so a strip that fits is never touched at all.
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const measure = () => {
+      const max = list.scrollWidth - list.clientWidth;
+      const left = max > 2 && list.scrollLeft > 2;
+      const right = max > 2 && list.scrollLeft < max - 2;
+      setEdges((prev) => (prev.left === left && prev.right === right ? prev : { left, right }));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(list);
+    for (const item of Array.from(list.children)) observer.observe(item);
+    list.addEventListener('scroll', measure, { passive: true });
+    window.addEventListener('resize', measure);
+    return () => {
+      observer.disconnect();
+      list.removeEventListener('scroll', measure);
+      window.removeEventListener('resize', measure);
+    };
+  }, [stations.length, activeId]);
+
+  // Keep the current station in sight — matters most on a phone, where only three fit.
+  useEffect(() => {
+    if (!activeId) return;
+    const item = listRef.current?.querySelector<HTMLElement>(`[data-station="${activeId}"]`);
+    item?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, [activeId]);
+
+  // A wheel over the strip scrolls it sideways: the gesture you would expect, and the only
+  // way to reach the far stations with a mouse if dragging is not discovered.
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const onWheel = (event: WheelEvent) => {
+      if (list.scrollWidth <= list.clientWidth + 2) return;
+      const delta = Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+      if (!delta) return;
+      list.scrollLeft += delta;
+      event.preventDefault();
+    };
+    list.addEventListener('wheel', onWheel, { passive: false });
+    return () => list.removeEventListener('wheel', onWheel);
+  }, []);
+
+  const onPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'touch') return; // the browser already pans it natively
+    const list = listRef.current;
+    if (!list || list.scrollWidth <= list.clientWidth + 2) return;
+    drag.current = { active: true, startX: event.clientX, startLeft: list.scrollLeft, moved: 0 };
+    list.setPointerCapture(event.pointerId);
+  }, []);
+
+  const onPointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const list = listRef.current;
+    if (!list || !drag.current.active) return;
+    const dx = event.clientX - drag.current.startX;
+    drag.current.moved = Math.max(drag.current.moved, Math.abs(dx));
+    list.scrollLeft = drag.current.startLeft - dx;
+  }, []);
+
+  const endDrag = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    drag.current.active = false;
+    listRef.current?.releasePointerCapture?.(event.pointerId);
+  }, []);
+
   return (
-    <nav
-      className="dock"
-      aria-label="Stesen dalam ruang PORT"
-      onMouseEnter={() => undefined}
-    >
+    <nav className="dock" aria-label="Stesen dalam ruang PORT">
       <p className="dock-head">{label}</p>
-      <div className="dock-list">
+      <div
+        className={`dock-list${edges.left ? ' can-left' : ''}${edges.right ? ' can-right' : ''}`}
+        ref={listRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+      >
         {stations.map((station) => {
           const style = { '--item-accent': station.accent } as CSSProperties;
           return (
             <button
               key={station.id}
               type="button"
+              data-station={station.id}
               className={`dock-item${activeId === station.id ? ' is-active' : ''}`}
               style={style}
-              onClick={() => onSelect(station.id)}
+              onClick={() => {
+                // a drag should never be read as a tap
+                if (drag.current.moved > 8) {
+                  drag.current.moved = 0;
+                  return;
+                }
+                onSelect(station.id);
+              }}
               title={station.tagline}
             >
               <Glyph glyph={station.glyph} size={16} />
-              {station.label}
+              {/* both forms ship, and the stylesheet picks one: the full name where there
+                  is room, the short one on a phone, where every tab costs a swipe */}
+              <span className="dock-label">
+                <span className="dock-label-full">{station.label}</span>
+                <span className="dock-label-short">{station.short}</span>
+              </span>
             </button>
           );
         })}

@@ -16,7 +16,10 @@
   --line-soft: rgba(233, 220, 194, 0.1);
   --glass: rgba(13, 12, 10, 0.72);
   --glass-solid: rgba(8, 8, 7, 0.94);
-  --accent: #e9dcc2;
+  --accent: #d9b978;
+  --gold: #d9b978;
+  --gold-soft: rgba(217, 185, 120, 0.32);
+  --chrome: linear-gradient(180deg, #ffffff 0%, #e9ecf1 36%, #b3b9c3 62%, #6d737d 100%);
   --warn: #ffb457;
   --radius: 14px;
   --font-display: 'Chakra Petch', ui-sans-serif, system-ui, sans-serif;
@@ -264,11 +267,11 @@ button {
   letter-spacing: 0.22em;
   margin: 0 0 0.1em;
   text-indent: 0.22em;
-  background: linear-gradient(180deg, #ffffff 0%, #f0e7d7 52%, #9d927e 100%);
+  background: var(--chrome);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 36px rgba(233, 220, 194, 0.32));
+  filter: drop-shadow(0 0 34px rgba(217, 185, 120, 0.28)) drop-shadow(0 1px 0 rgba(255, 255, 255, 0.14));
 }
 
 /* the greeting — the first thing anyone reads, so it carries the weight */
@@ -310,6 +313,8 @@ button {
   color: var(--accent);
   text-transform: uppercase;
   margin: 0 0 0.2rem;
+  padding-bottom: 0.95rem;
+  border-bottom: 1px solid var(--gold-soft);
 }
 
 .gate-line {
@@ -516,11 +521,19 @@ button {
 
 .dock {
   position: fixed;
-  left: 50%;
+  /*
+   * Centred with left/right + auto margins rather than `left: 50%` + `translateX(-50%)`.
+   * A fixed element's shrink-to-fit width is capped at (containing block - left), so the
+   * translate form silently limited this strip to HALF the viewport once the tabs no
+   * longer fit on one line — which is what forced them into three cramped rows.
+   */
+  left: 0;
+  right: 0;
   bottom: max(1.2rem, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
+  margin-inline: auto;
+  width: fit-content;
   z-index: 20;
-  max-width: min(1080px, calc(100vw - 2rem));
+  max-width: min(1280px, calc(100vw - 2rem));
   padding: 0.55rem;
   border: 1px solid var(--line-soft);
   border-radius: 18px;
@@ -541,14 +554,72 @@ button {
 
 .dock-list {
   display: flex;
+  flex-wrap: nowrap;
   gap: 0.35rem;
+  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
+  -ms-overflow-style: none;
   padding-bottom: 0.1rem;
+  /* the browser pans this strip natively on touch; a mouse drags it in JS */
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+  /* the fade widths the mask below reads; both zero means no mask is applied at all */
+  --fade-left: 0px;
+  --fade-right: 0px;
 }
 
 .dock-list::-webkit-scrollbar {
   display: none;
+  width: 0;
+  height: 0;
+}
+
+/*
+ * The only hint that the strip continues, and there is no visible slider: a soft fade on
+ * whichever side still has stations beyond it. Reach an end and that side goes crisp, so
+ * the deck never looks like it was simply cut off.
+ */
+.dock-list.can-left,
+.dock-list.can-right {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--fade-left),
+    #000 calc(100% - var(--fade-right)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--fade-left),
+    #000 calc(100% - var(--fade-right)),
+    transparent 100%
+  );
+}
+
+.dock-list.can-left {
+  --fade-left: 32px;
+}
+
+.dock-list.can-right {
+  --fade-right: 32px;
+}
+
+/*
+ * On touch, let each station settle under the thumb instead of stopping mid-glyph.
+ * Scoped to coarse pointers so a desktop drag is never yanked back by snapping.
+ */
+@media (pointer: coarse) {
+  .dock-list {
+    scroll-snap-type: x proximity;
+  }
+
+  .dock-item {
+    scroll-snap-align: center;
+  }
 }
 
 .dock-item {
@@ -571,6 +642,15 @@ button {
 .dock-item svg {
   color: var(--item-accent, var(--accent));
   opacity: 0.85;
+}
+
+/* the long name by default; the short one takes over on small screens, below */
+.dock-label {
+  white-space: nowrap;
+}
+
+.dock-label-short {
+  display: none;
 }
 
 .dock-item:hover,
@@ -664,13 +744,13 @@ button {
 }
 
 .rail-item:hover {
-  background: rgba(233, 220, 194, 0.06);
+  background: rgba(217, 185, 120, 0.06);
   color: var(--ink);
 }
 
 .rail-item.is-active {
   border-left-color: var(--accent);
-  background: rgba(233, 220, 194, 0.09);
+  background: rgba(217, 185, 120, 0.09);
   color: #fff;
 }
 
@@ -845,7 +925,7 @@ button {
 }
 
 .panel-body::-webkit-scrollbar-thumb {
-  background: rgba(233, 220, 194, 0.2);
+  background: rgba(217, 185, 120, 0.2);
   border-radius: 9px;
 }
 
@@ -1247,6 +1327,8 @@ button {
   position: relative;
   z-index: 10;
   min-height: 100vh;
+  /* dvh so the mobile URL bar cannot leave a gap at the bottom of the list view */
+  min-height: 100dvh;
   padding: 6rem 1.4rem 5rem;
   max-width: 1180px;
   margin: 0 auto;
@@ -1351,7 +1433,7 @@ button {
   padding: 0.1rem 0.45rem;
   border: 1px solid var(--line);
   border-radius: 5px;
-  background: rgba(233, 220, 194, 0.08);
+  background: rgba(217, 185, 120, 0.08);
   margin-right: 0.3rem;
 }
 
@@ -1447,11 +1529,203 @@ button {
     padding: 0.8rem 1rem;
   }
 
+  /* On a phone the strip goes edge to edge and scrolls; the fades are the only cue. */
   .dock {
-    left: 0.7rem;
-    right: 0.7rem;
-    transform: none;
+    width: auto;
+    margin-inline: 0;
+    left: max(0.7rem, env(safe-area-inset-left));
+    right: max(0.7rem, env(safe-area-inset-right));
     max-width: none;
+  }
+}
+
+/* ------------------------------------------------- phones held upright: compact chrome */
+
+/*
+ * Anything narrower than a small tablet switches the dock to the stations' short names,
+ * which cuts the strip from about 1230px to about 800px — so a phone shows three tabs at
+ * a time instead of two. The full name is still what a screen reader reads first, because
+ * the long form stays in the DOM either way.
+ */
+@media (max-width: 860px) {
+  .dock-label-full {
+    display: none;
+  }
+
+  .dock-label-short {
+    display: inline;
+  }
+}
+
+@media (max-width: 620px) {
+  .brand strong {
+    font-size: 0.95rem;
+    letter-spacing: 0.24em;
+  }
+
+  .dock {
+    padding: 0.4rem;
+    border-radius: 15px;
+  }
+
+  .dock-head {
+    font-size: 0.52rem;
+    letter-spacing: 0.22em;
+    padding: 0.3rem 0.5rem 0.4rem;
+  }
+
+  .dock-list {
+    gap: 0.25rem;
+  }
+
+  .dock-item {
+    padding: 0.52rem 0.66rem;
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+    gap: 0.45rem;
+  }
+
+  .rail-head p {
+    display: none;
+  }
+
+  .rail-list {
+    max-height: 26vh;
+  }
+
+  .gate {
+    padding: 4vh max(7vw, env(safe-area-inset-right)) 4vh max(7vw, env(safe-area-inset-left));
+  }
+}
+
+/*
+ * Wide but short — a phone in landscape, or a squat laptop window. The vertical budget is
+ * gone, so the chrome compresses and the wing rail becomes a left-hand column, which is
+ * what a wide short screen actually has room for.
+ */
+
+@media (max-height: 560px) {
+  .gate {
+    padding: 2.5vh 5vw;
+  }
+
+  .gate-kicker {
+    margin-bottom: 0.45rem;
+    font-size: 0.56rem;
+  }
+
+  .gate-mark {
+    font-size: clamp(1.9rem, 11vh, 3.6rem);
+    letter-spacing: 0.18em;
+    text-indent: 0.18em;
+  }
+
+  .gate-sub {
+    padding-bottom: 0.5rem;
+  }
+
+  .gate-welcome {
+    font-size: clamp(0.95rem, 4.6vh, 1.4rem);
+    margin: 0.75rem auto 0.3rem;
+  }
+
+  .gate-line {
+    font-size: 0.82rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .gate-actions {
+    gap: 0.45rem;
+  }
+
+  .btn {
+    padding: 0.58rem 1.05rem;
+    font-size: 0.64rem;
+  }
+
+  /* a phone on its side has the notch on a long edge, so inset the chrome sideways */
+  .hud-top {
+    padding: 0.45rem max(0.9rem, env(safe-area-inset-right)) 0.45rem
+      max(0.9rem, env(safe-area-inset-left));
+  }
+
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .dock {
+    padding: 0.3rem;
+    bottom: max(0.5rem, env(safe-area-inset-bottom));
+    max-width: calc(100vw - 1rem - env(safe-area-inset-left) - env(safe-area-inset-right));
+  }
+
+  .dock-head {
+    display: none;
+  }
+
+  .dock-item {
+    padding: 0.45rem 0.68rem;
+    font-size: 0.62rem;
+  }
+
+  .hint {
+    display: none;
+  }
+
+  .rail {
+    top: 3.5rem;
+    bottom: 3.1rem;
+    left: max(0.6rem, env(safe-area-inset-left));
+    right: auto;
+    width: min(270px, 44vw);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .rail-list {
+    flex: 1;
+    max-height: none;
+  }
+
+  .rail-head {
+    padding: 0.65rem 0.8rem 0.5rem;
+  }
+
+  .rail-head h2 {
+    font-size: 0.74rem;
+  }
+
+  .rail-head p {
+    display: none;
+  }
+
+  .rail-item {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.76rem;
+  }
+
+  .rail-foot {
+    padding: 0.5rem;
+  }
+
+  .rail-foot .btn {
+    padding: 0.45rem 0.35rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+  }
+
+  .panel.centered {
+    max-height: 96vh;
+  }
+
+  .panel-body {
+    padding: 1rem 1.05rem 2rem;
+  }
+
+  .reader-hero,
+  .hero {
+    aspect-ratio: 21 / 9;
   }
 }
 

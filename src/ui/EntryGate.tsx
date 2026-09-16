@@ -32,7 +32,7 @@ export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat 
         <p className="gate-welcome">
           Sedia nak terokai dunia <em>SENI</em>?
         </p>
-        <p className="gate-line">Jemput masuk — pintu kami sentiasa terbuka untuk anda.</p>
+        <p className="gate-line">Jemput masuk, pintu kami sentiasa terbuka...</p>
 
         <div className="gate-actions">
           <button

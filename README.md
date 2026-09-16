@@ -138,17 +138,19 @@ npm run sync:content -- --fresh
 
 ## Putting it online on Railway
 
-The repo is already configured for Railway (`railway.json`). You only need to do the
-account steps — everything technical is done.
+The repo is already configured for Railway (`railway.json` plus a `Dockerfile`). You only
+need to do the account steps — everything technical is done.
 
 1. **Make sure the code is on GitHub.** It lives at
-   `https://github.com/tradernonymous/portwebsitepilot`.
+   `https://github.com/tradernonymous/portwebsitepilot`. Pushing to `main` is all it takes to
+   trigger a fresh deploy once the project exists.
 2. **Create the Railway project.** Go to [railway.app](https://railway.app) and sign in with
    GitHub.
-3. **New Project → Deploy from GitHub repo →** choose `portwebsitepilot`. Railway reads
-   `railway.json`, runs `npm ci && npm run build`, then `npm start`.
-4. **Wait for the build** (a few minutes the first time — it is installing and converting
-   ~190 images). The health check at `/healthz` must answer before Railway marks it live.
+3. **New Project → Deploy from GitHub repo →** choose `portwebsitepilot`. Railway finds the
+   `Dockerfile`, runs one `npm ci` and one `npm run build`, then serves the result with
+   `node server.mjs`.
+4. **Wait for the build** (a couple of minutes the first time). The health check at `/healthz`
+   must answer before Railway marks it live.
 5. **Settings → Networking → Generate Domain.** That gives you a public
    `*.up.railway.app` address. Open it.
 6. **Point the real domain at it.** In the same Networking panel choose *Custom Domain* and
@@ -176,7 +178,13 @@ in the code is Railway-specific.
   reduce motion, the site adapts: the animation is skipped and the plain list view is offered.
   The dock, the rail and every gallery link work from the keyboard alone.
 - **Search engines.** The plain list view carries the full text of every station.
-- **Mobile.** Drag to look, tap to enter. The dock and rail re-position for small screens.
+- **Mobile.** Drag to look, tap to enter. The station dock along the bottom is a single row
+  that scrolls sideways, with a soft fade on whichever side still has stations beyond it —
+  there is no scrollbar. Below 860px it switches to each station's short name so more tabs
+  fit at once; a portrait phone shows about three of the seven, and the list button in the top
+  bar opens the full plain-text version of everything.
+- **Landscape phones.** The rail for the wing you are in moves to a left-hand column and the
+  chrome compresses, and the top bar and dock respect the notch insets.
 - **Performance.** three.js is loaded in the background while the gate is on screen, so the
   opening paints immediately. Gallery photographs load only for the station you are in, and
   are released when you leave.
@@ -195,6 +203,8 @@ src/assets/                 drop your PORT frontage photo here
 public/media/               synced photographs (webp)
 scripts/sync-content.mjs    the portipoh.com sync
 server.mjs                  the production web server
+Dockerfile                  how the site is built and packaged for Railway
+.dockerignore               keeps node_modules and dist out of the build context
 railway.json                Railway build and deploy settings
 ```
 
@@ -209,8 +219,12 @@ The site is designed to still work; try another browser.
 **The photos are missing after a clone.** They are committed, so this should not happen. If it
 does, run `npm run sync:content -- --fresh`.
 
-**A build fails on Railway but works locally.** Check the Node version — Railway should pick up
-`engines.node` (`>=20`) from `package.json`.
+**A build fails on Railway but works locally.** The Dockerfile pins Node 22, so the version
+should match. If the failure line mentions `npm ci` and `EBUSY` on `node_modules/.cache`, that
+is the platform's auto-generated build running a second install over a mounted cache — the
+Dockerfile exists precisely to avoid it, so make sure `railway.json` still says
+`"builder": "DOCKERFILE"`. To reproduce the build locally, run the same two commands the
+image runs, in a folder with no `node_modules`: `npm ci --include=dev && npm run build`.
 
 ---
 
