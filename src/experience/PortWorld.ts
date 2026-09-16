@@ -12,6 +12,9 @@
  */
 
 import * as THREE from 'three';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+import boldTypeface from 'three/examples/fonts/helvetiker_bold.typeface.json';
 import type { GalleryImage, Station } from '../content';
 import { entranceImage } from '../content';
 import { glyphDataUrl } from '../content/glyphs';
@@ -38,10 +41,26 @@ type Monolith = {
   station: Station;
   group: THREE.Group;
   body: THREE.Mesh;
-  glyph: THREE.Mesh;
   ring: THREE.Mesh;
-  label: THREE.Mesh;
+};
+
+/**
+ * The floating name plate for a station: extruded 3D lettering that turns to face the
+ * visitor. This is the deck's wayfinding — from anywhere on the deck you can read where
+ * each station is without hunting for it.
+ */
+type DeckLabel = {
+  station: Station;
+  group: THREE.Group;
+  name: THREE.Mesh;
+  nameMaterial: THREE.MeshStandardMaterial;
+  nameBase: THREE.Color;
+  nameHot: THREE.Color;
+  glyph: THREE.Mesh;
+  glyphMaterial: THREE.MeshBasicMaterial;
   baseY: number;
+  hot: number;
+  phase: number;
 };
 
 type FrameRef = {
@@ -169,6 +188,23 @@ function verticalFadeTexture() {
 
 /* ------------------------------------------------------------------ world */
 
+type DisplayFont = ReturnType<FontLoader['parse']>;
+
+/**
+ * The display face for the deck lettering, taken from the typeface three.js ships so the
+ * space needs no extra font asset. Parsed synchronously, and the space degrades to flat
+ * canvas labels if it ever fails.
+ */
+function loadDisplayFont() {
+  try {
+    return new FontLoader().parse(
+      boldTypeface as unknown as Parameters<FontLoader['parse']>[0],
+    );
+  } catch {
+    return null;
+  }
+}
+
 export class PortWorld {
   private readonly canvas: HTMLCanvasElement;
   private readonly opts: WorldOptions;
@@ -189,6 +225,8 @@ export class PortWorld {
   private readonly corridorGroup = new THREE.Group();
 
   private monoliths: Monolith[] = [];
+  private deckLabels: DeckLabel[] = [];
+  private font: DisplayFont | null = null;
   private frames: FrameRef[] = [];
   private starField?: THREE.Points;
   private entryRings: THREE.Mesh[] = [];
@@ -253,6 +291,8 @@ export class PortWorld {
     this.particleTexture = dotTexture();
 
     this.scene.fog = new THREE.FogExp2(0x000000, 0.017);
+
+    this.font = loadDisplayFont();
 
     this.scene.add(this.entryGroup, this.hubGroup, this.corridorGroup);
     this.buildEnvironment();
@@ -785,15 +825,15 @@ export class PortWorld {
       const accent = new THREE.Color(station.accent);
 
       const body = new THREE.Mesh(
-        new THREE.BoxGeometry(2.05, 3.1, 0.34),
+        new THREE.BoxGeometry(2.6, 4.2, 0.34),
         new THREE.MeshStandardMaterial({
           color: new THREE.Color(ACCENT_DIM),
-          emissive: accent.clone().multiplyScalar(0.08),
+          emissive: accent.clone().multiplyScalar(0.1),
           roughness: 0.32,
           metalness: 0.85,
         }),
       );
-      body.position.y = 1.75;
+      body.position.y = 2.3;
       body.userData.stationId = station.id;
       mg.add(body);
 
@@ -816,7 +856,7 @@ export class PortWorld {
       mg.add(pedestal);
 
       const bar = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.7, 0.045),
+        new THREE.PlaneGeometry(2.2, 0.045),
         new THREE.MeshBasicMaterial({
           color: accent,
           transparent: true,
@@ -824,32 +864,8 @@ export class PortWorld {
           blending: THREE.AdditiveBlending,
         }),
       );
-      bar.position.set(0, 3.32, 0.19);
+      bar.position.set(0, 4.42, 0.19);
       mg.add(bar);
-
-      const glyph = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.05, 1.05),
-        new THREE.MeshBasicMaterial({
-          map: this.loader.load(glyphDataUrl(station.glyph, station.accent)),
-          transparent: true,
-          opacity: 0.95,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        }),
-      );
-      glyph.position.set(0, 2.2, 0.22);
-      mg.add(glyph);
-
-      const label = new THREE.Mesh(
-        new THREE.PlaneGeometry(3.1, 0.55),
-        new THREE.MeshBasicMaterial({
-          map: labelTexture(station.label, { colour: '#efe9dd', size: 62, spacing: 5 }),
-          transparent: true,
-          opacity: 0.92,
-        }),
-      );
-      label.position.set(0, 0.72, 0.22);
-      mg.add(label);
 
       const ring = new THREE.Mesh(
         new THREE.RingGeometry(1.35, 1.45, 40),
@@ -867,16 +883,188 @@ export class PortWorld {
       mg.add(ring);
 
       group.add(mg);
-      this.monoliths.push({
+      this.monoliths.push({ station, group: mg, body, ring });
+    });
+
+    this.buildDeckLabels(stations);
+  }
+
+  /**
+   * A floating name plate in front of every monolith, carrying the station glyph, its
+   * number and its name in extruded type. Each plate turns to face the visitor every
+   * frame, so the deck is legible wherever you are standing — and brightens when you
+   * point at it.
+   */
+  private buildDeckLabels(stations: Station[]) {
+    const n = Math.max(1, stations.length);
+    const inward = 1.5;
+    const font = this.font;
+
+    stations.forEach((station, i) => {
+      const angle = (i / n) * Math.PI * 2 + Math.PI / n;
+      const group = new THREE.Group();
+      group.position.set(
+        Math.cos(angle) * (HUB_RADIUS - inward),
+        2.75,
+        Math.sin(angle) * (HUB_RADIUS - inward),
+      );
+      group.userData.stationId = station.id;
+      this.hubGroup.add(group);
+
+      const accent = new THREE.Color(station.accent);
+
+      // glyph
+      const glyphMaterial = new THREE.MeshBasicMaterial({
+        map: this.loader.load(glyphDataUrl(station.glyph, station.accent)),
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const glyph = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.86), glyphMaterial);
+      glyph.position.y = 0.88;
+      group.add(glyph);
+
+      // number
+      const numeral = this.text3D(String(i + 1).padStart(2, '0'), {
+        size: 0.34,
+        depth: 0.05,
+        color: accent,
+        emissive: 0.55,
+      });
+      if (numeral) {
+        numeral.position.y = 0.34;
+        group.add(numeral);
+      }
+
+      // name
+      const maxWidth = 3.5;
+      let name: THREE.Mesh;
+      let nameMaterial: THREE.MeshStandardMaterial;
+      let nameWidth = maxWidth;
+
+      if (font) {
+        nameMaterial = new THREE.MeshStandardMaterial({
+          color: 0xf3ece0,
+          emissive: new THREE.Color(0xf3ece0).multiplyScalar(0.16),
+          roughness: 0.34,
+          metalness: 0.6,
+        });
+        const nameGeo = new TextGeometry(station.label, {
+          font,
+          size: 0.28,
+          depth: 0.055,
+          curveSegments: 2,
+          bevelEnabled: true,
+          bevelThickness: 0.005,
+          bevelSize: 0.004,
+          bevelSegments: 1,
+        });
+        nameGeo.computeBoundingBox();
+        const box = nameGeo.boundingBox;
+        nameWidth = box ? box.max.x - box.min.x : maxWidth;
+        nameGeo.center();
+        name = new THREE.Mesh(nameGeo, nameMaterial);
+        // squeeze only when a long name would crowd its neighbours around the ring
+        if (nameWidth > maxWidth) name.scale.setScalar(maxWidth / nameWidth);
+      } else {
+        // If the display face ever fails to parse, fall back to a flat placard. It still
+        // turns to face the visitor, so the deck stays navigable either way.
+        nameMaterial = new THREE.MeshStandardMaterial({
+          map: labelTexture(station.label, { colour: '#f3ece0', size: 58, spacing: 6 }),
+          transparent: true,
+          roughness: 0.5,
+          metalness: 0.2,
+        });
+        name = new THREE.Mesh(new THREE.PlaneGeometry(maxWidth, 0.58), nameMaterial);
+      }
+
+      name.position.y = -0.12;
+      group.add(name);
+
+      // a short accent rule under the name
+      const rule = new THREE.Mesh(
+        new THREE.PlaneGeometry(Math.min(maxWidth, nameWidth || maxWidth) * 0.92, 0.022),
+        new THREE.MeshBasicMaterial({
+          color: accent,
+          transparent: true,
+          opacity: 0.6,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        }),
+      );
+      rule.position.y = -0.42;
+      group.add(rule);
+
+      this.deckLabels.push({
         station,
-        group: mg,
-        body,
+        group,
+        name,
+        nameMaterial,
+        nameBase: new THREE.Color(0xf3ece0),
+        nameHot: new THREE.Color(0xffffff),
         glyph,
-        ring,
-        label,
-        baseY: 0,
+        glyphMaterial,
+        baseY: group.position.y,
+        hot: 0,
+        phase: i * 0.9,
       });
     });
+  }
+
+  /* ---------------------------------------------------------------- 3D lettering */
+
+  /**
+   * Real extruded text — geometry, not a texture, so it catches the deck lighting and
+   * reads from any angle. Optionally squeezed to a maximum width so a long station name
+   * never crowds its neighbours around the ring.
+   */
+  private text3D(
+    text: string,
+    opts: {
+      size: number;
+      depth: number;
+      maxWidth?: number;
+      color: THREE.ColorRepresentation;
+      emissive?: number;
+      roughness?: number;
+      metalness?: number;
+    },
+  ): THREE.Mesh | null {
+    if (!this.font) return null;
+    let geometry: TextGeometry;
+    try {
+      geometry = new TextGeometry(text, {
+        font: this.font,
+        size: opts.size,
+        depth: opts.depth,
+        curveSegments: 2,
+        bevelEnabled: true,
+        bevelThickness: 0.006,
+        bevelSize: 0.005,
+        bevelSegments: 1,
+      });
+    } catch {
+      return null;
+    }
+
+    geometry.computeBoundingBox();
+    const box = geometry.boundingBox;
+    const width = box ? box.max.x - box.min.x : 0;
+    geometry.center();
+
+    const material = new THREE.MeshStandardMaterial({
+      color: opts.color,
+      emissive: new THREE.Color(opts.color).multiplyScalar(opts.emissive ?? 0.35),
+      roughness: opts.roughness ?? 0.32,
+      metalness: opts.metalness ?? 0.65,
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+    if (opts.maxWidth && width > opts.maxWidth) {
+      mesh.scale.setScalar(opts.maxWidth / width);
+    }
+    return mesh;
   }
 
   /* ---------------------------------------------------------------- corridor */
@@ -1087,18 +1275,32 @@ export class PortWorld {
       this.frames.push({ index: i, group: fg, plate: art, side, z });
     });
 
-    // arrival plate
-    const entryPlate = new THREE.Mesh(
-      new THREE.PlaneGeometry(16, 0.9),
-      new THREE.MeshBasicMaterial({
-        map: labelTexture(station.label, { colour: '#f2ece0', size: 60, spacing: 10 }),
-        transparent: true,
-        opacity: 0.7,
-        side: THREE.DoubleSide,
-      }),
-    );
-    entryPlate.position.set(0, 3.2, 1.5);
-    group.add(entryPlate);
+    // arrival plate, in the same extruded lettering as the deck so the two agree
+    const wingName = this.text3D(station.label, {
+      size: 0.42,
+      depth: 0.08,
+      maxWidth: 9,
+      color: 0xf3ece0,
+      emissive: 0.28,
+      metalness: 0.5,
+      roughness: 0.38,
+    });
+    if (wingName) {
+      wingName.position.set(0, 3.2, 1.5);
+      group.add(wingName);
+    } else {
+      const entryPlate = new THREE.Mesh(
+        new THREE.PlaneGeometry(16, 0.9),
+        new THREE.MeshBasicMaterial({
+          map: labelTexture(station.label, { colour: '#f2ece0', size: 60, spacing: 10 }),
+          transparent: true,
+          opacity: 0.7,
+          side: THREE.DoubleSide,
+        }),
+      );
+      entryPlate.position.set(0, 3.2, 1.5);
+      group.add(entryPlate);
+    }
 
     // exit portal at the far end — walk here to return to the deck
     const doorGlow = new THREE.Mesh(
@@ -1128,16 +1330,28 @@ export class PortWorld {
     this.corridorDoor = door;
     group.add(door);
 
-    const doorLabel = new THREE.Mesh(
-      new THREE.PlaneGeometry(4.4, 0.5),
-      new THREE.MeshBasicMaterial({
-        map: labelTexture('KEMBALI KE DEK', { colour: '#e9dcc2', size: 42, spacing: 4 }),
-        transparent: true,
-        opacity: 0.85,
-      }),
-    );
-    doorLabel.position.set(0, 4.55, -length - 1.4);
-    group.add(doorLabel);
+    const exitSign = this.text3D('KEMBALI KE DEK', {
+      size: 0.34,
+      depth: 0.06,
+      maxWidth: 5.2,
+      color: station.accent,
+      emissive: 0.5,
+    });
+    if (exitSign) {
+      exitSign.position.set(0, 4.55, -length - 1.4);
+      group.add(exitSign);
+    } else {
+      const doorLabel = new THREE.Mesh(
+        new THREE.PlaneGeometry(4.4, 0.5),
+        new THREE.MeshBasicMaterial({
+          map: labelTexture('KEMBALI KE DEK', { colour: '#e9dcc2', size: 42, spacing: 4 }),
+          transparent: true,
+          opacity: 0.85,
+        }),
+      );
+      doorLabel.position.set(0, 4.55, -length - 1.4);
+      group.add(doorLabel);
+    }
 
     group.visible = false;
   }
@@ -1241,12 +1455,20 @@ export class PortWorld {
       phase: this.phase,
       station: this.currentStation?.id ?? null,
       monoliths: this.monoliths.length,
+      deckLabels: this.deckLabels.length,
+      displayFont: this.font ? 'loaded' : 'missing',
       frames: this.frames.length,
       hovered: this.hovered,
       camZ: Number(this.rig.position.z.toFixed(2)),
       camY: Number(this.rig.position.y.toFixed(2)),
       walk: Number(this.corridorWalk.toFixed(2)),
       progress: Number(this.getWalkProgress().toFixed(3)),
+      labels: this.deckLabels.map((l) => ({
+        id: l.station.id,
+        glyphs: l.name.geometry.attributes.position?.count ?? 0,
+        rotY: Number(l.group.rotation.y.toFixed(3)),
+        hot: Number(l.hot.toFixed(2)),
+      })),
       frontageOpacity: this.frontPanels.map((p) =>
         Number((p.mesh.material as THREE.MeshBasicMaterial).opacity.toFixed(3)),
       ),
@@ -1504,18 +1726,38 @@ export class PortWorld {
     // monolith hover feedback
     for (const m of this.monoliths) {
       const isHovered = this.hovered === m.station.id;
-      const target = isHovered ? 1 : 0;
       const mat = m.ring.material as THREE.MeshBasicMaterial;
-      mat.opacity += (target * 0.9 - mat.opacity) * Math.min(1, delta * 10);
+      mat.opacity += ((isHovered ? 0.9 : 0) - mat.opacity) * Math.min(1, delta * 10);
       m.group.position.y = THREE.MathUtils.damp(
         m.group.position.y,
-        isHovered ? 0.32 : 0,
+        isHovered ? 0.38 : 0,
         6,
         delta,
       );
-      m.label.position.y = 0.72 + Math.sin(t * 1.2 + m.baseY + m.group.position.x) * 0.03;
-      const gm = m.glyph.material as THREE.MeshBasicMaterial;
-      gm.opacity = 0.72 + Math.sin(t * 1.4 + m.group.position.z) * 0.12 + (isHovered ? 0.2 : 0);
+    }
+
+    // Deck lettering: every plate turns to face the visitor, so the stations stay
+    // readable from wherever you are standing. `warp` keeps it working mid-transition.
+    if (this.phase === 'hub' || this.phase === 'warp') {
+      const camX = this.rig.position.x;
+      const camZ = this.rig.position.z;
+      for (const label of this.deckLabels) {
+        const { x, z } = label.group.position;
+        label.group.rotation.y = Math.atan2(camX - x, camZ - z);
+        label.group.position.y =
+          label.baseY + Math.sin(t * 1.1 + label.phase) * 0.035;
+
+        const isHovered = this.hovered === label.station.id;
+        label.hot = THREE.MathUtils.damp(label.hot, isHovered ? 1 : 0, 8, delta);
+        const scale = 1 + label.hot * 0.12;
+        label.group.scale.setScalar(scale);
+        label.nameMaterial.color.lerpColors(
+          label.nameBase,
+          label.nameHot,
+          label.hot,
+        );
+        label.glyphMaterial.opacity = 0.72 + label.hot * 0.28;
+      }
     }
 
     if (this.hoverRing) {
