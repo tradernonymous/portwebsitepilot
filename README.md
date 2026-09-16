@@ -243,10 +243,19 @@ in the code is Railway-specific.
 - **Mobile.** Drag to look, tap to enter. The station dock along the bottom is a single row
   that scrolls sideways, with a soft fade on whichever side still has stations beyond it —
   there is no scrollbar. Below 860px it switches to each station's short name so more tabs
-  fit at once; a portrait phone shows about three of the seven, and the list button in the top
-  bar opens the full plain-text version of everything.
-- **Landscape phones.** The rail for the wing you are in moves to a left-hand column and the
-  chrome compresses, and the top bar and dock respect the notch insets.
+  fit at once: at 390px wide the strip scrolls, and on a landscape phone all eight fit with
+  no scrolling at all. The list button in the top bar opens the full plain-text version of
+  everything.
+- **The dock stands in a wing too.** Standing in a gallery wing used to replace it with the
+  wing rail, which left a visitor with no way to reach another station. Now the rail sits
+  above the dock on a phone — a sheet across the width — and the teaching line moves to the
+  top of the screen so the three never overlap. The rail's own list scrolls, so every work in
+  a wing can be reached on any screen.
+- **Landscape phones.** The rail for the wing you are in becomes a left-hand column beside
+  the dock, the chrome compresses, and the top bar and dock respect the notch insets. A 16:9
+  film is fitted to the height of a short screen and centred rather than run below the fold.
+- **The light along the bottom** is the same light painting the room is filled with, drawn in
+  CSS (`.lightbed`), so the dock stands in the light the space is made of.
 - **Performance.** three.js is loaded in the background while the gate is on screen, so the
   opening paints immediately. Gallery photographs load only for the station you are in, and
   are released when you leave.
