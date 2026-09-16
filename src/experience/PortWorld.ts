@@ -52,7 +52,7 @@ type FrameRef = {
   z: number;
 };
 
-const ACCENT_DIM = '#0d1622';
+const ACCENT_DIM = '#141210';
 const HUB_CAMERA = new THREE.Vector3(0, 1.72, 0);
 const HUB_RADIUS = 8.1;
 
@@ -77,7 +77,7 @@ function labelTexture(
   text: string,
   opts: { colour?: string; size?: number; weight?: string; spacing?: number } = {},
 ) {
-  const { colour = '#e9f2ff', size = 96, weight = '600', spacing = 6 } = opts;
+  const { colour = '#f2ede2', size = 96, weight = '600', spacing = 6 } = opts;
   const font = `${weight} ${size}px "Chakra Petch", ui-sans-serif, system-ui, sans-serif`;
   const measure = document.createElement('canvas').getContext('2d');
   let width = 1024;
@@ -200,7 +200,6 @@ export class PortWorld {
   private corridorStrip?: THREE.Mesh;
   /** Photographic frontage planes in the approach, faded in as the visitor arrives. */
   private frontPanels: { mesh: THREE.Mesh; baseOpacity: number }[] = [];
-  private frontDoor?: THREE.Mesh;
   private farBackdrop?: THREE.Mesh;
   private frontageHeight = 11.5;
 
@@ -250,10 +249,10 @@ export class PortWorld {
     this.pitch.add(this.camera);
     this.scene.add(this.rig);
 
-    this.glowTexture = radialGlowTexture('rgba(120,210,255,0.55)', 'rgba(40,110,200,0.12)');
+    this.glowTexture = radialGlowTexture('rgba(240,228,205,0.5)', 'rgba(130,110,82,0.12)');
     this.particleTexture = dotTexture();
 
-    this.scene.fog = new THREE.FogExp2(0x04060c, 0.017);
+    this.scene.fog = new THREE.FogExp2(0x000000, 0.017);
 
     this.scene.add(this.entryGroup, this.hubGroup, this.corridorGroup);
     this.buildEnvironment();
@@ -343,19 +342,19 @@ export class PortWorld {
     // gradient backdrop
     const bg = canvasTexture(32, 512, (ctx) => {
       const g = ctx.createLinearGradient(0, 0, 0, 512);
-      g.addColorStop(0, '#050912');
-      g.addColorStop(0.45, '#081423');
-      g.addColorStop(1, '#02040a');
+      g.addColorStop(0, '#000000');
+      g.addColorStop(0.45, '#0f0d0b');
+      g.addColorStop(1, '#000000');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, 32, 512);
     });
     this.scene.background = bg;
 
-    this.scene.add(new THREE.AmbientLight(0x4a6a92, 0.85));
-    const key = new THREE.DirectionalLight(0xbfe4ff, 0.9);
+    this.scene.add(new THREE.AmbientLight(0x6b6152, 0.7));
+    const key = new THREE.DirectionalLight(0xf2ead9, 0.85);
     key.position.set(6, 12, 8);
     this.scene.add(key);
-    const rim = new THREE.PointLight(0x2e7fd8, 42, 60, 2);
+    const rim = new THREE.PointLight(0x8a7355, 34, 60, 2);
     rim.position.set(0, 7, 0);
     this.scene.add(rim);
 
@@ -383,7 +382,7 @@ export class PortWorld {
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
-        color: 0xa8d4ff,
+        color: 0xf2ede2,
       }),
     );
     this.starField = stars;
@@ -399,7 +398,8 @@ export class PortWorld {
       const t = i / ringCount;
       const radius = 7.5 - t * 3.4;
       const geo = new THREE.TorusGeometry(radius, 0.045 + t * 0.05, 8, 64);
-      const tone = new THREE.Color().setHSL(0.55 - t * 0.06, 0.85, 0.55 - t * 0.12);
+      // warm amber at the mouth of the approach, resolving to near-white at the door
+      const tone = new THREE.Color().setHSL(0.09, 0.5 * (1 - t), 0.52 + t * 0.34);
       const mat = new THREE.MeshBasicMaterial({
         color: tone,
         transparent: true,
@@ -435,7 +435,7 @@ export class PortWorld {
       new THREE.LineSegments(
         streakGeo,
         new THREE.LineBasicMaterial({
-          color: 0x8fd8ff,
+          color: 0xefe4cf,
           transparent: true,
           opacity: 0.5,
           blending: THREE.AdditiveBlending,
@@ -448,7 +448,7 @@ export class PortWorld {
     const gateGlow = new THREE.Mesh(
       new THREE.PlaneGeometry(30, 30),
       new THREE.MeshBasicMaterial({
-        map: radialGlowTexture('rgba(180,235,255,0.85)', 'rgba(50,130,220,0.18)'),
+        map: radialGlowTexture('rgba(255,246,228,0.82)', 'rgba(150,120,80,0.16)'),
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
@@ -459,7 +459,7 @@ export class PortWorld {
 
     const portal = new THREE.Mesh(
       new THREE.TorusGeometry(4.2, 0.16, 12, 96),
-      new THREE.MeshBasicMaterial({ color: 0x9fe4ff, blending: THREE.AdditiveBlending }),
+      new THREE.MeshBasicMaterial({ color: 0xfff2dc, blending: THREE.AdditiveBlending }),
     );
     portal.position.z = 0;
     this.entryGate.add(portal);
@@ -468,7 +468,7 @@ export class PortWorld {
       const halo = new THREE.Mesh(
         new THREE.TorusGeometry(5 + i * 1.5, 0.045, 8, 96),
         new THREE.MeshBasicMaterial({
-          color: i === 1 ? 0xffb457 : 0x7fe3ff,
+          color: i === 1 ? 0xffb457 : 0xe9dcc2,
           transparent: true,
           opacity: 0.4 - i * 0.08,
           blending: THREE.AdditiveBlending,
@@ -481,7 +481,7 @@ export class PortWorld {
     const logo = new THREE.Mesh(
       new THREE.PlaneGeometry(9, 2.25),
       new THREE.MeshBasicMaterial({
-        map: labelTexture('PORT', { colour: '#eaf6ff', size: 220, spacing: 40 }),
+        map: labelTexture('PORT', { colour: '#f7f2e8', size: 220, spacing: 40 }),
         transparent: true,
         opacity: 0.95,
       }),
@@ -494,7 +494,7 @@ export class PortWorld {
       new THREE.PlaneGeometry(14, 0.9),
       new THREE.MeshBasicMaterial({
         map: labelTexture('PEOPLE OF REMARKABLE TALENTS', {
-          colour: '#7fd6ff',
+          colour: '#e9dcc2',
           size: 54,
           weight: '400',
           spacing: 12,
@@ -544,8 +544,6 @@ export class PortWorld {
         mesh.geometry = new THREE.PlaneGeometry(width, height);
         mesh.position.y = 2.2 + (mesh.userData.yOffset as number) * height;
       }
-      const doorY = 2.2 - height * 0.5 + 2.1;
-      if (this.frontDoor) this.frontDoor.position.y = Math.max(1.4, doorY);
     });
 
     const makePanel = (
@@ -581,45 +579,21 @@ export class PortWorld {
     // its mirror in the street, faded out downwards
     panels.push(makePanel(0.3, 0x9dc4e8, -1.0, true, texture, vFade));
 
-    // a doorway punched into the frontage, dark with a warm lip of light
-    const door = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.2, 4.4),
+    // A threshold bloom rather than a drawn doorway. The photograph already is the real
+    // space, so this only has to glow warmly as you cross into it — and it sits happily
+    // over an interior shot or an exterior one.
+    const threshold = new THREE.Mesh(
+      new THREE.PlaneGeometry(17, 12),
       new THREE.MeshBasicMaterial({
-        color: 0x05080f,
+        map: radialGlowTexture('rgba(255,238,208,0.45)', 'rgba(150,120,80,0.1)'),
         transparent: true,
-        opacity: 0.86,
-        depthWrite: false,
-      }),
-    );
-    door.position.set(0, 2.1, -10.85);
-    this.frontDoor = door;
-    group.add(door);
-
-    const doorLip = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.9, 0.16),
-      new THREE.MeshBasicMaterial({
-        color: 0xffd9a0,
-        transparent: true,
-        opacity: 0.85,
+        opacity: 0.5,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
     );
-    doorLip.position.set(0, 4.34, -10.8);
-    group.add(doorLip);
-
-    const doorGlow = new THREE.Mesh(
-      new THREE.PlaneGeometry(13, 9),
-      new THREE.MeshBasicMaterial({
-        map: radialGlowTexture('rgba(255,214,160,0.5)', 'rgba(120,170,235,0.1)'),
-        transparent: true,
-        opacity: 0.55,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    );
-    doorGlow.position.set(0, 2.4, -10.7);
-    group.add(doorGlow);
+    threshold.position.set(0, 2.4, -10.6);
+    group.add(threshold);
 
     // A huge, very faint copy that rides with the camera, so the front is present in the
     // background from the very first frame of the gate screen.
@@ -648,7 +622,7 @@ export class PortWorld {
     const floor = new THREE.Mesh(
       new THREE.CircleGeometry(26, 72),
       new THREE.MeshStandardMaterial({
-        color: 0x070d18,
+        color: 0x050504,
         roughness: 0.55,
         metalness: 0.65,
       }),
@@ -682,7 +656,7 @@ export class PortWorld {
       new THREE.LineSegments(
         gridGeo,
         new THREE.LineBasicMaterial({
-          color: 0x1d4c78,
+          color: 0x3d372c,
           transparent: true,
           opacity: 0.55,
           blending: THREE.AdditiveBlending,
@@ -707,9 +681,9 @@ export class PortWorld {
     const beam = new THREE.Mesh(
       new THREE.CylinderGeometry(0.65, 1.5, 12, 32, 1, true),
       new THREE.MeshBasicMaterial({
-        color: 0x63c8ff,
+        color: 0xfff6e6,
         transparent: true,
-        opacity: 0.055,
+        opacity: 0.05,
         side: THREE.DoubleSide,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
@@ -734,9 +708,9 @@ export class PortWorld {
       new THREE.Line(
         rimGeo,
         new THREE.LineBasicMaterial({
-          color: 0x7fe3ff,
+          color: 0xe9dcc2,
           transparent: true,
-          opacity: 0.85,
+          opacity: 0.8,
           blending: THREE.AdditiveBlending,
         }),
       ),
@@ -764,7 +738,7 @@ export class PortWorld {
           depthWrite: false,
           opacity: 0.75,
           blending: THREE.AdditiveBlending,
-          color: 0x9fd8ff,
+          color: 0xeae3d5,
         }),
       ),
     );
@@ -773,7 +747,7 @@ export class PortWorld {
     const logo = new THREE.Mesh(
       new THREE.PlaneGeometry(11, 2.75),
       new THREE.MeshBasicMaterial({
-        map: labelTexture('PORT', { colour: '#dcf1ff', size: 200, spacing: 36 }),
+        map: labelTexture('PORT', { colour: '#f2ece0', size: 200, spacing: 36 }),
         transparent: true,
         opacity: 0.72,
         side: THREE.DoubleSide,
@@ -836,7 +810,7 @@ export class PortWorld {
 
       const pedestal = new THREE.Mesh(
         new THREE.BoxGeometry(2.4, 0.22, 0.8),
-        new THREE.MeshStandardMaterial({ color: 0x0a1220, metalness: 0.9, roughness: 0.3 }),
+        new THREE.MeshStandardMaterial({ color: 0x121110, metalness: 0.9, roughness: 0.3 }),
       );
       pedestal.position.y = 0.11;
       mg.add(pedestal);
@@ -869,7 +843,7 @@ export class PortWorld {
       const label = new THREE.Mesh(
         new THREE.PlaneGeometry(3.1, 0.55),
         new THREE.MeshBasicMaterial({
-          map: labelTexture(station.label, { colour: '#dbe9ff', size: 62, spacing: 5 }),
+          map: labelTexture(station.label, { colour: '#efe9dd', size: 62, spacing: 5 }),
           transparent: true,
           opacity: 0.92,
         }),
@@ -971,7 +945,7 @@ export class PortWorld {
 
     // floor + ceiling
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x06090f,
+      color: 0x050504,
       roughness: 0.28,
       metalness: 0.8,
     });
@@ -982,7 +956,7 @@ export class PortWorld {
 
     const ceiling = new THREE.Mesh(
       new THREE.PlaneGeometry(9, length + 20),
-      new THREE.MeshStandardMaterial({ color: 0x04060b, roughness: 0.9, metalness: 0.2 }),
+      new THREE.MeshStandardMaterial({ color: 0x030303, roughness: 0.9, metalness: 0.2 }),
     );
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.set(0, 4.4, -length / 2 + 6);
@@ -993,7 +967,7 @@ export class PortWorld {
       const wall = new THREE.Mesh(
         new THREE.PlaneGeometry(length + 20, 4.6),
         new THREE.MeshStandardMaterial({
-          color: 0x080c14,
+          color: 0x0b0a09,
           roughness: 0.85,
           metalness: 0.15,
           side: THREE.DoubleSide,
@@ -1025,9 +999,9 @@ export class PortWorld {
       const lamp = new THREE.Mesh(
         new THREE.PlaneGeometry(0.9, 0.12),
         new THREE.MeshBasicMaterial({
-          color: 0xbfe6ff,
+          color: 0xf2e8d5,
           transparent: true,
-          opacity: 0.5,
+          opacity: 0.45,
           blending: THREE.AdditiveBlending,
         }),
       );
@@ -1045,7 +1019,7 @@ export class PortWorld {
 
       const plate = new THREE.Mesh(
         new THREE.BoxGeometry(3.5, 2.5, 0.14),
-        new THREE.MeshStandardMaterial({ color: 0x0b1119, metalness: 0.7, roughness: 0.4 }),
+        new THREE.MeshStandardMaterial({ color: 0x0e0d0b, metalness: 0.7, roughness: 0.4 }),
       );
       fg.add(plate);
 
@@ -1072,7 +1046,7 @@ export class PortWorld {
         new THREE.PlaneGeometry(3.3, 0.44),
         new THREE.MeshBasicMaterial({
           map: labelTexture(ex.title.toUpperCase(), {
-            colour: '#dcebff',
+            colour: '#efe9dd',
             size: 44,
             spacing: 3,
           }),
@@ -1117,7 +1091,7 @@ export class PortWorld {
     const entryPlate = new THREE.Mesh(
       new THREE.PlaneGeometry(16, 0.9),
       new THREE.MeshBasicMaterial({
-        map: labelTexture(station.label, { colour: '#e6f3ff', size: 60, spacing: 10 }),
+        map: labelTexture(station.label, { colour: '#f2ece0', size: 60, spacing: 10 }),
         transparent: true,
         opacity: 0.7,
         side: THREE.DoubleSide,
@@ -1130,7 +1104,7 @@ export class PortWorld {
     const doorGlow = new THREE.Mesh(
       new THREE.PlaneGeometry(7, 7),
       new THREE.MeshBasicMaterial({
-        map: radialGlowTexture('rgba(200,240,255,0.8)', 'rgba(60,150,230,0.14)'),
+        map: radialGlowTexture('rgba(255,246,228,0.78)', 'rgba(150,120,80,0.14)'),
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
@@ -1142,7 +1116,7 @@ export class PortWorld {
     const door = new THREE.Mesh(
       new THREE.PlaneGeometry(3.3, 3.9),
       new THREE.MeshBasicMaterial({
-        color: 0x9fe4ff,
+        color: 0xf4e9d2,
         transparent: true,
         opacity: 0.22,
         side: THREE.DoubleSide,
@@ -1157,7 +1131,7 @@ export class PortWorld {
     const doorLabel = new THREE.Mesh(
       new THREE.PlaneGeometry(4.4, 0.5),
       new THREE.MeshBasicMaterial({
-        map: labelTexture('KEMBALI KE DEK', { colour: '#cfe9ff', size: 42, spacing: 4 }),
+        map: labelTexture('KEMBALI KE DEK', { colour: '#e9dcc2', size: 42, spacing: 4 }),
         transparent: true,
         opacity: 0.85,
       }),
@@ -1523,9 +1497,6 @@ export class PortWorld {
         // keep the far front at a stable distance so it always reads as background
         this.farBackdrop.position.z = this.rig.position.z - 62;
         this.farBackdrop.position.y = this.rig.position.y + 4;
-      }
-      if (this.frontDoor) {
-        (this.frontDoor.material as THREE.MeshBasicMaterial).opacity = 0.86 * arrive * passThrough;
       }
     }
     if (this.phase === 'hub') this.updateHover();

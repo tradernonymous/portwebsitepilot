@@ -1,20 +1,22 @@
 /* ==========================================================================
    PORT — People Of Remarkable Talents
-   A dark, instrument-panel aesthetic: thin glowing rules, translucent plates,
-   and type that stays out of the way of the photography.
+
+   True black, with a warm champagne chrome drawn from the wood and lamplight of
+   the building itself. Colour is spent only on the seven stations, so the space
+   stays dark and the work stays loud.
    ========================================================================== */
 
 :root {
-  --bg: #04060c;
-  --bg-2: #070c16;
-  --ink: #e9f2fd;
-  --ink-dim: #a8bdd4;
-  --muted: #7d93ab;
-  --line: rgba(127, 227, 255, 0.2);
-  --line-soft: rgba(127, 227, 255, 0.1);
-  --glass: rgba(8, 15, 27, 0.72);
-  --glass-solid: rgba(6, 11, 21, 0.94);
-  --accent: #7fe3ff;
+  --bg: #000000;
+  --bg-2: #0a0a09;
+  --ink: #f4f1ea;
+  --ink-dim: #bcb5a9;
+  --muted: #8d877c;
+  --line: rgba(233, 220, 194, 0.2);
+  --line-soft: rgba(233, 220, 194, 0.1);
+  --glass: rgba(13, 12, 10, 0.72);
+  --glass-solid: rgba(8, 8, 7, 0.94);
+  --accent: #e9dcc2;
   --warn: #ffb457;
   --radius: 14px;
   --font-display: 'Chakra Petch', ui-sans-serif, system-ui, sans-serif;
@@ -103,7 +105,7 @@ button {
 .stage {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at 50% 60%, #0a1626 0%, var(--bg) 70%);
+  background: radial-gradient(circle at 50% 58%, #0d0c0a 0%, var(--bg) 72%);
 }
 
 .stage canvas {
@@ -149,7 +151,12 @@ button {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 50%, rgba(210, 245, 255, 0.95), rgba(90, 180, 255, 0.1) 55%, transparent 75%);
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 248, 235, 0.92),
+    rgba(190, 168, 130, 0.12) 55%,
+    transparent 75%
+  );
   animation: warp 0.55s var(--ease) forwards;
 }
 
@@ -176,9 +183,9 @@ button {
   place-items: center;
   background: radial-gradient(
     ellipse at 50% 46%,
-    rgba(4, 8, 15, 0.28) 0%,
-    rgba(3, 6, 12, 0.62) 52%,
-    rgba(2, 4, 9, 0.92) 100%
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.58) 52%,
+    rgba(0, 0, 0, 0.94) 100%
   );
   z-index: 40;
   text-align: center;
@@ -197,8 +204,8 @@ button {
   inset: -2%;
   background-size: cover;
   background-position: center 42%;
-  opacity: 0.42;
-  filter: saturate(0.72) contrast(1.08) brightness(0.82) blur(1.5px);
+  opacity: 0.5;
+  filter: saturate(0.88) contrast(1.06) brightness(0.72) blur(1px);
   -webkit-mask-image: radial-gradient(
     ellipse 78% 62% at 50% 44%,
     #000 0%,
@@ -237,12 +244,12 @@ button {
   left: 50%;
   top: -4rem;
   width: min(760px, 108vw);
-  height: 22rem;
+  height: 26rem;
   transform: translateX(-50%);
   background: radial-gradient(
     ellipse at 50% 45%,
-    rgba(3, 6, 12, 0.82) 0%,
-    rgba(3, 6, 12, 0.55) 45%,
+    rgba(0, 0, 0, 0.86) 0%,
+    rgba(0, 0, 0, 0.6) 45%,
     transparent 72%
   );
   z-index: -1;
@@ -257,11 +264,42 @@ button {
   letter-spacing: 0.22em;
   margin: 0 0 0.1em;
   text-indent: 0.22em;
-  background: linear-gradient(180deg, #ffffff 0%, #9fdcff 55%, #4a9ed6 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f0e7d7 52%, #9d927e 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 34px rgba(120, 200, 255, 0.35));
+  filter: drop-shadow(0 0 36px rgba(233, 220, 194, 0.32));
+}
+
+/* the greeting — the first thing anyone reads, so it carries the weight */
+.gate-kicker {
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 1.1rem;
+}
+
+.gate-welcome {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 4.4vw, 2.15rem);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.015em;
+  color: var(--ink);
+  margin: 1.9rem auto 0.7rem;
+  max-width: 24ch;
+  text-wrap: balance;
+}
+
+.gate-welcome em {
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  text-shadow: 0 0 30px rgba(233, 220, 194, 0.4);
 }
 
 .gate-sub {
@@ -271,15 +309,15 @@ button {
   text-indent: 0.42em;
   color: var(--accent);
   text-transform: uppercase;
-  margin: 0 0 2.2rem;
+  margin: 0 0 0.2rem;
 }
 
 .gate-line {
-  display: inline-block;
-  font-size: 0.94rem;
+  display: block;
+  font-size: 0.95rem;
   color: var(--ink-dim);
-  max-width: 46ch;
-  margin: 0 auto 2.4rem;
+  max-width: 40ch;
+  margin: 0 auto 2.5rem;
 }
 
 .gate-actions {
@@ -297,7 +335,7 @@ button {
   padding: 0.85rem 1.7rem;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(12, 24, 42, 0.6);
+  background: rgba(24, 21, 17, 0.6);
   color: var(--ink);
   transition: all 0.28s var(--ease);
   backdrop-filter: blur(8px);
@@ -306,13 +344,13 @@ button {
 .btn:hover {
   border-color: var(--accent);
   color: #fff;
-  box-shadow: 0 0 26px rgba(127, 227, 255, 0.28);
+  box-shadow: 0 0 26px rgba(233, 220, 194, 0.26);
   transform: translateY(-1px);
 }
 
 .btn-primary {
-  background: linear-gradient(120deg, rgba(127, 227, 255, 0.22), rgba(127, 227, 255, 0.06));
-  border-color: rgba(127, 227, 255, 0.6);
+  background: linear-gradient(120deg, rgba(233, 220, 194, 0.24), rgba(233, 220, 194, 0.06));
+  border-color: rgba(233, 220, 194, 0.6);
   color: #fff;
 }
 
@@ -383,7 +421,7 @@ button {
   padding: 1rem 1.4rem;
   z-index: 20;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(3, 6, 12, 0.9), transparent);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent);
 }
 
 .hud-top > * {
@@ -626,13 +664,13 @@ button {
 }
 
 .rail-item:hover {
-  background: rgba(127, 227, 255, 0.06);
+  background: rgba(233, 220, 194, 0.06);
   color: var(--ink);
 }
 
 .rail-item.is-active {
   border-left-color: var(--accent);
-  background: rgba(127, 227, 255, 0.09);
+  background: rgba(233, 220, 194, 0.09);
   color: #fff;
 }
 
@@ -691,7 +729,7 @@ button {
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: rgba(2, 4, 9, 0.62);
+  background: rgba(0, 0, 0, 0.64);
   backdrop-filter: blur(3px);
   animation: fade-in 0.35s var(--ease) both;
 }
@@ -807,7 +845,7 @@ button {
 }
 
 .panel-body::-webkit-scrollbar-thumb {
-  background: rgba(127, 227, 255, 0.2);
+  background: rgba(233, 220, 194, 0.2);
   border-radius: 9px;
 }
 
@@ -878,7 +916,7 @@ button {
   border: 1px solid var(--line-soft);
   border-radius: 10px;
   overflow: hidden;
-  background: #0a1220;
+  background: #0e0d0b;
   padding: 0;
   display: block;
   width: 100%;
@@ -928,7 +966,7 @@ button {
   overflow: hidden;
   border: 1px solid var(--line-soft);
   margin-bottom: 1.6rem;
-  background: #0a1220;
+  background: #0e0d0b;
 }
 
 .hero img {
@@ -984,13 +1022,13 @@ button {
   padding: 0.8rem;
   border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: rgba(11, 19, 32, 0.55);
+  background: rgba(20, 18, 16, 0.55);
   transition: all 0.26s var(--ease);
 }
 
 .exhibit-card:hover {
   border-color: rgba(127, 227, 255, 0.45);
-  background: rgba(17, 29, 48, 0.75);
+  background: rgba(32, 29, 25, 0.78);
   transform: translateY(-2px);
 }
 
@@ -1011,7 +1049,7 @@ button {
 .exhibit-card .noimg {
   display: grid;
   place-items: center;
-  background: linear-gradient(140deg, #0c1626, #0a1120);
+  background: linear-gradient(140deg, #171512, #0b0a09);
   color: var(--muted);
 }
 
@@ -1054,7 +1092,7 @@ button {
   overflow: hidden;
   border: 1px solid var(--line-soft);
   margin-bottom: 1.2rem;
-  background: #0a1220;
+  background: #0e0d0b;
 }
 
 .reader-hero img {
@@ -1092,7 +1130,7 @@ button {
   gap: 0.6rem;
   padding: 0.9rem 1.6rem;
   border-top: 1px solid var(--line-soft);
-  background: rgba(4, 8, 15, 0.6);
+  background: rgba(8, 8, 7, 0.6);
 }
 
 .pager .btn {
@@ -1137,7 +1175,7 @@ button {
   border: 1px solid var(--line-soft);
   border-radius: 12px;
   padding: 1rem;
-  background: rgba(11, 19, 32, 0.5);
+  background: rgba(20, 18, 16, 0.5);
 }
 
 .contact-card h4 {
@@ -1218,7 +1256,7 @@ button {
   font-size: clamp(2.4rem, 9vw, 5rem);
   letter-spacing: 0.2em;
   text-indent: 0.2em;
-  background: linear-gradient(180deg, #fff, #7ec8f0);
+  background: linear-gradient(180deg, #fff, #cec2ab);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -1250,6 +1288,7 @@ button {
   border: 1px solid var(--line-soft);
   border-radius: 999px;
   color: var(--ink-dim);
+  background: rgba(14, 13, 11, 0.7);
 }
 
 .flat-nav a:hover {
@@ -1312,7 +1351,7 @@ button {
   padding: 0.1rem 0.45rem;
   border: 1px solid var(--line);
   border-radius: 5px;
-  background: rgba(127, 227, 255, 0.08);
+  background: rgba(233, 220, 194, 0.08);
   margin-right: 0.3rem;
 }
 

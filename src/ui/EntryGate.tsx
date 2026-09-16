@@ -25,16 +25,14 @@ export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat 
         />
       ) : null}
       <div className="gate-inner">
+        <p className="gate-kicker">Est. 2011 · Ipoh, Perak</p>
         <h1 className="gate-mark">PORT</h1>
         <p className="gate-sub">People Of Remarkable Talents</p>
 
-        <p className="gate-line">
-          Kampung Karyawan Amanjaya — agensi kebudayaan Negeri Perak. Ruang ini dibina untuk
-          diterokai, bukan digulung.
-          {reducedMotion
-            ? ' Mod gerakan minimum dikesan, jadi anda akan terus tiba di dek.'
-            : ' Anda akan melintasi pintu masuk PORT dan tiba di dek utama.'}
+        <p className="gate-welcome">
+          Sedia nak terokai dunia <em>SENI</em>?
         </p>
+        <p className="gate-line">Jemput masuk — pintu kami sentiasa terbuka untuk anda.</p>
 
         <div className="gate-actions">
           <button

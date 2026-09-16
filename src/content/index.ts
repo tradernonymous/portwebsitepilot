@@ -197,7 +197,7 @@ export const stations: Station[] = [
     label: 'TENTANG KAMI',
     short: 'Tentang',
     glyph: 'compass',
-    accent: '#4fd1ff',
+    accent: '#e9dcc2',
     tagline: 'Siapa kami, dan mengapa kami ada.',
     kind: 'about',
     intro: [
