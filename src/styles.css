@@ -743,12 +743,6 @@ button {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .lightbed i {
-    animation: none;
-  }
-}
-
 .dock {
   position: fixed;
   /*
@@ -1010,7 +1004,6 @@ button {
   border-radius: var(--radius);
   background: var(--glass);
   backdrop-filter: blur(14px);
-  overflow: hidden;
   animation: slide-in 0.5s var(--ease) both;
 }
 
@@ -1396,9 +1389,15 @@ button {
   color: var(--gold);
 }
 
-/* The film station gets the room it needs: 16:9 inside a narrow slide-over is a compromise. */
+/*
+ * The film station gets the room it needs: 16:9 inside a narrow slide-over is a compromise.
+ *
+ * `.panel.video-panel`, not `.video-panel`: a media query adds no weight of its own, and the
+ * generic `.panel` width is written later in this file, so one class was never enough to win
+ * — the wide screening room silently stayed a narrow slide-over.
+ */
 @media (min-width: 1000px) {
-  .video-panel {
+  .panel.video-panel {
     width: min(1240px, 94vw);
   }
 }
@@ -2103,7 +2102,12 @@ button {
 @media (max-width: 860px) {
   .rail {
     top: auto;
-    bottom: 6.6rem;
+    /*
+     * Clear of the station dock, which now stands in a wing as well as on the deck.
+     * 6.6rem was measured against the dock's own position and left the two overlapping:
+     * the dock's top edge sits about 6.2rem off the floor on a phone.
+     */
+    bottom: 7.4rem;
     left: 0.7rem;
     right: 0.7rem;
     width: auto;
@@ -2111,6 +2115,17 @@ button {
 
   .rail-list {
     max-height: 30vh;
+  }
+
+  /*
+   * The teaching line moves to the top of the screen in a wing.
+   *
+   * At the bottom it lands in the same band as the wing rail, which is a sheet above the
+   * dock on a phone — the two were drawn on top of one another.
+   */
+  .hint.is-wing {
+    top: 4.8rem;
+    bottom: auto;
   }
 
   /*
@@ -2319,12 +2334,38 @@ button {
 
   .rail {
     top: 3.5rem;
-    bottom: 3.1rem;
+    /* Above the compressed dock, which stands in a wing too. 3.1rem sat underneath it. */
+    bottom: 5.8rem;
     left: max(0.6rem, env(safe-area-inset-left));
     right: auto;
     width: min(270px, 44vw);
     display: flex;
     flex-direction: column;
+  }
+
+  /*
+   * The wing line moves off the bottom as well — every strip down there is taken — and
+   * keeps clear of the rail, which is a left-hand column on a wide, short screen.
+   */
+  .hint.is-wing {
+    top: 3.6rem;
+    bottom: auto;
+    left: calc(min(270px, 44vw) + 1rem);
+    right: 0.8rem;
+    max-width: none;
+  }
+
+  /*
+   * A 16:9 film cannot be watched at full width on a short screen.
+   *
+   * Held to the available width, the player stood 434px tall in a 390px window, so a third
+   * of it — and the play button with it — sat below the fold. Fitted to the height instead
+   * and centred, so the whole player is on screen at once.
+   */
+  .video-stage {
+    max-width: calc(56vh * 16 / 9);
+    max-height: 56vh;
+    margin-inline: auto;
   }
 
   .rail-list {

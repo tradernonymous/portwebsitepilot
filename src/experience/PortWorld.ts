@@ -76,8 +76,7 @@ type LightShard = {
   rate: number;
   phase: number;
   baseOpacity: number;
-  /** How far the highlight slides along the band, and how fast. */
-  travel: number;
+  /** How fast the highlight slides along the band. */
   scroll: number;
   /** Local axis the shard leans on when the pointer sweeps close to it. */
   lean: THREE.Vector3;
@@ -632,7 +631,6 @@ export class PortWorld {
           rate: 0.03 + Math.random() * 0.05,
           phase: Math.random() * Math.PI * 2,
           baseOpacity: 0.13 + Math.random() * 0.11,
-          travel: 0.05 + Math.random() * 0.16,
           scroll: 0.04 + Math.random() * 0.1,
           lean: new THREE.Vector3(
             THREE.MathUtils.randFloatSpread(1),

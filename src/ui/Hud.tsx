@@ -288,9 +288,24 @@ export function DeckCaption({ station, fallback }: { station?: Station | null; f
   );
 }
 
-export function Hint({ children, retiring }: { children: ReactNode; retiring?: boolean }) {
+export function Hint({
+  children,
+  retiring,
+  wing,
+}: {
+  children: ReactNode;
+  retiring?: boolean;
+  /**
+   * Set inside a gallery wing, where a phone draws the wing rail as a sheet above the dock.
+   * The line moves to the top of the screen there rather than being drawn over the rail.
+   */
+  wing?: boolean;
+}) {
   return (
-    <p className={`hint${retiring ? ' is-done' : ''}`} aria-hidden={retiring ? true : undefined}>
+    <p
+      className={`hint${wing ? ' is-wing' : ''}${retiring ? ' is-done' : ''}`}
+      aria-hidden={retiring ? true : undefined}
+    >
       {children}
     </p>
   );

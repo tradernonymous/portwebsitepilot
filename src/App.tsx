@@ -495,7 +495,7 @@ export default function App() {
 
           {/* The dock names the stations; the hint teaches the gesture. One line each,
               and the verb follows the device — a phone has no cursor to click with. */}
-          <Hint retiring={taught === hintSpace}>
+          <Hint retiring={taught === hintSpace} wing={inCorridor}>
             {inCorridor
               ? coarsePointer
                 ? 'Undur / Maju untuk berjalan · Ketuk bingkai untuk membaca'

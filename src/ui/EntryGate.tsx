@@ -63,10 +63,18 @@ export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat 
         }
       }
       if (!payload || typeof payload !== 'object') return;
+      // An embed the owner has switched off reports itself as an error, and that card is
+      // exactly what must never be the welcome screen.
+      if ((payload as { event?: unknown }).event === 'onError') return;
       const info = (payload as { info?: { playerState?: unknown } }).info;
       const state = typeof info?.playerState === 'number' ? info.playerState : null;
-      // 1 playing, 3 buffering: either way there is a film on screen behind the words.
-      if (state === 1 || state === 3) setFilmLive(true);
+      // 1 playing, 2 paused, 3 buffering, 5 cued.
+      //
+      // Cued and paused count. A phone that will not autoplay parks the player on 5 with
+      // the film's own frame and a play button, and that is a film the visitor can start
+      // with one tap — refusing to show it until it plays by itself is what made the
+      // entry screen look like a still photograph on a phone.
+      if (state === 1 || state === 2 || state === 3 || state === 5) setFilmLive(true);
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
