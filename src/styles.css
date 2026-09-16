@@ -124,6 +124,17 @@ button {
   transition: filter 0.5s var(--ease);
 }
 
+/* The foyer is the gallery page. Hide the 360 canvas behind it instead of stacking two
+   competing rooms; the selected work remains the single visual destination. */
+.stage.is-gallery-home canvas {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.stage.is-gallery-home {
+  background: var(--bg);
+}
+
 .stage canvas {
   transition: filter 0.5s var(--ease);
 }
@@ -291,6 +302,28 @@ button {
       rgba(0, 0, 0, 0.82) 100%
     ),
     linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, transparent 26%, transparent 62%, rgba(0, 0, 0, 0.88) 100%);
+}
+
+.gate-language {
+  position: absolute;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  z-index: 4;
+  min-width: 44px;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.42);
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  transition: all 0.22s var(--ease);
+}
+
+.gate-language:hover {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .gate-credit {
@@ -664,6 +697,14 @@ button {
   transition: all 0.22s var(--ease);
 }
 
+.language-btn {
+  min-width: 38px;
+  padding-inline: 0.45rem;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
 .icon-btn:hover,
 .icon-btn[aria-pressed='true'] {
   color: var(--ink);
@@ -883,6 +924,99 @@ button {
   animation: foyer-in 0.65s var(--ease) both;
 }
 
+.gallery-foyer.immersive {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+
+.gallery-foyer.immersive .gallery-foyer-art {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  background: var(--bg);
+}
+
+.gallery-foyer.immersive .gallery-foyer-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(247,247,244,0.98) 0%, rgba(247,247,244,0.82) 30%, rgba(247,247,244,0.05) 68%, rgba(247,247,244,0.78) 100%), linear-gradient(0deg, rgba(247,247,244,0.96), transparent 42%, rgba(247,247,244,0.28));
+}
+
+.gallery-foyer.immersive .gallery-foyer-art img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  object-position: center;
+  padding: 7vh 15vw 18vh;
+  filter: grayscale(0.08) saturate(0.95) contrast(1.04);
+}
+
+.gallery-foyer.immersive .gallery-foyer-index {
+  left: auto;
+  right: 4vw;
+  top: 7rem;
+  bottom: auto;
+  color: var(--ink);
+  text-shadow: none;
+  z-index: 2;
+}
+
+.gallery-foyer.immersive .gallery-foyer-copy {
+  position: absolute;
+  left: clamp(1.25rem, 8vw, 8rem);
+  bottom: clamp(8rem, 16vh, 11rem);
+  z-index: 3;
+  width: min(450px, calc(100vw - 2.5rem));
+  pointer-events: auto;
+}
+
+.gallery-foyer.immersive .gallery-foyer-kicker {
+  color: var(--ink-dim);
+}
+
+.gallery-foyer.immersive h1 {
+  font-size: clamp(1.8rem, 5vw, 4.6rem);
+  letter-spacing: 0.08em;
+  white-space: normal;
+  text-wrap: balance;
+}
+
+.gallery-foyer.immersive .gallery-foyer-copy p {
+  max-width: 34ch;
+  font-size: clamp(0.78rem, 1.4vw, 1rem);
+  line-height: 1.55;
+}
+
+.gallery-foyer.immersive .gallery-foyer-actions {
+  margin-top: 1.15rem;
+}
+
+.gallery-foyer.immersive .gallery-foyer-pager {
+  position: fixed;
+  right: clamp(1rem, 4vw, 4rem);
+  bottom: max(1.2rem, env(safe-area-inset-bottom));
+  pointer-events: auto;
+}
+
+.gallery-foyer.immersive .foyer-arrow {
+  width: 42px;
+  height: 42px;
+  background: rgba(255,255,252,0.84);
+}
+
 .gallery-foyer-art {
   position: relative;
   min-height: 118px;
@@ -1008,6 +1142,7 @@ button {
 
 .dock {
   position: fixed;
+  pointer-events: auto;
   /*
    * Centred with left/right + auto margins rather than `left: 50%` + `translateX(-50%)`.
    * A fixed element's shrink-to-fit width is capped at (containing block - left), so the
@@ -1019,7 +1154,7 @@ button {
   bottom: max(1.2rem, env(safe-area-inset-bottom));
   margin-inline: auto;
   width: fit-content;
-  z-index: 20;
+  z-index: 50;
   max-width: min(1280px, calc(100vw - 2rem));
   padding: 0.55rem;
   border: 1px solid var(--line-soft);
@@ -2589,6 +2724,31 @@ button {
   .gallery-foyer-art img,
   .gallery-foyer-empty {
     min-height: 104px;
+  }
+
+  .gallery-foyer.immersive .gallery-foyer-art img {
+    padding: 8vh 4vw 19vh;
+    object-fit: contain;
+  }
+
+  .gallery-foyer.immersive .gallery-foyer-copy {
+    left: 1rem;
+    bottom: calc(max(0.7rem, env(safe-area-inset-bottom)) + 6.9rem);
+    width: min(380px, calc(100vw - 2rem));
+  }
+
+  .gallery-foyer.immersive h1 {
+    font-size: clamp(1.45rem, 8vw, 2.4rem);
+  }
+
+  .gallery-foyer.immersive .gallery-foyer-index {
+    top: 5rem;
+    right: 1rem;
+  }
+
+  .gallery-foyer.immersive .gallery-foyer-pager {
+    right: 1rem;
+    bottom: calc(max(0.7rem, env(safe-area-inset-bottom)) + 6.9rem);
   }
 
   .gallery-foyer-actions {

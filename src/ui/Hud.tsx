@@ -5,11 +5,20 @@ import { Glyph } from './Glyph';
 type TopBarProps = {
   crumb?: ReactNode;
   flat: boolean;
+  language?: 'ms' | 'en';
+  onToggleLanguage?: () => void;
   onToggleFlat: () => void;
   onHelp: () => void;
 };
 
-export function TopBar({ crumb, flat, onToggleFlat, onHelp }: TopBarProps) {
+export function TopBar({
+  crumb,
+  flat,
+  language = 'ms',
+  onToggleLanguage,
+  onToggleFlat,
+  onHelp,
+}: TopBarProps) {
   return (
     <header className="hud-top">
       <div className="brand">
@@ -19,6 +28,15 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp }: TopBarProps) {
       <div className="hud-spacer" />
       {crumb ? <div className="crumb">{crumb}</div> : null}
       <div className="hud-tools">
+        <button
+          type="button"
+          className="icon-btn language-btn"
+          onClick={onToggleLanguage}
+          aria-label={language === 'ms' ? 'Switch to English' : 'Tukar ke Bahasa Melayu'}
+          title={language === 'ms' ? 'English' : 'Bahasa Melayu'}
+        >
+          {language === 'ms' ? 'EN' : 'BM'}
+        </button>
         <button
           type="button"
           className="icon-btn"

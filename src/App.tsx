@@ -29,6 +29,7 @@ export default function App() {
   const [activeExhibit, setActiveExhibit] = useState(0);
   const [corridorProgress, setCorridorProgress] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [language, setLanguage] = useState<'ms' | 'en'>('ms');
   /** The room preview shown in the foyer before a visitor enters it. */
   const [foyerStationId, setFoyerStationId] = useState(
     stations[1]?.id ?? stations[0]?.id ?? null,
@@ -390,7 +391,14 @@ export default function App() {
   if (mode === 'flat') {
     return (
       <>
-        <TopBar crumb={null} flat onToggleFlat={toggleFlat} onHelp={() => setHelpOpen(true)} />
+        <TopBar
+          crumb={null}
+          flat
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === 'ms' ? 'en' : 'ms'))}
+          onToggleFlat={toggleFlat}
+          onHelp={() => setHelpOpen(true)}
+        />
         <FlatView />
         {reader}
         {helpOpen ? (
@@ -413,6 +421,7 @@ export default function App() {
 
   const inCorridor = hintSpace === 'corridor';
   const dimmed = route.kind === 'station' && activeStation?.kind !== 'corridor';
+  const isGalleryHome = phase === 'hub' && !activeStation;
   /** Pointing at a station wins over merely facing it; otherwise the room names itself. */
   const captionStation = stationById(hovered ?? facing ?? '');
   const crumbExhibit =
@@ -420,7 +429,7 @@ export default function App() {
 
   return (
     <>
-      <div className={`stage${dimmed ? ' is-dimmed' : ''}`}>
+      <div className={`stage${dimmed ? ' is-dimmed' : ''}${isGalleryHome ? ' is-gallery-home' : ''}`}>
         <canvas ref={canvasRef} aria-hidden="true" />
       </div>
       <div className="vignette" aria-hidden="true" />
@@ -438,12 +447,12 @@ export default function App() {
           <i />
         </div>
       ) : null}
-      {phase === 'warp' ? <div className="warp-flash" aria-hidden="true" /> : null}
-
-      {!entered ? (
+      {phase === 'warp' ? <div className="warp-flash" aria-hidden="true" /> : null}          {!entered ? (
         <EntryGate
           ready={ready}
           reducedMotion={reducedMotion}
+          language={language}
+          onToggleLanguage={() => setLanguage((current) => (current === 'ms' ? 'en' : 'ms'))}
           onEnter={enterSpace}
           onSkipToDeck={skipToDeck}
           onFlat={goFlat}
@@ -452,6 +461,8 @@ export default function App() {
         <>
           <TopBar
             flat={false}
+            language={language}
+            onToggleLanguage={() => setLanguage((current) => (current === 'ms' ? 'en' : 'ms'))}
             onToggleFlat={toggleFlat}
             onHelp={() => setHelpOpen(true)}
             crumb={
@@ -499,6 +510,7 @@ export default function App() {
           {phase === 'hub' && !activeStation && foyerStation ? (
             <GalleryFoyer
               station={foyerStation}
+              language={language}
               index={foyerIndex}
               total={stations.length}
               onPrevious={() => moveFoyer(-1)}

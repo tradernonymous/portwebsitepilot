@@ -7,7 +7,9 @@ type Props = {
   /** The 3D space has finished building and is waiting. */
   ready: boolean;
   reducedMotion: boolean;
+  language?: 'ms' | 'en';
   onEnter: () => void;
+  onToggleLanguage?: () => void;
   onSkipToDeck: () => void;
   onFlat: () => void;
 };
@@ -30,7 +32,8 @@ type Props = {
  */
 const REFUSAL_GRACE_MS = 900;
 
-export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat }: Props) {
+export function EntryGate({ ready, reducedMotion, language = 'ms', onEnter, onToggleLanguage, onSkipToDeck, onFlat }: Props) {
+  const english = language === 'en';
   const [filmUp, setFilmUp] = useState(false);
   const [filmLive, setFilmLive] = useState(false);
   /** Set once the player has told us it cannot play this video at all. */
@@ -132,6 +135,14 @@ export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat 
 
       {/* Keeps the wordmark legible over a film that changes colour shot to shot. */}
       <div className="gate-veil" aria-hidden="true" />
+      <button
+        type="button"
+        className="gate-language"
+        onClick={onToggleLanguage}
+        aria-label={english ? 'Tukar ke Bahasa Melayu' : 'Switch to English'}
+      >
+        {english ? 'BM' : 'EN'}
+      </button>
 
       <div className="gate-inner">
         <p className="gate-kicker">Est. 2011 · Ipoh, Perak</p>
@@ -139,9 +150,11 @@ export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat 
         <p className="gate-sub">People Of Remarkable Talents</p>
 
         <p className="gate-welcome">
-          Sedia nak terokai dunia <em>SENI</em>?
+          {english ? <>Ready to explore the world of <em>ART</em>?</> : <>Sedia nak terokai dunia <em>SENI</em>?</>}
         </p>
-        <p className="gate-line">Jemput masuk, pintu kami sentiasa terbuka...</p>
+        <p className="gate-line">
+          {english ? 'Come in, our doors are always open...' : 'Jemput masuk, pintu kami sentiasa terbuka...'}
+        </p>
 
         <div className="gate-actions">
           <button
@@ -153,8 +166,8 @@ export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat 
             {!ready
               ? 'Menyediakan ruang…'
               : reducedMotion
-                ? 'Masuk ke dek'
-                : 'Masuk ke PORT'}
+                ? english ? 'Enter the deck' : 'Masuk ke dek'
+                : english ? 'Enter PORT' : 'Masuk ke PORT'}
           </button>
           <button
             type="button"
@@ -162,10 +175,10 @@ export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat 
             onClick={onSkipToDeck}
             disabled={!ready}
           >
-            Langkau animasi
+            {english ? 'Skip animation' : 'Langkau animasi'}
           </button>
           <button type="button" className="btn btn-ghost" onClick={onFlat}>
-            Senarai biasa
+            {english ? 'List view' : 'Senarai biasa'}
           </button>
         </div>
       </div>
@@ -179,10 +192,9 @@ export function EntryGate({ ready, reducedMotion, onEnter, onSkipToDeck, onFlat 
         title={`${featuredVideo.title} — ${channel.name}`}
       >
         <Glyph glyph="video" size={13} />
-        <span>
-          {featuredVideo.title}
+        <span>            {featuredVideo.title}
           <i>
-            {channel.handle} · tonton dengan bunyi
+            {channel.handle} · {english ? 'watch with sound' : 'tonton dengan bunyi'}
           </i>
         </span>
       </a>
