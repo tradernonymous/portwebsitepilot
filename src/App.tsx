@@ -522,8 +522,19 @@ export default function App() {
             stations={stations}
             activeId={hovered ?? facing ?? activeStation?.id ?? null}
             onSelect={selectStation}
-            label="Pilih stesen"
-            caption={<DeckCaption station={captionStation} fallback="Pilih stesen" />}
+            label={language === 'en' ? 'Browse rooms' : 'Pilih ruang'}
+            caption={
+              isGalleryHome ? (
+                <b className="dock-caption dock-caption-quiet">
+                  {language === 'en' ? 'Browse rooms' : 'Pilih ruang'}
+                </b>
+              ) : (
+                <DeckCaption
+                  station={captionStation}
+                  fallback={language === 'en' ? 'Choose a room' : 'Pilih stesen'}
+                />
+              )
+            }
           />
 
           {/* The dock names the stations; the hint teaches the gesture. One line each,
