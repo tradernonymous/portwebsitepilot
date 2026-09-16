@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { stationById, stations } from './content';
 import type { Phase, PortWorld } from './experience/PortWorld';
 import { detectWebGL, useHashRoute, useMediaQuery, useReducedMotion } from './lib/hooks';
-import { CorridorRail, DeckCaption, DeckGuide, Dock, Hint, TopBar } from './ui/Hud';
+import { CorridorRail, DeckCaption, Dock, Hint, TopBar } from './ui/Hud';
 import { EntryGate } from './ui/EntryGate';
 import { ExhibitReader } from './ui/ExhibitReader';
 import { FlatView } from './ui/FlatView';
 import { HelpPanel } from './ui/HelpPanel';
+import { GalleryFoyer } from './ui/GalleryFoyer';
 import { StationPanel } from './ui/StationPanel';
 import { VideoRoom } from './ui/VideoRoom';
 
@@ -28,6 +29,8 @@ export default function App() {
   const [activeExhibit, setActiveExhibit] = useState(0);
   const [corridorProgress, setCorridorProgress] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
+  /** The room preview shown in the foyer before a visitor enters it. */
+  const [foyerStationId, setFoyerStationId] = useState(stations[0]?.id ?? null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const worldRef = useRef<PortWorld | null>(null);
@@ -98,7 +101,7 @@ export default function App() {
         onFacing: (id) => setFacing(id),
         onStationSelect: (id) => {
           setHovered(id);
-          navigate({ kind: 'station', stationId: id });
+          setFoyerStationId(id);
         },
         onExhibitSelect: (index) => {
           const station = worldRef.current?.getStation();
@@ -332,13 +335,19 @@ export default function App() {
     }
   }, [mode, navigate, goFlat]);
 
-  const selectStation = useCallback(
-    (id: string) => {
-      worldRef.current?.aimAtStation(id);
-      navigate({ kind: 'station', stationId: id });
-    },
-    [navigate],
-  );
+  const selectStation = useCallback((id: string) => {
+    worldRef.current?.aimAtStation(id);
+    setFoyerStationId(id);
+  }, []);
+
+  const foyerStation = stationById(foyerStationId ?? '') ?? stations[0];
+  const foyerIndex = Math.max(0, stations.findIndex((station) => station.id === foyerStation.id));
+  const moveFoyer = useCallback((delta: number) => {
+    const next = (foyerIndex + delta + stations.length) % stations.length;
+    const station = stations[next];
+    setFoyerStationId(station.id);
+    worldRef.current?.aimAtStation(station.id);
+  }, [foyerIndex]);
 
   const closeStation = useCallback(() => navigate({ kind: 'hub' }), [navigate]);
 
@@ -485,7 +494,16 @@ export default function App() {
            * with no way to reach another station — the one control that is always there had
            * silently gone. The wing rail is a second, local control and now sits beside it.
            */}
-          <DeckGuide active={phase === 'hub' && !activeStation} />
+          {phase === 'hub' && !activeStation && foyerStation ? (
+            <GalleryFoyer
+              station={foyerStation}
+              index={foyerIndex}
+              total={stations.length}
+              onPrevious={() => moveFoyer(-1)}
+              onNext={() => moveFoyer(1)}
+              onEnter={() => navigate({ kind: 'station', stationId: foyerStation.id })}
+            />
+          ) : null}
           <Dock
             stations={stations}
             activeId={hovered ?? facing ?? activeStation?.id ?? null}
