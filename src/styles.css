@@ -905,6 +905,251 @@ button {
   }
 }
 
+/*
+ * Full-page scroll foyer — one deck per viewport page.
+ * Replaces the 360 view entirely. Each section fills the screen and scrolls
+ * into view like entering a new gallery room.
+ */
+.page-foyer {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.page-foyer::-webkit-scrollbar {
+  display: none;
+}
+
+.page-foyer-section {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  scroll-snap-align: start;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+  padding-bottom: calc(max(6rem, env(safe-area-inset-bottom)) + 6rem);
+}
+
+.page-foyer-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--bg);
+}
+
+.page-foyer-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.82) contrast(1.04) brightness(0.88);
+  transform: scale(1.02);
+  transition: transform 1.8s var(--ease), filter 1.8s var(--ease);
+}
+
+.page-foyer-section.is-active .page-foyer-bg img {
+  transform: scale(1);
+  filter: saturate(0.88) contrast(1.06) brightness(0.92);
+}
+
+.page-foyer-video {
+  position: absolute;
+  inset: 0;
+}
+
+.page-foyer-video img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.7) contrast(1.1) brightness(0.65);
+}
+
+.page-foyer-video-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 60%, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 100%);
+}
+
+.page-foyer-empty {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #111, #d5d5d0);
+}
+
+.page-foyer-gradient {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.3) 35%,
+    rgba(0, 0, 0, 0.08) 55%,
+    rgba(0, 0, 0, 0.04) 100%
+  );
+  pointer-events: none;
+}
+
+.page-foyer-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    transparent 40%,
+    rgba(0, 0, 0, 0.35) 100%
+  );
+  pointer-events: none;
+}
+
+.page-foyer-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  pointer-events: none;
+}
+
+.page-foyer-top {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.page-foyer-index {
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+}
+
+.page-foyer-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.52);
+  font-family: var(--font-display);
+  font-size: 0.56rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.page-foyer-label svg {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.page-foyer-bottom {
+  max-width: 620px;
+}
+
+.page-foyer-tagline {
+  margin: 0 0 1.1rem;
+  font-size: clamp(1.05rem, 2.8vw, 1.45rem);
+  font-weight: 500;
+  line-height: 1.4;
+  color: #ffffff;
+  text-shadow: 0 2px 28px rgba(0, 0, 0, 0.7), 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+.page-foyer-actions {
+  display: flex;
+  gap: 0.7rem;
+  pointer-events: auto;
+}
+
+.page-foyer-actions .btn {
+  font-size: 0.68rem;
+  padding: 0.75rem 1.6rem;
+}
+
+.page-foyer-dots {
+  position: fixed;
+  right: clamp(1rem, 2.5vw, 2rem);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 14;
+}
+
+.page-foyer-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  transition: all 0.35s var(--ease);
+}
+
+.page-foyer-dot.is-active {
+  background: #ffffff;
+  border-color: #ffffff;
+  transform: scale(1.35);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.page-foyer-dot:hover {
+  background: rgba(255, 255, 255, 0.6);
+  transform: scale(1.15);
+}
+
+/* Small-screen responsive for page foyer */
+@media (max-width: 620px) {
+  .page-foyer-section {
+    padding: 1.2rem;
+    padding-bottom: calc(max(5.5rem, env(safe-area-inset-bottom)) + 5rem);
+  }
+
+  .page-foyer-tagline {
+    font-size: clamp(0.85rem, 4.5vw, 1.1rem);
+    margin-bottom: 0.75rem;
+  }
+
+  .page-foyer-actions .btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.62rem;
+  }
+
+  .page-foyer-dots {
+    right: 0.6rem;
+    top: auto;
+    bottom: calc(max(5.5rem, env(safe-area-inset-bottom)) + 5.5rem);
+    transform: none;
+    flex-direction: row;
+  }
+
+  .page-foyer-dot {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+/* Landscape short screen */
+@media (max-height: 560px) {
+  .page-foyer-section {
+    padding-bottom: calc(max(4rem, env(safe-area-inset-bottom)) + 4.5rem);
+  }
+
+  .page-foyer-tagline {
+    font-size: clamp(0.72rem, 2.8vh, 0.95rem);
+  }
+}
+
+/* Old gallery-foyer styles (kept for flat view / non-scroll fallback) */
 .gallery-foyer {
   position: fixed;
   left: clamp(1rem, 3vw, 3rem);
@@ -3063,11 +3308,11 @@ button {
 .scanlines {
   background: repeating-linear-gradient(
     to bottom,
-    rgba(17, 17, 17, 0.035) 0 1px,
-    transparent 1px 3px
+    rgba(17, 17, 17, 0.02) 0 1px,
+    transparent 1px 2px
   );
   mix-blend-mode: multiply;
-  opacity: 0.45;
+  opacity: 0.25;
 }
 
 .dock-caption.is-live b,

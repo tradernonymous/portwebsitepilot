@@ -345,12 +345,10 @@ export default function App() {
 
   const foyerStation = stationById(foyerStationId ?? '') ?? stations[0];
   const foyerIndex = Math.max(0, stations.findIndex((station) => station.id === foyerStation.id));
-  const moveFoyer = useCallback((delta: number) => {
-    const next = (foyerIndex + delta + stations.length) % stations.length;
-    const station = stations[next];
-    setFoyerStationId(station.id);
-    worldRef.current?.aimAtStation(station.id);
-  }, [foyerIndex]);
+  const onFoyerChange = useCallback((id: string) => {
+    setFoyerStationId(id);
+    worldRef.current?.aimAtStation(id);
+  }, []);
 
   const closeStation = useCallback(() => navigate({ kind: 'hub' }), [navigate]);
 
@@ -507,14 +505,12 @@ export default function App() {
            * with no way to reach another station — the one control that is always there had
            * silently gone. The wing rail is a second, local control and now sits beside it.
            */}
-          {phase === 'hub' && !activeStation && foyerStation ? (
+          {phase === 'hub' && !activeStation ? (
             <GalleryFoyer
-              station={foyerStation}
+              stations={stations}
+              activeIndex={foyerIndex}
               language={language}
-              index={foyerIndex}
-              total={stations.length}
-              onPrevious={() => moveFoyer(-1)}
-              onNext={() => moveFoyer(1)}
+              onStationChange={onFoyerChange}
               onEnter={() => navigate({ kind: 'station', stationId: foyerStation.id })}
             />
           ) : null}
