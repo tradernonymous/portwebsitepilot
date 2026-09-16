@@ -1,31 +1,30 @@
 /* ==========================================================================
    PORT — People Of Remarkable Talents
 
-   True black, with a warm champagne chrome drawn from the wood and lamplight of
-   the building itself. Colour is spent only on the seven stations, so the space
-   stays dark and the work stays loud.
+   White gallery surfaces, black architectural contrast, and lightpaintings used as
+   atmosphere rather than decoration. PORT's own work stays louder than the chrome.
    ========================================================================== */
 
 :root {
-  --bg: #000000;
-  --bg-2: #0a0a09;
-  --ink: #f4f1ea;
-  --ink-dim: #bcb5a9;
-  --muted: #8d877c;
-  --line: rgba(233, 220, 194, 0.2);
-  --line-soft: rgba(233, 220, 194, 0.1);
-  --glass: rgba(13, 12, 10, 0.72);
-  --glass-solid: rgba(8, 8, 7, 0.94);
-  --accent: #d9b978;
-  --gold: #d9b978;
-  --gold-soft: rgba(217, 185, 120, 0.32);
-  --chrome: linear-gradient(180deg, #ffffff 0%, #e9ecf1 36%, #b3b9c3 62%, #6d737d 100%);
-  --warn: #ffb457;
+  --bg: #f7f7f4;
+  --bg-2: #ecece8;
+  --ink: #111111;
+  --ink-dim: #454545;
+  --muted: #707070;
+  --line: rgba(17, 17, 17, 0.2);
+  --line-soft: rgba(17, 17, 17, 0.1);
+  --glass: rgba(255, 255, 252, 0.82);
+  --glass-solid: rgba(250, 250, 247, 0.97);
+  --accent: #111111;
+  --gold: #3a3a3a;
+  --gold-soft: rgba(17, 17, 17, 0.24);
+  --chrome: linear-gradient(180deg, #111111 0%, #4b4b4b 42%, #ffffff 100%);
+  --warn: #8b4a12;
   --radius: 14px;
   --font-display: 'Chakra Petch', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Sora', ui-sans-serif, system-ui, sans-serif;
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -108,7 +107,7 @@ button {
 .stage {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at 50% 58%, #0d0c0a 0%, var(--bg) 72%);
+  background: radial-gradient(circle at 50% 58%, #ffffff 0%, var(--bg) 72%);
 }
 
 .stage canvas {
@@ -446,7 +445,7 @@ button {
   padding: 0.85rem 1.7rem;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(24, 21, 17, 0.6);
+  background: rgba(255, 255, 252, 0.82);
   color: var(--ink);
   transition: all 0.28s var(--ease);
   backdrop-filter: blur(8px);
@@ -454,15 +453,15 @@ button {
 
 .btn:hover {
   border-color: var(--accent);
-  color: #fff;
-  box-shadow: 0 0 26px rgba(233, 220, 194, 0.26);
+  color: var(--ink);
+  box-shadow: 0 0 26px rgba(17, 17, 17, 0.16);
   transform: translateY(-1px);
 }
 
 .btn-primary {
-  background: linear-gradient(120deg, rgba(233, 220, 194, 0.24), rgba(233, 220, 194, 0.06));
-  border-color: rgba(233, 220, 194, 0.6);
-  color: #fff;
+  background: #111111;
+  border-color: #111111;
+  color: #ffffff;
 }
 
 .btn-ghost {
@@ -1166,6 +1165,73 @@ button {
   width: 100%;
   height: 100%;
   border: 0;
+  opacity: 0;
+  transition: opacity 0.35s var(--ease);
+}
+
+.video-stage.is-ready iframe {
+  opacity: 1;
+}
+
+.video-fallback {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #f0f0ed;
+}
+
+.video-fallback img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(0.28) contrast(0.9);
+}
+
+.video-fallback-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(17, 17, 17, 0.78), rgba(17, 17, 17, 0.16) 72%);
+}
+
+.video-fallback-copy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: clamp(1rem, 4vw, 2.4rem);
+  color: #ffffff;
+}
+
+.video-fallback-copy p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(0.8rem, 1.4vw, 1.1rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.video-fallback-copy a {
+  display: inline-flex;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.64);
+  border-radius: 999px;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.video-stage.is-loading .video-fallback-copy p {
+  opacity: 0.82;
+}
+
+.video-stage.is-fallback .video-fallback {
+  animation: fade-in 0.35s var(--ease) both;
 }
 
 .video-under {
@@ -1433,7 +1499,7 @@ button {
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: rgba(0, 0, 0, 0.64);
+  background: rgba(17, 17, 17, 0.28);
   backdrop-filter: blur(3px);
   animation: fade-in 0.35s var(--ease) both;
 }
@@ -1450,7 +1516,7 @@ button {
   display: flex;
   flex-direction: column;
   animation: panel-in 0.45s var(--ease) both;
-  box-shadow: -30px 0 90px rgba(0, 0, 0, 0.6);
+  box-shadow: -30px 0 90px rgba(17, 17, 17, 0.22);
 }
 
 .panel.centered {
@@ -2375,6 +2441,10 @@ button {
     margin-inline: auto;
   }
 
+  .video-fallback-copy {
+    padding: 1rem;
+  }
+
   .rail-list {
     flex: 1;
     max-height: none;
@@ -2419,6 +2489,68 @@ button {
   .hero {
     aspect-ratio: 21 / 9;
   }
+}
+
+/* --------------------------------------------------------------- white gallery palette */
+
+/*
+ * PORT is a white gallery now. Black remains the frame, the type and the navigation
+ * contrast; lightpaintings are the only colour allowed to drift through the room.
+ */
+.hud-top {
+  background: linear-gradient(180deg, rgba(247, 247, 244, 0.96), rgba(247, 247, 244, 0));
+}
+
+.vignette {
+  background: radial-gradient(ellipse at 50% 50%, transparent 48%, rgba(17, 17, 17, 0.18) 100%);
+}
+
+.scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(17, 17, 17, 0.035) 0 1px,
+    transparent 1px 3px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.45;
+}
+
+.dock-caption.is-live b,
+.dock-item:hover,
+.dock-item.is-active,
+.rail-item.is-active,
+.video-under h3,
+.video-meta b {
+  color: var(--ink);
+}
+
+.dock-item:hover,
+.dock-item.is-active {
+  border-color: rgba(17, 17, 17, 0.24);
+  background: rgba(17, 17, 17, 0.06);
+  box-shadow: inset 0 0 22px rgba(17, 17, 17, 0.05);
+}
+
+.rail-item:hover {
+  background: rgba(17, 17, 17, 0.05);
+}
+
+.rail-item.is-active {
+  background: rgba(17, 17, 17, 0.08);
+}
+
+.video-card.is-playing {
+  border-color: rgba(17, 17, 17, 0.3);
+  background: rgba(17, 17, 17, 0.06);
+}
+
+.flat-nav a {
+  color: var(--ink-dim);
+  background: rgba(255, 255, 252, 0.82);
+}
+
+.thumb {
+  background: #111111;
 }
 
 @media (prefers-reduced-motion: reduce) {

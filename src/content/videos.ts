@@ -105,7 +105,9 @@ export function embedUrl(
     params.set('fs', '0');
   }
   if (opts.start) params.set('start', String(opts.start));
-  return `https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`;
+  // The regular player is more reliable on phones and on embedded browsers than the
+  // privacy wrapper, while the site still sends no tracking data of its own.
+  return `https://www.youtube.com/embed/${id}?${params.toString()}`;
 }
 
 export const watchUrl = (id: string) => `https://www.youtube.com/watch?v=${id}`;

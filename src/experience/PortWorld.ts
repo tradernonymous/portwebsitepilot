@@ -103,14 +103,14 @@ const HUB_RADIUS = 8.1;
  * light behind them. Station accents still exist, but only where they are information: in
  * the panels and the list view.
  */
-const GOLD = 0xd9b978;
-const GOLD_LEAF = 0xe8d7ac;
+const GOLD = 0x1a1a1a;
+const GOLD_LEAF = 0x0f0f0f;
 
 /**
  * The light paintings' palette. Four pigments, held back with low opacity so the wall
  * reads as coloured light rather than as a rainbow.
  */
-const PIGMENTS = [0x3f4fd8, 0xc0397f, 0xd8a24a, 0x2f9fa8];
+const PIGMENTS = [0x63738a, 0x8b7180, 0x9b875f, 0x668b8a];
 
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -365,8 +365,9 @@ export class PortWorld {
 
     this.glowTexture = radialGlowTexture('rgba(240,228,205,0.5)', 'rgba(130,110,82,0.12)');
 
-    // Light on a far wall must still read as light, so the fog only just touches the black.
-    this.scene.fog = new THREE.FogExp2(0x000000, 0.009);
+    // White gallery haze: distance should soften the walls without turning the space into
+    // a black tunnel.
+    this.scene.fog = new THREE.FogExp2(0xf7f7f4, 0.0045);
 
     this.font = loadDisplayFont();
 
@@ -482,21 +483,20 @@ export class PortWorld {
     // gradient backdrop
     const bg = canvasTexture(32, 512, (ctx) => {
       const g = ctx.createLinearGradient(0, 0, 0, 512);
-      g.addColorStop(0, '#000000');
-      g.addColorStop(0.5, '#050505');
-      g.addColorStop(1, '#000000');
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.5, '#f2f2ef');
+      g.addColorStop(1, '#ffffff');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, 32, 512);
     });
     this.scene.background = bg;
 
-    // Restrained gallery lighting: enough to give the lettering and frames an edge,
-    // never enough to lift the black off zero.
-    this.scene.add(new THREE.AmbientLight(0x5a5348, 0.5));
-    const key = new THREE.DirectionalLight(0xf0e8d8, 0.7);
+    // White gallery lighting: black frames and real work carry the contrast.
+    this.scene.add(new THREE.AmbientLight(0xffffff, 1.15));
+    const key = new THREE.DirectionalLight(0xffffff, 1.25);
     key.position.set(6, 12, 8);
     this.scene.add(key);
-    const rim = new THREE.PointLight(0x8a7355, 18, 60, 2);
+    const rim = new THREE.PointLight(0xffffff, 10, 60, 2);
     rim.position.set(0, 7, 0);
     this.scene.add(rim);
 
@@ -886,13 +886,13 @@ export class PortWorld {
 
       const frame = new THREE.Mesh(
         new THREE.BoxGeometry(width + 0.16, height + 0.16, 0.07),
-        new THREE.MeshStandardMaterial({ color: 0x0b0a09, metalness: 0.8, roughness: 0.35 }),
+        new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.82, roughness: 0.34 }),
       );
       piece.add(frame);
 
       const leaf = new THREE.LineSegments(
         new THREE.EdgesGeometry(new THREE.BoxGeometry(width + 0.2, height + 0.2, 0.1)),
-        new THREE.LineBasicMaterial({ color: 0xd9b978, transparent: true, opacity: 0.8 }),
+        new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.72 }),
       );
       piece.add(leaf);
 
@@ -904,7 +904,7 @@ export class PortWorld {
 
       const art = new THREE.Mesh(
         new THREE.PlaneGeometry(width, height),
-        new THREE.MeshBasicMaterial({ map: texture, color: 0xefe8db, side: THREE.DoubleSide }),
+        new THREE.MeshBasicMaterial({ map: texture, color: 0xffffff, side: THREE.DoubleSide }),
       );
       art.position.z = 0.05;
       piece.add(art);
@@ -1023,9 +1023,9 @@ export class PortWorld {
     const floor = new THREE.Mesh(
       new THREE.CircleGeometry(26, 72),
       new THREE.MeshStandardMaterial({
-        color: 0x030303,
+        color: 0xf0f0ed,
         roughness: 0.5,
-        metalness: 0.7,
+        metalness: 0.28,
       }),
     );
     floor.rotation.x = -Math.PI / 2;
@@ -1042,9 +1042,9 @@ export class PortWorld {
     const pool = new THREE.Mesh(
       new THREE.CircleGeometry(30, 64),
       new THREE.MeshBasicMaterial({
-        map: radialGlowTexture('rgba(232,215,172,0.30)', 'rgba(120,96,64,0.05)'),
+        map: radialGlowTexture('rgba(17,17,17,0.16)', 'rgba(17,17,17,0.02)'),
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.2,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
@@ -1059,8 +1059,8 @@ export class PortWorld {
       new THREE.MeshBasicMaterial({
         color: GOLD_LEAF,
         transparent: true,
-        opacity: 0.16,
-        blending: THREE.AdditiveBlending,
+        opacity: 0.18,
+        blending: THREE.NormalBlending,
         depthWrite: false,
         side: THREE.DoubleSide,
       }),
@@ -1096,10 +1096,10 @@ export class PortWorld {
       new THREE.LineSegments(
         gridGeo,
         new THREE.LineBasicMaterial({
-          color: 0x4a4234,
+          color: 0x161616,
           transparent: true,
-          opacity: 0.3,
-          blending: THREE.AdditiveBlending,
+          opacity: 0.16,
+          blending: THREE.NormalBlending,
         }),
       ),
     );
@@ -1498,9 +1498,9 @@ export class PortWorld {
 
     // floor + ceiling
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x050504,
-      roughness: 0.28,
-      metalness: 0.8,
+      color: 0xe8e8e4,
+      roughness: 0.42,
+      metalness: 0.18,
     });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(9, length + 20), floorMat);
     floor.rotation.x = -Math.PI / 2;
@@ -1509,7 +1509,7 @@ export class PortWorld {
 
     const ceiling = new THREE.Mesh(
       new THREE.PlaneGeometry(9, length + 20),
-      new THREE.MeshStandardMaterial({ color: 0x030303, roughness: 0.9, metalness: 0.2 }),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.78, metalness: 0.08 }),
     );
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.set(0, 4.4, -length / 2 + 6);
@@ -1520,9 +1520,9 @@ export class PortWorld {
       const wall = new THREE.Mesh(
         new THREE.PlaneGeometry(length + 20, 4.6),
         new THREE.MeshStandardMaterial({
-          color: 0x0b0a09,
-          roughness: 0.85,
-          metalness: 0.15,
+          color: 0xf5f5f2,
+          roughness: 0.84,
+          metalness: 0.08,
           side: THREE.DoubleSide,
         }),
       );
@@ -1550,9 +1550,9 @@ export class PortWorld {
         new THREE.LineSegments(
           geometry,
           new THREE.LineBasicMaterial({
-            color: 0xd9b978,
+            color: 0x151515,
             transparent: true,
-            opacity: detail.opacity,
+            opacity: detail.opacity * 0.75,
           }),
         ),
       );
@@ -1563,9 +1563,9 @@ export class PortWorld {
       const lamp = new THREE.Mesh(
         new THREE.PlaneGeometry(0.9, 0.12),
         new THREE.MeshBasicMaterial({
-          color: 0xf2e8d5,
+          color: 0x111111,
           transparent: true,
-          opacity: 0.45,
+          opacity: 0.22,
           blending: THREE.AdditiveBlending,
         }),
       );
@@ -1583,14 +1583,14 @@ export class PortWorld {
 
       const plate = new THREE.Mesh(
         new THREE.BoxGeometry(3.5, 2.5, 0.14),
-        new THREE.MeshStandardMaterial({ color: 0x0e0d0b, metalness: 0.7, roughness: 0.4 }),
+        new THREE.MeshStandardMaterial({ color: 0x121212, metalness: 0.72, roughness: 0.38 }),
       );
       fg.add(plate);
 
       // gold leaf around the frame
       const border = new THREE.LineSegments(
         new THREE.EdgesGeometry(new THREE.BoxGeometry(3.56, 2.56, 0.2)),
-        new THREE.LineBasicMaterial({ color: 0xd9b978, transparent: true, opacity: 0.9 }),
+        new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.72 }),
       );
       fg.add(border);
 

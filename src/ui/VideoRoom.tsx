@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Station } from '../content';
 import { channel, embedUrl, thumbUrl, watchUrl, type PortVideo } from '../content/videos';
 import { useDialogFocus } from '../lib/hooks';
@@ -27,6 +27,7 @@ export function VideoRoom({ station, onClose }: Props) {
   const shelves = station.videoShelves ?? [];
   const [openShelf, setOpenShelf] = useState(shelves[0]?.id ?? '');
   const [playing, setPlaying] = useState(shelves[0]?.videos[0]?.id ?? '');
+  const [playerState, setPlayerState] = useState<'loading' | 'ready' | 'fallback'>('loading');
   const modal = Boolean(onClose);
   // Only the panel variant takes focus; the inline one must leave the page where it is.
   const scroller = useDialogFocus<HTMLDivElement>(`${station.id}:${modal ? 'panel' : 'inline'}`);
@@ -34,6 +35,38 @@ export function VideoRoom({ station, onClose }: Props) {
   const shelf = shelves.find((s) => s.id === openShelf) ?? shelves[0];
   const current: PortVideo | undefined =
     shelf?.videos.find((v) => v.id === playing) ?? shelf?.videos[0];
+
+  // Keep YouTube's own error card out of PORT. A working player reports a usable state;
+  // an unavailable embed reports onError; a silent player gets a branded fallback after a
+  // short grace period so the gallery never presents a blank or third-party error screen.
+  useEffect(() => {
+    setPlayerState('loading');
+    if (!current) return;
+    const fallbackTimer = window.setTimeout(() => setPlayerState('fallback'), 4500);
+    const onMessage = (event: MessageEvent) => {
+      if (typeof event.origin !== 'string' || !/youtube\.com$/.test(event.origin)) return;
+      let payload: unknown = event.data;
+      if (typeof payload === 'string') {
+        try {
+          payload = JSON.parse(payload);
+        } catch {
+          return;
+        }
+      }
+      if (!payload || typeof payload !== 'object') return;
+      if ((payload as { event?: unknown }).event === 'onError') {
+        setPlayerState('fallback');
+        return;
+      }
+      const state = (payload as { info?: { playerState?: unknown } }).info?.playerState;
+      if (state === 1 || state === 2 || state === 3 || state === 5) setPlayerState('ready');
+    };
+    window.addEventListener('message', onMessage);
+    return () => {
+      window.clearTimeout(fallbackTimer);
+      window.removeEventListener('message', onMessage);
+    };
+  }, [current?.id]);
 
   const openShelfById = (id: string) => {
     setOpenShelf(id);
@@ -59,17 +92,30 @@ export function VideoRoom({ station, onClose }: Props) {
   const body = (
     <div className="video-body">
       <div className="video-player">
-        <div className="video-stage">
+        <div className={`video-stage is-${playerState}`}>
           {/* Keyed on the id so switching films mounts a fresh player rather than
               leaving the previous one's audio running underneath. */}
           <iframe
             key={current.id}
-            src={embedUrl(current.id, { controls: true })}
+            src={embedUrl(current.id, { controls: true, api: true })}
             title={current.title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             referrerPolicy="strict-origin-when-cross-origin"
             allowFullScreen
           />
+          {playerState !== 'ready' ? (
+            <div className="video-fallback">
+              <img src={thumbUrl(current.id, 'hq')} alt="" />
+              <div className="video-fallback-shade" />
+              <div className="video-fallback-copy">
+                <Glyph glyph="video" size={18} />
+                <p>{playerState === 'loading' ? 'Menyambung ke filem…' : 'Filem ini dibuka di YouTube'}</p>
+                <a href={watchUrl(current.id)} target="_blank" rel="noreferrer noopener">
+                  Tonton di YouTube →
+                </a>
+              </div>
+            </div>
+          ) : null}
         </div>
         <div className="video-under">
           <div>
