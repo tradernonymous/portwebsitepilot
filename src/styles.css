@@ -498,6 +498,52 @@ button {
   transform-origin: left;
 }
 
+/* The entry film is dark by design; the welcome copy must never disappear into it. */
+.gate::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 18% 32%, rgba(62, 121, 214, 0.28), transparent 34%),
+    radial-gradient(ellipse at 78% 28%, rgba(214, 68, 140, 0.24), transparent 32%),
+    radial-gradient(ellipse at 52% 78%, rgba(224, 170, 72, 0.18), transparent 38%);
+  mix-blend-mode: screen;
+  opacity: 0.9;
+  animation: gate-painting-drift 18s ease-in-out infinite alternate;
+}
+
+.gate-kicker,
+.gate-welcome,
+.gate-sub,
+.gate-line {
+  color: #ffffff;
+  text-shadow: 0 2px 22px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.92);
+}
+
+.gate-welcome em,
+.gate-sub {
+  color: #ffffff;
+}
+
+.gate-sub {
+  border-bottom-color: rgba(255, 255, 255, 0.42);
+}
+
+.gate-credit span {
+  color: #ffffff;
+}
+
+@keyframes gate-painting-drift {
+  from {
+    transform: translate3d(-2%, 1%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, -1%, 0) scale(1.08);
+  }
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -650,9 +696,10 @@ button {
   position: absolute;
   display: block;
   border-radius: 50%;
-  /* Screen blending is what makes overlapping bands add up to light rather than to mud. */
-  mix-blend-mode: screen;
-  filter: blur(38px);
+  /* On a white gallery, multiply keeps the painted colour visible without making a dark slab. */
+  mix-blend-mode: multiply;
+  filter: blur(30px);
+  opacity: 0.9;
   will-change: transform, opacity;
 }
 
@@ -663,8 +710,8 @@ button {
   height: 46vh;
   background: radial-gradient(
     closest-side,
-    rgba(63, 79, 216, 0.5),
-    rgba(63, 79, 216, 0.14) 55%,
+    rgba(63, 79, 216, 0.7),
+    rgba(63, 79, 216, 0.22) 55%,
     transparent
   );
   animation: light-drift-a 34s var(--ease) infinite alternate;
@@ -677,8 +724,8 @@ button {
   height: 52vh;
   background: radial-gradient(
     closest-side,
-    rgba(192, 57, 127, 0.42),
-    rgba(216, 162, 74, 0.16) 58%,
+    rgba(192, 57, 127, 0.62),
+    rgba(216, 162, 74, 0.26) 58%,
     transparent
   );
   animation: light-drift-b 41s var(--ease) infinite alternate;
@@ -691,8 +738,8 @@ button {
   height: 44vh;
   background: radial-gradient(
     closest-side,
-    rgba(47, 159, 168, 0.4),
-    rgba(47, 159, 168, 0.12) 56%,
+    rgba(47, 159, 168, 0.58),
+    rgba(47, 159, 168, 0.2) 56%,
     transparent
   );
   animation: light-drift-c 29s var(--ease) infinite alternate;
@@ -1042,11 +1089,26 @@ button {
   filter: drop-shadow(0 0 6px rgba(217, 185, 120, 0.55));
 }
 
-.dock-caption i {
+.dock-caption i,
+.gallery-foyer-copy p {
   font-style: normal;
   text-transform: none;
   letter-spacing: 0.05em;
-  color: color-mix(in srgb, var(--muted) 78%, transparent);
+  background: linear-gradient(100deg, #2868c7, #b24788 48%, #b27b28 78%, #2868c7);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: tagline-flow 9s ease-in-out infinite alternate;
+}
+
+@keyframes tagline-flow {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
 }
 
 @keyframes caption-in {
@@ -2910,6 +2972,20 @@ button {
 
 .panel-body::-webkit-scrollbar-thumb {
   background: rgba(17, 17, 17, 0.2);
+}
+
+.gate .gate-kicker,
+.gate .gate-welcome,
+.gate .gate-welcome em,
+.gate .gate-sub,
+.gate .gate-line,
+.gate .gate-credit span {
+  color: #ffffff !important;
+  text-shadow: 0 2px 22px rgba(0, 0, 0, 0.94), 0 0 5px rgba(0, 0, 0, 0.94);
+}
+
+.gate .gate-sub {
+  border-bottom-color: rgba(255, 255, 255, 0.46);
 }
 
 @media (prefers-reduced-motion: reduce) {

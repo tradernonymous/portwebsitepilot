@@ -30,7 +30,9 @@ export default function App() {
   const [corridorProgress, setCorridorProgress] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
   /** The room preview shown in the foyer before a visitor enters it. */
-  const [foyerStationId, setFoyerStationId] = useState(stations[0]?.id ?? null);
+  const [foyerStationId, setFoyerStationId] = useState(
+    stations[1]?.id ?? stations[0]?.id ?? null,
+  );
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const worldRef = useRef<PortWorld | null>(null);

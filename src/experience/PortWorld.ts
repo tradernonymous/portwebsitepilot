@@ -285,6 +285,8 @@ export class PortWorld {
   private readonly corridorGroup = new THREE.Group();
 
   private monoliths: Monolith[] = [];
+  private focusedStationId: string | null = null;
+  private deckTurnAt = 0;
   /**
    * Covers hung on the deck keep their own textures rather than joining `textureCache`:
    * leaving a wing releases every photograph in that cache, and the deck is still standing.
@@ -624,7 +626,7 @@ export class PortWorld {
           ),
           rate: 0.03 + Math.random() * 0.05,
           phase: Math.random() * Math.PI * 2,
-          baseOpacity: 0.13 + Math.random() * 0.11,
+          baseOpacity: 0.24 + Math.random() * 0.14,
           scroll: 0.04 + Math.random() * 0.1,
           lean: new THREE.Vector3(
             THREE.MathUtils.randFloatSpread(1),
@@ -1206,6 +1208,8 @@ export class PortWorld {
       const mg = new THREE.Group();
       mg.position.set(Math.cos(angle) * HUB_RADIUS, 0, Math.sin(angle) * HUB_RADIUS);
       mg.rotation.y = -angle + Math.PI / 2;
+      mg.userData.homePosition = mg.position.clone();
+      mg.userData.homeRotationY = mg.rotation.y;
 
       /*
        * One card, one size, every station — a landscape board the work fills.
@@ -1217,7 +1221,7 @@ export class PortWorld {
        * gold leaf around it, and the piece.
        */
       const body = new THREE.Mesh(
-        new THREE.BoxGeometry(2.94, 2.42, 0.26),
+        new THREE.BoxGeometry(4.9, 3.65, 0.26),
         new THREE.MeshStandardMaterial({
           color: new THREE.Color(ACCENT_DIM),
           emissive: new THREE.Color(GOLD).multiplyScalar(0.03),
@@ -1242,7 +1246,7 @@ export class PortWorld {
       mg.add(edges);
 
       const pedestal = new THREE.Mesh(
-        new THREE.BoxGeometry(2.6, 0.24, 0.9),
+        new THREE.BoxGeometry(4.35, 0.24, 1.2),
         new THREE.MeshStandardMaterial({ color: 0x121110, metalness: 0.9, roughness: 0.3 }),
       );
       pedestal.position.y = 0.12;
@@ -1278,6 +1282,29 @@ export class PortWorld {
         hot: 0,
       });
     });
+
+    // Start on the first substantial gallery programme rather than the institutional
+    // profile, so the visitor enters on an artwork instead of an empty-looking frontage.
+    this.setFocusedMonolith(stations[1]?.id ?? stations[0]?.id ?? null);
+  }
+
+  /** Keep one room in view at a time; changing rooms is an intentional arrival. */
+  private setFocusedMonolith(stationId: string | null) {
+    this.focusedStationId = stationId;
+    for (const monolith of this.monoliths) {
+      const homePosition = monolith.group.userData.homePosition as THREE.Vector3 | undefined;
+      const homeRotationY = monolith.group.userData.homeRotationY as number | undefined;
+      const selected = stationId === null || monolith.station.id === stationId;
+      if (selected && stationId !== null) {
+        // Bring the chosen work to the visitor instead of making them search a ring.
+        monolith.group.position.set(0, 0, -HUB_RADIUS);
+        monolith.group.rotation.y = 0;
+      } else if (homePosition) {
+        monolith.group.position.copy(homePosition);
+        if (homeRotationY !== undefined) monolith.group.rotation.y = homeRotationY;
+      }
+      monolith.group.visible = selected;
+    }
   }
 
   /* ---------------------------------------------------------------- 3D lettering */
@@ -1424,11 +1451,11 @@ export class PortWorld {
     const image = deckCovers.get(station.id);
     if (!image) return;
 
-    const width = 2.66;
-    const height = 2.14;
-    const openingWidth = 2.4;
-    const openingHeight = 1.86;
-    const centreY = 2.05;
+    const width = 4.42;
+    const height = 3.18;
+    const openingWidth = 4.08;
+    const openingHeight = 2.76;
+    const centreY = 2.8;
 
     /*
      * The monolith group is turned so that its local +Z points radially *outward* — away
@@ -1449,8 +1476,7 @@ export class PortWorld {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       side: THREE.DoubleSide,
-    });
-    const halo = new THREE.Mesh(new THREE.PlaneGeometry(width + 0.8, height + 0.86), haloMaterial);
+    });      const halo = new THREE.Mesh(new THREE.PlaneGeometry(width + 0.8, height + 0.86), haloMaterial);
     halo.position.set(0, centreY, 0.16);
     mount.add(halo);
 
@@ -1768,6 +1794,7 @@ export class PortWorld {
   private enterHub() {
     this.rig.position.copy(HUB_CAMERA);
     this.look = { yaw: 0, pitch: 0, ty: 0, tp: 0 };
+    if (this.focusedStationId) this.aimAtStation(this.focusedStationId);
     this.setPhase('hub');
   }
 
@@ -1824,6 +1851,7 @@ export class PortWorld {
       phase: this.phase,
       station: this.currentStation?.id ?? null,
       monoliths: this.monoliths.length,
+      visibleMonoliths: this.monoliths.filter((monolith) => monolith.group.visible).length,
       paintings: {
         shards: this.shards.length,
         visible: this.shards.filter((s) => s.material.opacity > 0.001).length,
@@ -1832,6 +1860,7 @@ export class PortWorld {
           : 0,
       },
       facing: this.facing,
+      focusedStation: this.focusedStationId,
       deckCovers: this.monoliths.map((m) => ({
         id: m.station.id,
         hung: Boolean(m.art),
@@ -1887,6 +1916,7 @@ export class PortWorld {
   aimAtStation(stationId: string) {
     const m = this.monoliths.find((x) => x.station.id === stationId);
     if (!m) return;
+    this.setFocusedMonolith(stationId);
     const p = m.group.position;
     const yaw = Math.atan2(-p.x, -p.z);
     this.look.ty = yaw;
@@ -1942,6 +1972,21 @@ export class PortWorld {
   };
 
   private onWheel = (event: WheelEvent) => {
+    if (this.phase === 'hub') {
+      if (Math.abs(event.deltaY) < 10) return;
+      const now = performance.now();
+      if (now - this.deckTurnAt < 420) return;
+      this.deckTurnAt = now;
+      const current = this.opts.stations.findIndex((station) => station.id === this.focusedStationId);
+      const step = event.deltaY > 0 ? 1 : -1;
+      const next = (current + step + this.opts.stations.length) % this.opts.stations.length;
+      const station = this.opts.stations[next];
+      if (station) {
+        this.aimAtStation(station.id);
+        this.opts.onStationSelect?.(station.id);
+      }
+      return;
+    }
     this.walk(event.deltaY * 0.012);
   };
 
@@ -1970,7 +2015,7 @@ export class PortWorld {
     this.ray.setFromCamera(this.ndc.set(this.pointer.x, this.pointer.y), this.camera);
 
     if (this.phase === 'hub' || this.phase === 'warp') {
-      const bodies = this.monoliths.map((m) => m.body);
+      const bodies = this.monoliths.filter((m) => m.group.visible).map((m) => m.body);
       const hits = this.ray.intersectObjects(bodies, false);
       if (hits.length) {
         const id = hits[0].object.userData.stationId as string;
@@ -2000,7 +2045,7 @@ export class PortWorld {
     if (this.phase === 'hub' || this.phase === 'warp') {
       this.ray.setFromCamera(this.ndc.set(this.pointer.x, this.pointer.y), this.camera);
       const hits = this.ray.intersectObjects(
-        this.monoliths.map((m) => m.body),
+        this.monoliths.filter((m) => m.group.visible).map((m) => m.body),
         false,
       );
       this.setHovered(hits.length ? (hits[0].object.userData.stationId as string) : null);
@@ -2141,6 +2186,7 @@ export class PortWorld {
       let bestId: string | null = null;
       let bestDot = -Infinity;
       for (const monolith of this.monoliths) {
+        if (!monolith.group.visible) continue;
         const dx = monolith.group.position.x - this.rig.position.x;
         const dz = monolith.group.position.z - this.rig.position.z;
         const length = Math.hypot(dx, dz) || 1;
@@ -2163,6 +2209,7 @@ export class PortWorld {
     // that lifts the one you are pointing at, so the deck tells you what you are about to open.
     if (this.phase === 'hub' || this.phase === 'warp') {
       for (const monolith of this.monoliths) {
+        if (!monolith.group.visible) continue;
         const want = this.hovered === monolith.station.id ? 1 : 0;
         monolith.hot = THREE.MathUtils.damp(monolith.hot, want, 8, delta);
         if (monolith.haloMaterial) monolith.haloMaterial.opacity = 0.15 + monolith.hot * 0.3;
