@@ -2,10 +2,16 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { LangProvider } from './lib/lang';
-import './styles.css';
 import './styles/tokens.css';
+import './styles/base.css';
 import './styles/fx.css';
 import './styles/gate.css';
+import './styles/hall.css';
+import './styles/room.css';
+import './styles/reader.css';
+import './styles/video.css';
+import './styles/walk.css';
+import './styles/flat.css';
 
 const container = document.getElementById('root');
 if (!container) throw new Error('#root missing from index.html');

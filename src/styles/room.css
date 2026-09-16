@@ -1,0 +1,510 @@
+/* ==========================================================================
+   A room: its door, its wall of works, its sections, and the way on
+   ========================================================================== */
+
+.artwork {
+  display: block;
+}
+
+.artwork.is-contain {
+  width: auto;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  margin: auto;
+}
+
+/* ---------------------------------------------------------------- light plate */
+
+.light-plate {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, #16161f, var(--void) 75%);
+  color: var(--light);
+}
+
+.light-plate .light-painting {
+  mix-blend-mode: screen;
+}
+
+.light-plate-copy {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(0deg, rgba(5, 5, 7, 0.85), transparent);
+}
+
+.light-plate-copy span {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  color: var(--light-3);
+}
+
+.light-plate-copy b {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* ---------------------------------------------------------------- room hero */
+
+.room {
+  --room-accent: var(--lp-violet);
+}
+
+.room-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 3rem;
+  min-height: min(88svh, 820px);
+  padding: 8rem max(1.25rem, 5vw) clamp(3rem, 7vh, 5rem);
+  overflow: hidden;
+  overflow: clip;
+  background: var(--void);
+  color: var(--light);
+  isolation: isolate;
+}
+
+/* the cover, as light on the wall rather than as a picture: blurred far past pixels */
+.room-hero-bg {
+  position: absolute;
+  inset: -40px;
+  z-index: -3;
+  background-size: cover;
+  background-position: center;
+  filter: blur(36px) saturate(1.2) brightness(0.55);
+  transform: scale(1.15);
+}
+
+.room-hero-veil {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(90deg, rgba(5, 5, 7, 0.92) 0%, rgba(5, 5, 7, 0.55) 55%, rgba(5, 5, 7, 0.35) 100%),
+    linear-gradient(0deg, rgba(5, 5, 7, 0.7), transparent 50%);
+}
+
+.room-hero .light-painting {
+  z-index: -1;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+.room-hero-inner {
+  max-width: 820px;
+}
+
+.room-title {
+  font-size: clamp(2.3rem, 6.4vw, 5.4rem);
+  line-height: 0.98;
+  font-weight: 700;
+  margin: 0.2rem 0 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.room-tagline {
+  font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+  color: var(--light);
+  max-width: 44ch;
+}
+
+.room-intro {
+  max-width: 62ch;
+  margin: 1.4rem 0 2rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--room-accent);
+}
+
+.room-intro p {
+  color: var(--light-2);
+}
+
+.room-hero-cover {
+  position: relative;
+  margin: 0;
+  width: clamp(220px, 24vw, 340px);
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transform: perspective(1000px) rotateY(-10deg) rotateX(3deg);
+}
+
+.room-hero-cover .artwork {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------------------------------------------------------------- body */
+
+.room-body {
+  padding: clamp(3rem, 7vw, 5.5rem) max(1.25rem, 5vw);
+  display: grid;
+  gap: clamp(3rem, 6vw, 5rem);
+}
+
+.room-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 1.5rem;
+}
+
+.room-section {
+  position: relative;
+  padding: 1.8rem 1.6rem 1.6rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.room-section-index {
+  display: block;
+  margin-bottom: 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-3);
+}
+
+.room-section h2 {
+  font-size: 1.35rem;
+  margin-bottom: 0.8rem;
+}
+
+.room-section p {
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- works wall */
+
+.works-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.works-head .kicker {
+  margin: 0;
+}
+
+.works-head h2 {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+}
+
+.works-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: clamp(1.5rem, 3vw, 2.6rem);
+}
+
+.work {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.work-frame {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--paper);
+  box-shadow: 0 1px 0 var(--rule), 0 24px 50px -32px rgba(11, 11, 15, 0.45);
+  transition: box-shadow 0.4s var(--ease), transform 0.4s var(--ease-out);
+}
+
+.work-frame .artwork {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s var(--ease-out);
+}
+
+.work-frame .hud-corner {
+  width: 16px;
+  height: 16px;
+  color: #fff;
+  margin: 10px;
+  opacity: 0;
+  mix-blend-mode: difference;
+  transition: opacity 0.3s var(--ease);
+}
+
+.work:hover .work-frame,
+.work:focus-visible .work-frame {
+  transform: translateY(-4px);
+  box-shadow: 0 0 0 1px rgba(139, 92, 255, 0.35), 0 30px 60px -28px rgba(90, 46, 224, 0.55);
+}
+
+.work:hover .work-frame .artwork {
+  transform: scale(1.04);
+}
+
+.work:hover .hud-corner {
+  opacity: 1;
+}
+
+.work-plaque {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.work-meta {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+.work-meta b {
+  color: var(--ink);
+  margin-right: 0.4rem;
+}
+
+.work-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.work-tagline {
+  color: var(--ink-2);
+  font-size: 0.92rem;
+}
+
+/* ---------------------------------------------------------------- the way on */
+
+.room-onward {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(60px, 0.6fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 1.5rem;
+  padding: clamp(3rem, 6vw, 4.5rem) max(1.25rem, 5vw);
+  background: var(--void);
+  color: var(--light);
+}
+
+.onward {
+  display: grid;
+  gap: 0.35rem;
+  text-decoration: none;
+}
+
+.onward.is-next {
+  text-align: right;
+  justify-items: end;
+}
+
+.onward span {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--light-3);
+}
+
+.onward b {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.6vw, 2rem);
+  font-weight: 600;
+  line-height: 1.1;
+  transition: color 0.3s var(--ease), text-shadow 0.3s var(--ease);
+}
+
+.onward:hover b {
+  color: #fff;
+  text-shadow: 0 0 24px rgba(139, 92, 255, 0.8);
+}
+
+.onward-line {
+  position: relative;
+  height: 2px;
+  background: var(--rule-dark);
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.onward-line i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, var(--lp-cyan), var(--lp-magenta), transparent);
+  animation: onward-run 2.6s var(--ease) infinite;
+}
+
+@keyframes onward-run {
+  from {
+    left: -40%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+.room-back {
+  display: block;
+  padding: 1.1rem;
+  text-align: center;
+  background: var(--void);
+  color: var(--light-2);
+  border-top: 1px solid var(--rule-dark);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.room-back:hover {
+  color: var(--light);
+}
+
+/* ---------------------------------------------------------------- contact + partners */
+
+.section h3 {
+  font-size: 1.4rem;
+  margin: 0 0 1.2rem;
+}
+
+.section + .section {
+  margin-top: 3rem;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 1rem;
+}
+
+.contact-card {
+  padding: 1.3rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.contact-card h4 {
+  margin-bottom: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.contact-card p {
+  margin: 0;
+}
+
+.contact-card a {
+  font-weight: 600;
+}
+
+.contact-fax {
+  margin-top: 0.4rem !important;
+  color: var(--ink-3);
+}
+
+.map-frame {
+  position: relative;
+  margin-top: 1.5rem;
+  min-height: 260px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--void);
+  color: var(--light);
+}
+
+.map-frame iframe {
+  width: 100%;
+  height: 360px;
+  border: 0;
+}
+
+.map-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(61, 232, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 255, 0.16) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+.map-note {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+  padding: 2.2rem;
+}
+
+.map-note p {
+  margin: 0;
+  max-width: 40ch;
+  font-size: 1.1rem;
+}
+
+.map-note .btn {
+  background: transparent;
+  color: var(--light);
+  border-color: var(--rule-dark-strong);
+}
+
+.partner-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem 2.5rem;
+}
+
+.partner-strip img {
+  height: 56px;
+  width: auto;
+  object-fit: contain;
+  filter: grayscale(1);
+  opacity: 0.8;
+  transition: filter 0.3s var(--ease), opacity 0.3s var(--ease);
+}
+
+.partner-strip img:hover {
+  filter: none;
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  .room-hero {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding-top: 7rem;
+  }
+
+  .room-hero-cover {
+    display: none;
+  }
+
+  .room-onward {
+    grid-template-columns: 1fr;
+  }
+
+  .onward.is-next {
+    text-align: left;
+    justify-items: start;
+  }
+}

@@ -223,6 +223,10 @@ const exhibitsEn: Record<string, ExhibitEn> = {
     title: 'Perak Music Archive (AMP)',
     meta: 'Archive · Music',
     tagline: 'A reference to the many genres of music from Perak.',
+    body: [
+      "AMP's archive holds recordings, posters, album sleeves, press cuttings and documents gathered from musicians and their families across Perak.",
+      'The material is catalogued so researchers, students and policymakers can use it — and part of it is now available through the Perak Music Archive website.',
+    ],
   },
   'media-liputan': {
     title: 'Press Coverage',
@@ -243,6 +247,10 @@ const exhibitsEn: Record<string, ExhibitEn> = {
   'portcast-arkib': {
     meta: 'Video · Interviews',
     tagline: 'Video documentation built on the holdings of the Perak Music Archive.',
+    body: [
+      "Every PORTCAST episode is kept as part of the Perak Music Archive — an oral history of Perak's musicians, recorded in their own voices.",
+      "Full recordings can be watched in PORT's Screening Room and on the official @portipoh YouTube channel.",
+    ],
   },
 
   // What's on

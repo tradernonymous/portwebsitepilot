@@ -39,6 +39,8 @@ export type WorldOptions = {
   /** Which exhibit the camera is nearest, as you walk. */
   onExhibitFocus?: (index: number) => void;
   onReady?: () => void;
+  /** Build only the gallery wing — no approach, no deck. */
+  corridorOnly?: boolean;
 };
 
 type Monolith = {
@@ -376,8 +378,12 @@ export class PortWorld {
     this.scene.add(this.entryGroup, this.hubGroup, this.corridorGroup);
     this.buildEnvironment();
     this.buildPaintings();
-    this.buildEntry();
-    this.buildHub(opts.stations);
+    // A walk through one wing needs only the wing: the approach and the deck are skipped,
+    // which saves their geometry and every deck cover texture.
+    if (!opts.corridorOnly) {
+      this.buildEntry();
+      this.buildHub(opts.stations);
+    }
     // Applied silently: the entry gate is still on screen at this point, so the
     // world must not tell React it has arrived anywhere yet.
     this.applyPhase(this.reduced ? 'hub' : 'entry');

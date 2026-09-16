@@ -75,8 +75,9 @@ export function detectWebGL(): boolean {
 export type Route =
   | { kind: 'hub' }
   | { kind: 'flat' }
-  | { kind: 'station'; stationId: string }
-  | { kind: 'exhibit'; stationId: string; index: number };
+  | { kind: 'station'; stationId: string; shelf?: string }
+  | { kind: 'exhibit'; stationId: string; index: number }
+  | { kind: 'walk'; stationId: string };
 
 function parse(hash: string): Route {
   const clean = hash.replace(/^#\/?/, '').trim();
@@ -84,6 +85,11 @@ function parse(hash: string): Route {
   const parts = clean.split('/').filter(Boolean);
   if (parts[0] === 'senarai') return { kind: 'flat' };
   if (parts[0] === 's' && parts[1]) {
+    // `#/s/<room>/jalan` walks the room in 3D; `#/s/video/filem/<shelf>` opens a film shelf
+    if (parts[2] === 'jalan') return { kind: 'walk', stationId: parts[1] };
+    if (parts[2] === 'filem' && parts[3]) {
+      return { kind: 'station', stationId: parts[1], shelf: parts[3] };
+    }
     const index = parts[2] !== undefined ? Number(parts[2]) : NaN;
     if (Number.isInteger(index) && index >= 0) {
       return { kind: 'exhibit', stationId: parts[1], index };
@@ -100,10 +106,17 @@ function stringify(route: Route): string {
     case 'flat':
       return 'senarai';
     case 'station':
-      return `s/${route.stationId}`;
+      return route.shelf ? `s/${route.stationId}/filem/${route.shelf}` : `s/${route.stationId}`;
     case 'exhibit':
       return `s/${route.stationId}/${route.index}`;
+    case 'walk':
+      return `s/${route.stationId}/jalan`;
   }
+}
+
+/** The address of a route, for real links (`<a href>`), so rooms open in new tabs too. */
+export function hrefFor(route: Route): string {
+  return `#/${stringify(route)}`;
 }
 
 /** Deep-linkable routes so a station or exhibit can be shared on WhatsApp. */

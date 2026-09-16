@@ -229,7 +229,7 @@ const ORG = 'https://portipoh.com';
 
 /* ------------------------------------------------------------------ the space */
 
-export const stations: Station[] = [
+const rawStations: Station[] = [
   /* ---------------------------------------------------------------- 1. TENTANG KAMI */
   {
     id: 'tentang',
@@ -534,8 +534,11 @@ export const stations: Station[] = [
         title: 'Arkib Muzik Perak (AMP)',
         meta: 'Arkib · Muzik',
         tagline: 'Sumber rujukan kepelbagaian genre muzik negeri Perak.',
-        body: body(614, 0, 3),
-        images: library(/poster|_mg_/i, 3),
+        body: [
+          'Bahagian arkib AMP menyimpan rakaman, poster, kulit album, keratan akhbar dan dokumen yang dikumpul daripada pemuzik dan keluarga mereka di seluruh Perak.',
+          'Bahan-bahan ini disusun supaya boleh dirujuk oleh penyelidik, pelajar dan pembuat dasar — sebahagiannya kini boleh diakses melalui laman sesawang Arkib Muzik Perak.',
+        ],
+        images: [],
         source: `${ORG}/program-utama/arkib-muzik-perak/`,
       },
       {
@@ -565,8 +568,11 @@ export const stations: Station[] = [
         title: 'PORTCAST',
         meta: 'Video · Temu Bual',
         tagline: 'Pendokumentasian video berdasarkan bahan simpanan Arkib Muzik Perak.',
-        body: body(821, 0, 2),
-        images: library(/poster_ims|_mg_/i, 3),
+        body: [
+          'Setiap episod PORTCAST disimpan sebagai sebahagian daripada Arkib Muzik Perak — sejarah lisan pemuzik Perak, dirakam dengan suara mereka sendiri.',
+          'Rakaman penuh boleh ditonton di Bilik Tayangan PORT dan di saluran YouTube rasmi @portipoh.',
+        ],
+        images: [],
         source: `${ORG}/program-utama/port-cast/`,
       },
     ],
@@ -668,6 +674,70 @@ export const stations: Station[] = [
     heroImage: imagesOf(16)[0] ?? library(/header/i, 1)[0],
   },
 ];
+
+/* ------------------------------------------------------------------ curation */
+
+/**
+ * The synced library holds only a handful of general event photographs, and the station
+ * definitions above lean on them wherever a work has no pictures of its own. Shown on a
+ * gallery wall that reads as the same photograph hung under a dozen different titles — an
+ * artist's residency illustrated by a stranger's concert. This pass enforces three rules:
+ *
+ *   1. A general photograph is never presented as a specific work.
+ *   2. Every image appears in at most one work across the whole site.
+ *   3. An image too small to hold a wall is left out rather than stretched.
+ *
+ * A work left with no pictures is not a gap: the gallery gives it a light-painting plate of
+ * its own (see `LightPlate`). Paragraphs that only repeat the work's date line or a page
+ * heading are dropped for the same reason.
+ */
+const GENERIC = /^(img_|dsc_|_mg_|_dsc|header|main_programme_header|port_white)/i;
+const MIN_WALL_WIDTH = 480;
+/**
+ * Photographs whose file names name a person or a project. Such a picture only hangs on a
+ * work that names the same — so an artist's portrait can never caption someone else's year.
+ */
+const NAMED = ['hafizuddin', 'kembali', 'direktori', 'hsdr9', 'portfest', 'ims', 'dbp'];
+
+function namedFor(caption: string, exhibit: Exhibit, ids: Set<string>): boolean {
+  const lower = caption.toLowerCase();
+  const names = NAMED.filter((name) => lower.includes(name));
+  if (!names.length) return true;
+  // a work that *is* that name (the artist's own page) has first claim on the picture
+  const owned = names.filter((name) => ids.has(name));
+  if (owned.length) return owned.includes(exhibit.id);
+  const about = `${exhibit.id} ${exhibit.title} ${exhibit.tagline}`.toLowerCase();
+  return names.some((name) => about.includes(name));
+}
+
+function curate(list: Station[]): Station[] {
+  const used = new Set<string>();
+  const ids = new Set(list.flatMap((station) => station.exhibits.map((exhibit) => exhibit.id)));
+  return list.map((station) => ({
+    ...station,
+    exhibits: station.exhibits.map((exhibit) => {
+      const images = exhibit.images.filter((img) => {
+        if (GENERIC.test(img.caption)) return false;
+        if (!namedFor(img.caption, exhibit, ids)) return false;
+        if (img.width && img.width < MIN_WALL_WIDTH) return false;
+        if (used.has(img.small)) return false;
+        used.add(img.small);
+        return true;
+      });
+      const seen = new Set<string>();
+      const bodyText = exhibit.body.filter((para) => {
+        const text = para.trim();
+        if (seen.has(text)) return false;
+        seen.add(text);
+        if (text.length < 60 && /^(sesi \d|artis-artis|direktori kreatif)/i.test(text)) return false;
+        return text !== exhibit.tagline;
+      });
+      return { ...exhibit, images, body: bodyText };
+    }),
+  }));
+}
+
+export const stations: Station[] = curate(rawStations);
 
 export function stationById(id: string): Station | undefined {
   return stations.find((s) => s.id === id);
@@ -771,6 +841,30 @@ export const entranceImage: { large: string; small: string; caption: string } | 
   }
   return undefined;
 })();
+
+/**
+ * The walk into the building, in order. A street-front photograph dropped at
+ * `src/assets/building.*` becomes the first stage; the lobby photograph at
+ * `src/assets/entrance.*` is always the last. `focus` is the doorway the camera travels
+ * towards, as a fraction of the photograph's width and height.
+ */
+const droppedBuilding = import.meta.glob('../assets/building.*', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>;
+
+export type EntranceStage = { src: string; focus: { x: number; y: number } };
+
+export const entranceStages: EntranceStage[] = [
+  ...Object.values(droppedBuilding)
+    .slice(0, 1)
+    .map((src) => ({ src, focus: { x: 0.5, y: 0.6 } })),
+  ...(entranceImage
+    ? // the lobby's doorway, left of the counter, under the PORT wall
+      [{ src: entranceImage.large, focus: { x: 0.37, y: 0.54 } }]
+    : []),
+];
 
 /** True when the frontage is a real dropped-in photo rather than the synced banner. */
 export const entranceIsCustom = Boolean(

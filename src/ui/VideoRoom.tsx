@@ -1,46 +1,48 @@
 import { useEffect, useState } from 'react';
 import type { Station } from '../content';
 import { channel, embedUrl, thumbUrl, watchUrl, type PortVideo } from '../content/videos';
-import { useDialogFocus } from '../lib/hooks';
 import { useLang } from '../lib/lang';
+import { pad } from '../lib/order';
 import { Glyph } from './Glyph';
 
 type Props = {
   station: Station;
-  /**
-   * Present when the room is a panel standing over the space, absent when it is a section
-   * inside the plain list. The same component serves both, so a film can never exist in
-   * one view of PORT and be missing from the other.
-   */
-  onClose?: () => void;
+  /** Open on this programme's shelf rather than the first. */
+  initialShelf?: string;
+  /** Show the room's own introduction above the screen. */
+  showIntro?: boolean;
 };
 
 /**
- * The screening room: PORT's films, on shelves.
+ * The screening room: PORT's films on shelves.
  *
- * The channel is a flat wall of a hundred uploads in reverse date order, which is no way
- * to meet an institution's work. Here each film belongs to the programme it came from —
- * the interview series, the symposium, the stage — so a visitor picks a programme first
- * and a recording second, and every card is the same size and shape whatever the footage
- * behind it happens to be.
+ * The channel is a flat wall of uploads in reverse date order, which is no way to meet an
+ * institution's work. Here each film belongs to the programme it came from — the stage, the
+ * symposium, the interview series, the festival — so a visitor picks a programme first and
+ * a recording second.
  */
-export function VideoRoom({ station, onClose }: Props) {
+export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
   const { t } = useLang();
   const shelves = station.videoShelves ?? [];
-  const [openShelf, setOpenShelf] = useState(shelves[0]?.id ?? '');
-  const [playing, setPlaying] = useState(shelves[0]?.videos[0]?.id ?? '');
+  const startShelf = shelves.find((s) => s.id === initialShelf) ?? shelves[0];
+  const [openShelf, setOpenShelf] = useState(startShelf?.id ?? '');
+  const [playing, setPlaying] = useState(startShelf?.videos[0]?.id ?? '');
   const [playerState, setPlayerState] = useState<'loading' | 'ready' | 'fallback'>('loading');
-  const modal = Boolean(onClose);
-  // Only the panel variant takes focus; the inline one must leave the page where it is.
-  const scroller = useDialogFocus<HTMLDivElement>(`${station.id}:${modal ? 'panel' : 'inline'}`);
+
+  // A link to a different shelf (from the hall) while the room is already open.
+  useEffect(() => {
+    const target = shelves.find((s) => s.id === initialShelf);
+    if (!target) return;
+    setOpenShelf(target.id);
+    setPlaying(target.videos[0]?.id ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialShelf]);
 
   const shelf = shelves.find((s) => s.id === openShelf) ?? shelves[0];
-  const current: PortVideo | undefined =
-    shelf?.videos.find((v) => v.id === playing) ?? shelf?.videos[0];
+  const current: PortVideo | undefined = shelf?.videos.find((v) => v.id === playing) ?? shelf?.videos[0];
 
-  // Keep YouTube's own error card out of PORT. A working player reports a usable state;
-  // an unavailable embed reports onError; a silent player gets a branded fallback after a
-  // short grace period so the gallery never presents a blank or third-party error screen.
+  // Keep YouTube's own error card out of PORT: a working player reports a usable state, a
+  // refused embed reports onError, and a silent player gets a branded fallback.
   useEffect(() => {
     setPlayerState('loading');
     if (!current) return;
@@ -72,7 +74,6 @@ export function VideoRoom({ station, onClose }: Props) {
 
   const openShelfById = (id: string) => {
     setOpenShelf(id);
-    // Opening a programme lands you on its first film — the recording that leads it.
     const first = shelves.find((s) => s.id === id)?.videos[0];
     if (first) setPlaying(first.id);
   };
@@ -91,186 +92,114 @@ export function VideoRoom({ station, onClose }: Props) {
     );
   }
 
-  const body = (
-    <>
-      <div className="screening-room-mark" aria-hidden="true">
-        <span>{t('screeningMark')}</span>
-        <b>{t('movingArchive')}</b>
-        <i>
-          {shelf.videos.length} {t('selectedRecordings')}
-        </i>
-      </div>
-      <div className="video-body">
-      <div className="video-player">
-        <div className={`video-stage is-${playerState}`}>
-          {/* Keyed on the id so switching films mounts a fresh player rather than
-              leaving the previous one's audio running underneath. */}
-          <iframe
-            key={current.id}
-            src={embedUrl(current.id, { controls: true, api: true })}
-            title={current.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-            onLoad={(event) =>
-              event.currentTarget.contentWindow?.postMessage('{"event":"listening"}', '*')
-            }
-          />
-          {playerState !== 'ready' ? (
-            <div className="video-fallback">
-              <img src={thumbUrl(current.id, 'hq')} alt="" />
-              <div className="video-fallback-shade" />
-              <div className="video-fallback-copy">
-                <Glyph glyph="video" size={18} />
-                <p>{playerState === 'loading' ? t('connecting') : t('opensOnYoutube')}</p>
-                <a href={watchUrl(current.id)} target="_blank" rel="noreferrer noopener">
-                  {t('watchOnYoutube')}
-                </a>
-              </div>
-            </div>
-          ) : null}
-        </div>
-        <div className="video-under">
-          <div>
-            <p className="video-kicker" style={{ color: station.accent }}>
-              {shelf.label}
-            </p>
-            <h3>{current.title}</h3>
-            <p className="video-note">{current.note ?? current.meta}</p>
-          </div>
-          <a
-            className="btn btn-ghost"
-            href={watchUrl(current.id)}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            {t('openOnYoutube')}
-          </a>
-        </div>
-      </div>
-
-      <div className="video-shelf">
-        <div className="video-tabs" role="tablist" aria-label={t('videoProgrammes')}>
-          {shelves.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              role="tab"
-              aria-selected={s.id === shelf.id}
-              className={`video-tab${s.id === shelf.id ? ' is-active' : ''}`}
-              onClick={() => openShelfById(s.id)}
-            >
-              {s.short}
-              <i>{s.videos.length}</i>
-            </button>
+  return (
+    <section className="video-room" aria-label={station.label}>
+      {showIntro ? (
+        <div className="video-intro">
+          {station.intro.map((para) => (
+            <p key={para}>{para}</p>
           ))}
         </div>
-        <p className="video-tagline">{shelf.tagline}</p>
+      ) : null}
 
-        <div className="video-list">
-          {shelf.videos.map((video) => {
-            const nowPlaying = video.id === current.id;
-            return (
+      <div className="video-body">
+        <div className="video-player">
+          <div className={`video-stage is-${playerState}`}>
+            {/* Keyed on the id so switching films mounts a fresh player rather than leaving
+                the previous one's audio running underneath. */}
+            <iframe
+              key={current.id}
+              src={embedUrl(current.id, { controls: true, api: true })}
+              title={current.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+              onLoad={(event) => event.currentTarget.contentWindow?.postMessage('{"event":"listening"}', '*')}
+            />
+            {playerState !== 'ready' ? (
+              <div className="video-fallback">
+                <img src={thumbUrl(current.id, 'hq')} alt="" />
+                <div className="video-fallback-shade" />
+                <div className="video-fallback-copy">
+                  <Glyph glyph="video" size={18} />
+                  <p>{playerState === 'loading' ? t('connecting') : t('opensOnYoutube')}</p>
+                  <a href={watchUrl(current.id)} target="_blank" rel="noreferrer noopener">
+                    {t('watchOnYoutube')}
+                  </a>
+                </div>
+              </div>
+            ) : null}
+            <span className="hud-corner is-tl" aria-hidden="true" />
+            <span className="hud-corner is-tr" aria-hidden="true" />
+            <span className="hud-corner is-bl" aria-hidden="true" />
+            <span className="hud-corner is-br" aria-hidden="true" />
+          </div>
+          <div className="video-under">
+            <div>
+              <p className="kicker">{shelf.label}</p>
+              <h3>{current.title}</h3>
+              <p className="video-note">{current.note ?? current.meta}</p>
+            </div>
+            <a className="btn" href={watchUrl(current.id)} target="_blank" rel="noreferrer noopener">
+              {t('openOnYoutube')}
+            </a>
+          </div>
+        </div>
+
+        <div className="video-shelf">
+          {/* Programme titles, not tabs */}
+          <div className="video-programmes" role="tablist" aria-label={t('videoProgrammes')}>
+            {shelves.map((s) => (
               <button
-                key={video.id}
+                key={s.id}
                 type="button"
-                className={`video-card${nowPlaying ? ' is-playing' : ''}`}
-                aria-current={nowPlaying ? 'true' : undefined}
-                onClick={() => setPlaying(video.id)}
+                role="tab"
+                aria-selected={s.id === shelf.id}
+                className={`video-programme${s.id === shelf.id ? ' is-active' : ''}`}
+                onClick={() => openShelfById(s.id)}
               >
-                <span className="video-thumb">
-                  <img src={thumbUrl(video.id, 'hq')} alt="" loading="lazy" />
-                  <span className="video-time">{video.duration}</span>
-                  <span className="video-badge" aria-hidden="true">
-                    {nowPlaying ? t('nowPlaying') : t('play')}
-                  </span>
-                </span>
-                <span className="video-meta">
-                  <b>{video.title}</b>
-                  <i>{video.meta}</i>
-                </span>
+                {s.short}
+                <i>{pad(s.videos.length)}</i>
               </button>
-            );
-          })}
+            ))}
+          </div>
+          <p className="video-tagline">{shelf.tagline}</p>
+
+          <div className="video-list">
+            {shelf.videos.map((video, i) => {
+              const nowPlaying = video.id === current.id;
+              return (
+                <button
+                  key={video.id}
+                  type="button"
+                  className={`video-card${nowPlaying ? ' is-playing' : ''}`}
+                  aria-current={nowPlaying ? 'true' : undefined}
+                  onClick={() => setPlaying(video.id)}
+                >
+                  <span className="video-thumb">
+                    <img src={thumbUrl(video.id, 'mq')} alt="" loading="lazy" />
+                    <span className="video-time">{video.duration}</span>
+                  </span>
+                  <span className="video-meta">
+                    <i>
+                      {pad(i + 1)} · {nowPlaying ? t('nowPlaying') : video.meta}
+                    </i>
+                    <b>{video.title}</b>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
-    </>
-  );
 
-  if (!modal) {
-    return (
-      <section className="video-room is-inline" aria-label={station.label}>
-        <ShelvesIntro station={station} />
-        {body}
-        <p className="video-source">
-          {t('allRecordingsFrom')}{' '}
-          <a href={channel.videosUrl} target="_blank" rel="noreferrer noopener">
-            {channel.handle}
-          </a>{' '}
-          {t('onYoutube')}
-        </p>
-      </section>
-    );
-  }
-
-  return (
-    <>
-      <div className="panel-scrim" onClick={onClose} role="presentation" />
-      <section
-        className="panel video-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label={station.label}
-        style={{ borderLeftColor: station.accent }}
-      >
-        <div className="panel-top">
-          <div className="panel-title">
-            <p className="panel-kicker">{t('room')}</p>
-            <h2>
-              <Glyph glyph={station.glyph} size={20} /> {station.label}
-            </h2>
-            <p className="lede">{station.tagline}</p>
-          </div>
-          <button
-            type="button"
-            className="icon-btn close-btn"
-            onClick={onClose}
-            aria-label={t('close')}
-            title={t('close')}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3Z"
-              />
-            </svg>
-          </button>
-        </div>
-        <div className="panel-body" ref={scroller} tabIndex={-1}>
-          {body}
-          <p className="video-source">
-            {t('allRecordingsFrom')}{' '}
-            <a href={channel.videosUrl} target="_blank" rel="noreferrer noopener">
-              {channel.handle}
-            </a>{' '}
-            {t('onYoutube')}
-          </p>
-        </div>
-      </section>
-    </>
-  );
-}
-
-/** The station's own words, shown where the room is a page rather than a panel. */
-function ShelvesIntro({ station }: { station: Station }) {
-  return (
-    <>
-      {station.intro.map((para) => (
-        <p key={para} className="video-lede">
-          {para}
-        </p>
-      ))}
-    </>
+      <p className="video-source">
+        {t('allRecordingsFrom')}{' '}
+        <a href={channel.videosUrl} target="_blank" rel="noreferrer noopener">
+          {channel.handle}
+        </a>{' '}
+        {t('onYoutube')}
+      </p>
+    </section>
   );
 }

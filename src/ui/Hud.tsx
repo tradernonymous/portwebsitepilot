@@ -1,43 +1,59 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { Station } from '../content';
 import { useLang } from '../lib/lang';
-import { Glyph } from './Glyph';
 
 type TopBarProps = {
+  /** The trail after "PORT" — room and work names, titles only. */
   crumb?: ReactNode;
   flat: boolean;
-  language?: 'ms' | 'en';
-  onToggleLanguage?: () => void;
   onToggleFlat: () => void;
   onHelp: () => void;
+  /** Changes whenever the page underneath changes, so the bar re-reads what it sits on. */
+  pageKey: string;
 };
 
-export function TopBar({
-  crumb,
-  flat,
-  language = 'ms',
-  onToggleLanguage,
-  onToggleFlat,
-  onHelp,
-}: TopBarProps) {
-  const { t } = useLang();
+/**
+ * The one bar that stays put. It sits transparent over a dark hero (the film, a room's
+ * light) and turns to white glass once the page has scrolled onto the gallery wall, so its
+ * words are always legible against whatever is behind them.
+ */
+export function TopBar({ crumb, flat, onToggleFlat, onHelp, pageKey }: TopBarProps) {
+  const { t, lang, toggle } = useLang();
+  const [onDark, setOnDark] = useState(true);
+
+  useEffect(() => {
+    let raf = 0;
+    const measure = () => {
+      raf = 0;
+      const hero = document.querySelector('[data-hero]');
+      const bottom = hero ? hero.getBoundingClientRect().bottom : 0;
+      setOnDark(bottom > 60);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(measure);
+    };
+    measure();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [pageKey]);
+
   return (
-    <header className="hud-top">
-      <div className="brand">
-        <strong>PORT</strong>
-        <span>{t('brandLine')}</span>
-      </div>
-      <div className="hud-spacer" />
-      {crumb ? <div className="crumb">{crumb}</div> : null}
-      <div className="hud-tools">
-        <button
-          type="button"
-          className="icon-btn language-btn"
-          onClick={onToggleLanguage}
-          aria-label={t('switchLang')}
-          title={t('switchLang')}
-        >
-          {language === 'ms' ? 'EN' : 'BM'}
+    <header className={`topbar${onDark ? ' is-on-dark' : ''}`}>
+      <a className="topbar-brand" href="#/" aria-label={`PORT — ${t('home')}`}>
+        <b>PORT</b>
+        <span>unity thru arts</span>
+      </a>
+      {crumb ? <nav className="topbar-crumb">{crumb}</nav> : <span className="topbar-spacer" />}
+      <div className="topbar-tools">
+        <button type="button" className="chip" onClick={toggle} aria-label={t('switchLang')} title={t('switchLang')}>
+          <span className={lang === 'ms' ? 'is-on' : ''}>BM</span>
+          <i aria-hidden="true">/</i>
+          <span className={lang === 'en' ? 'is-on' : ''}>EN</span>
         </button>
         <button
           type="button"
@@ -49,25 +65,13 @@ export function TopBar({
         >
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
             {flat ? (
-              <path
-                fill="currentColor"
-                d="M12 2.6 1.8 9.1l10.2 6.5 10.2-6.5ZM4.6 12.4 12 17l7.4-4.6v3.9L12 21l-7.4-4.7Zm0 4.9L12 22l7.4-4.7v2.4L12 24l-7.4-4.3Z"
-              />
+              <path fill="currentColor" d="M3 3h8v8H3Zm2 2v4h4V5Zm8-2h8v8h-8Zm2 2v4h4V5ZM3 13h8v8H3Zm2 2v4h4v-4Zm8-2h8v8h-8Zm2 2v4h4v-4Z" />
             ) : (
-              <path
-                fill="currentColor"
-                d="M3 5h18v2.2H3Zm0 5.9h18v2.2H3Zm0 5.9h18V19H3Z"
-              />
+              <path fill="currentColor" d="M3 5h18v2H3Zm0 6h18v2H3Zm0 6h12v2H3Z" />
             )}
           </svg>
         </button>
-        <button
-          type="button"
-          className="icon-btn"
-          onClick={onHelp}
-          title={t('helpTitle')}
-          aria-label={t('helpTitle')}
-        >
+        <button type="button" className="icon-btn" onClick={onHelp} title={t('helpTitle')} aria-label={t('helpTitle')}>
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
             <path
               fill="currentColor"
@@ -77,150 +81,6 @@ export function TopBar({
         </button>
       </div>
     </header>
-  );
-}
-
-type DockProps = {
-  stations: Station[];
-  activeId?: string | null;
-  onSelect: (id: string) => void;
-  label: string;
-  /** The live line above the tabs. Falls back to the plain label when nothing is named. */
-  caption?: ReactNode;
-};
-
-/**
- * The station dock — the DOM twin of the monolith ring, for pointer, keyboard and touch.
- *
- * It is one row that always keeps scrolling: touch pans it natively, a mouse can drag it,
- * a wheel over it scrolls it sideways, and the active station is always brought back into
- * view. There is deliberately no visible scrollbar — a soft fade, shown only on the side
- * that still has stations beyond it, is what signals there is more to see. Reach an end and
- * that edge goes crisp again, so the strip never looks accidentally clipped.
- */
-export function Dock({ stations, activeId, onSelect, label, caption }: DockProps) {
-  const { t } = useLang();
-  const listRef = useRef<HTMLDivElement>(null);
-  const drag = useRef({ active: false, startX: 0, startLeft: 0, moved: 0 });
-  const [edges, setEdges] = useState({ left: false, right: false });
-
-  // Fades are measured from real overflow, so a strip that fits is never touched at all.
-  useEffect(() => {
-    const list = listRef.current;
-    if (!list) return;
-    const measure = () => {
-      const max = list.scrollWidth - list.clientWidth;
-      const left = max > 2 && list.scrollLeft > 2;
-      const right = max > 2 && list.scrollLeft < max - 2;
-      setEdges((prev) => (prev.left === left && prev.right === right ? prev : { left, right }));
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(list);
-    for (const item of Array.from(list.children)) observer.observe(item);
-    list.addEventListener('scroll', measure, { passive: true });
-    window.addEventListener('resize', measure);
-    return () => {
-      observer.disconnect();
-      list.removeEventListener('scroll', measure);
-      window.removeEventListener('resize', measure);
-    };
-  }, [stations.length, activeId]);
-
-  // Keep the current station in sight — matters most on a phone, where only three fit.
-  useEffect(() => {
-    if (!activeId) return;
-    const item = listRef.current?.querySelector<HTMLElement>(`[data-station="${activeId}"]`);
-    item?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }, [activeId]);
-
-  // A wheel over the strip scrolls it sideways: the gesture you would expect, and the only
-  // way to reach the far stations with a mouse if dragging is not discovered.
-  useEffect(() => {
-    const list = listRef.current;
-    if (!list) return;
-    const onWheel = (event: WheelEvent) => {
-      if (list.scrollWidth <= list.clientWidth + 2) return;
-      const delta = Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
-      if (!delta) return;
-      list.scrollLeft += delta;
-      event.preventDefault();
-    };
-    list.addEventListener('wheel', onWheel, { passive: false });
-    return () => list.removeEventListener('wheel', onWheel);
-  }, []);
-
-  const onPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'touch') return; // the browser already pans it natively
-    const list = listRef.current;
-    if (!list || list.scrollWidth <= list.clientWidth + 2) return;
-    drag.current = { active: true, startX: event.clientX, startLeft: list.scrollLeft, moved: 0 };
-    list.setPointerCapture(event.pointerId);
-  }, []);
-
-  const onPointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const list = listRef.current;
-    if (!list || !drag.current.active) return;
-    const dx = event.clientX - drag.current.startX;
-    drag.current.moved = Math.max(drag.current.moved, Math.abs(dx));
-    list.scrollLeft = drag.current.startLeft - dx;
-  }, []);
-
-  const endDrag = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    drag.current.active = false;
-    listRef.current?.releasePointerCapture?.(event.pointerId);
-  }, []);
-
-  return (
-    <nav className="dock" aria-label={t('rooms')}>
-      <div className="dock-head">
-        <span className="dock-kicker">
-          {t('collection')} / {String(stations.length).padStart(2, '0')} {t('rooms').toLowerCase()}
-        </span>
-        {caption ?? <b className="dock-caption">{label}</b>}
-      </div>
-      <div
-        className={`dock-list${edges.left ? ' can-left' : ''}${edges.right ? ' can-right' : ''}`}
-        ref={listRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-      >
-        {stations.map((station) => {
-          const style = { '--item-accent': station.accent } as CSSProperties;
-          return (
-            <button
-              key={station.id}
-              type="button"
-              data-station={station.id}
-              className={`dock-item${activeId === station.id ? ' is-active' : ''}`}
-              style={style}
-              onClick={() => {
-                // a drag should never be read as a tap
-                if (drag.current.moved > 8) {
-                  drag.current.moved = 0;
-                  return;
-                }
-                onSelect(station.id);
-              }}
-              title={station.tagline}
-            >
-              <i className="dock-index" aria-hidden="true">
-                {String(stations.indexOf(station) + 1).padStart(2, '0')}
-              </i>
-              <Glyph glyph={station.glyph} size={16} />
-              {/* both forms ship, and the stylesheet picks one: the full name where there
-                  is room, the short one on a phone, where every tab costs a swipe */}
-              <span className="dock-label">
-                <span className="dock-label-full">{station.label}</span>
-                <span className="dock-label-short">{station.short}</span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
   );
 }
 
@@ -234,16 +94,8 @@ type RailProps = {
   onOpen: (index: number) => void;
 };
 
-/** The corridor's index rail: shows where you are and lets you jump between works. */
-export function CorridorRail({
-  station,
-  activeIndex,
-  progress,
-  onSelect,
-  onWalk,
-  onExit,
-  onOpen,
-}: RailProps) {
+/** The 3D wing's index rail: where you are, and every work in the wing. */
+export function CorridorRail({ station, activeIndex, progress, onSelect, onWalk, onExit, onOpen }: RailProps) {
   const { t } = useLang();
   return (
     <aside className="rail" aria-label={`${t('worksIn')} ${station.label}`}>
@@ -252,7 +104,6 @@ export function CorridorRail({
           {t('walkKicker')} / {String(station.exhibits.length).padStart(2, '0')} {t('works')}
         </span>
         <h2>{station.label}</h2>
-        <p>{station.tagline}</p>
       </div>
       <div className="rail-progress" role="presentation">
         <span style={{ transform: `scaleX(${Math.max(0.02, progress)})` }} />
@@ -274,65 +125,27 @@ export function CorridorRail({
         ))}
       </div>
       <div className="rail-foot">
-        <button type="button" className="btn btn-ghost" onClick={() => onWalk(-6)}>
+        <button type="button" className="btn" onClick={() => onWalk(-6)}>
           {t('walkBack')}
         </button>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => onOpen(activeIndex >= 0 ? activeIndex : 0)}
-        >
+        <button type="button" className="btn btn-primary" onClick={() => onOpen(activeIndex >= 0 ? activeIndex : 0)}>
           {t('openWork')}
         </button>
-        <button type="button" className="btn btn-ghost" onClick={() => onWalk(6)}>
+        <button type="button" className="btn" onClick={() => onWalk(6)}>
           {t('walkFwd')}
         </button>
       </div>
-      <div className="rail-foot">
-        <button type="button" className="btn btn-ghost" onClick={onExit}>
-          ← {t('backToHall')}
-        </button>
-      </div>
+      <button type="button" className="rail-exit" onClick={onExit}>
+        {t('backToRoom')}
+      </button>
     </aside>
   );
 }
 
-export function DeckCaption({
-  station,
-  fallback,
-}: {
-  station?: Station | null;
-  fallback: string;
-}) {
-  if (!station) return <b className="dock-caption">{fallback}</b>;
+/** A one-line gesture lesson that retires itself once the visitor has acted on it. */
+export function Hint({ children, retiring }: { children: ReactNode; retiring?: boolean }) {
   return (
-    // Keyed on the station so the glow replays each time the name changes.
-    <span className="dock-caption is-live" key={station.id}>
-      <Glyph glyph={station.glyph} size={15} />
-      <b>{station.label}</b>
-      <i>{station.tagline}</i>
-    </span>
-  );
-}
-
-export function Hint({
-  children,
-  retiring,
-  wing,
-}: {
-  children: ReactNode;
-  retiring?: boolean;
-  /**
-   * Set inside a gallery wing, where a phone draws the wing rail as a sheet above the dock.
-   * The line moves to the top of the screen there rather than being drawn over the rail.
-   */
-  wing?: boolean;
-}) {
-  return (
-    <p
-      className={`hint${wing ? ' is-wing' : ''}${retiring ? ' is-done' : ''}`}
-      aria-hidden={retiring ? true : undefined}
-    >
+    <p className={`hint${retiring ? ' is-done' : ''}`} aria-hidden={retiring ? true : undefined}>
       {children}
     </p>
   );

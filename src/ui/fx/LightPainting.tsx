@@ -274,7 +274,9 @@ export function LightPainting({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
       ctx.globalCompositeOperation = dark ? 'lighter' : 'multiply';
-      ctx.lineCap = 'round';
+      // butt caps: with additive light, round caps overlap at every segment join and the
+      // stroke comes out as a string of beads
+      ctx.lineCap = 'butt';
       ctx.lineJoin = 'round';
     };
 
@@ -291,6 +293,13 @@ export function LightPainting({
           lx[i] = point.x;
           ly[i] = point.y;
         }
+        // the halo is one continuous stroke, so it has no seams to double up on
+        ctx.beginPath();
+        ctx.moveTo(lx[0], ly[0]);
+        for (let i = 1; i < steps; i += 1) ctx.lineTo(lx[i], ly[i]);
+        ctx.strokeStyle = rgba(mix(colours, p.hue + 0.7), dark ? 0.09 : 0.05);
+        ctx.lineWidth = p.width * 9;
+        ctx.stroke();
         // an exposure has no fading tail — the whole path is lit, brightest in its middle
         const chunk = 6;
         for (let start = 0; start < steps - 1; start += chunk) {
@@ -301,9 +310,6 @@ export function LightPainting({
           ctx.beginPath();
           ctx.moveTo(lx[start], ly[start]);
           for (let i = start + 1; i <= end; i += 1) ctx.lineTo(lx[i], ly[i]);
-          ctx.strokeStyle = rgba(colour, alpha * (dark ? 0.14 : 0.08));
-          ctx.lineWidth = p.width * 8;
-          ctx.stroke();
           ctx.strokeStyle = rgba(colour, alpha * (dark ? 0.8 : 0.55));
           ctx.lineWidth = p.width * 1.4;
           ctx.stroke();

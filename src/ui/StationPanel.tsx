@@ -1,55 +1,6 @@
-import { useDialogFocus } from '../lib/hooks';
 import { contact, googleMapEmbedUrl, partners, type Station } from '../content';
 import { useLang } from '../lib/lang';
 import { VideoRoom } from './VideoRoom';
-
-type Props = {
-  station: Station;
-  onClose: () => void;
-};
-
-export function StationPanel({ station, onClose }: Props) {
-  const scroller = useDialogFocus<HTMLDivElement>(station.id);
-  const { t } = useLang();
-
-  return (
-    <>
-      <div className="panel-scrim" onClick={onClose} role="presentation" />
-      <section
-        className="panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label={station.label}
-        style={{ borderLeftColor: station.accent }}
-      >
-        <div className="panel-top">
-          <div className="panel-title">
-            <p className="panel-kicker">{t('room')}</p>
-            <h2>{station.label}</h2>
-          </div>
-          <button
-            type="button"
-            className="icon-btn close-btn"
-            onClick={onClose}
-            aria-label={t('close')}
-            title={t('close')}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3Z"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div className="panel-body" ref={scroller} tabIndex={-1}>
-          <StationContent station={station} />
-        </div>
-      </section>
-    </>
-  );
-}
 
 /**
  * Shared between the slide-over panel and the flat (non-3D) view, so the same markup
@@ -122,7 +73,7 @@ export function StationContent({ station }: { station: Station }) {
   );
 }
 
-function ContactContent() {
+export function ContactContent() {
   const { t } = useLang();
   const mapsQuery = encodeURIComponent(
     'PORT Ipoh, Jalan Sultan Azlan Shah, 31400 Ipoh, Perak',

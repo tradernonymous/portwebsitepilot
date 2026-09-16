@@ -1,0 +1,317 @@
+/* ==========================================================================
+   The screening room
+   ========================================================================== */
+
+.video-room {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.video-intro {
+  max-width: 72ch;
+}
+
+.video-intro p {
+  color: var(--ink-2);
+  font-size: 1.05rem;
+}
+
+.video-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  align-items: start;
+}
+
+.video-player {
+  display: grid;
+  gap: 1.1rem;
+  position: sticky;
+  top: 5.5rem;
+}
+
+.video-stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--void);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 40px 80px -40px rgba(90, 46, 224, 0.55), 0 0 0 1px var(--rule);
+}
+
+.video-stage .hud-corner {
+  width: 22px;
+  height: 22px;
+  margin: -9px;
+  color: var(--lp-violet-ink);
+}
+
+.video-stage iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+}
+
+.video-stage.is-ready iframe {
+  opacity: 1;
+}
+
+.video-fallback {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  color: var(--light);
+}
+
+.video-fallback img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(6px) brightness(0.6);
+  transform: scale(1.08);
+}
+
+.video-fallback-shade {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(5, 5, 7, 0.2), rgba(5, 5, 7, 0.75));
+}
+
+.video-fallback-copy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.6rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.video-fallback-copy p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.video-fallback-copy a {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--lp-cyan);
+}
+
+.video-stage.is-loading .video-fallback-copy a {
+  visibility: hidden;
+}
+
+/* while loading, a film shows through only once it is truly ready — the iframe stays clickable when shown */
+.video-stage:not(.is-ready) .video-fallback {
+  pointer-events: auto;
+}
+
+.video-under {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.video-under .kicker {
+  margin-bottom: 0.5rem;
+}
+
+.video-under h3 {
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+}
+
+.video-note {
+  margin: 0.4rem 0 0;
+  color: var(--ink-2);
+}
+
+.video-under .btn {
+  flex: none;
+}
+
+.video-shelf {
+  display: grid;
+  gap: 1rem;
+}
+
+.video-programmes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.4rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.video-programme {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.3rem 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  transition: color 0.25s var(--ease);
+}
+
+.video-programme i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+}
+
+.video-programme::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.95rem;
+  height: 2px;
+  background: var(--spectrum);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s var(--ease-out);
+}
+
+.video-programme:hover,
+.video-programme.is-active {
+  color: var(--ink);
+}
+
+.video-programme.is-active::after {
+  transform: scaleX(1);
+}
+
+.video-tagline {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+}
+
+.video-list {
+  display: grid;
+  gap: 0.4rem;
+  max-height: min(70svh, 620px);
+  overflow-y: auto;
+  padding-right: 0.3rem;
+  scrollbar-width: thin;
+}
+
+.video-card {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.45rem;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  transition: background 0.2s var(--ease);
+}
+
+.video-card:hover {
+  background: var(--paper);
+}
+
+.video-card.is-playing {
+  background: var(--void);
+  color: var(--light);
+}
+
+.video-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--paper-2);
+}
+
+.video-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-time {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  padding: 0.05rem 0.35rem;
+  border-radius: 3px;
+  background: rgba(5, 5, 7, 0.85);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+}
+
+.video-meta {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.video-meta i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.video-card.is-playing .video-meta i {
+  color: var(--lp-cyan);
+}
+
+.video-meta b {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.video-source,
+.video-empty {
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+
+@media (max-width: 980px) {
+  .video-body {
+    grid-template-columns: 1fr;
+  }
+
+  .video-player {
+    position: static;
+  }
+
+  .video-list {
+    max-height: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .video-under {
+    flex-direction: column;
+  }
+
+  .video-card {
+    grid-template-columns: 110px minmax(0, 1fr);
+  }
+}

@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
+import { useEffect, useRef } from 'react';
 import { entranceImage } from '../content';
 import { localizeFeatured } from '../content/en';
-import { channel, embedUrl, featuredVideo, watchUrl } from '../content/videos';
+import { channel, featuredVideo, watchUrl } from '../content/videos';
 import { useLang } from '../lib/lang';
+import { FilmBackdrop } from './FilmBackdrop';
 import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
-import { Orb } from './fx/Orb';
+import { PrismShards } from './fx/PrismShards';
 import { Glyph } from './Glyph';
 
 type Props = {
@@ -15,110 +16,31 @@ type Props = {
 };
 
 /**
- * How long the player is given to report a refusal before the film is shown anyway. Long
- * enough for an embed that YouTube will not serve to say so, short enough that nobody
- * watches a still photograph wondering where the film went.
- */
-const REFUSAL_GRACE_MS = 900;
-
-/**
- * The threshold: a dark room with PORT's festival film running on the wall, light being
- * painted across it, and one glowing way in.
- *
- * The film is shown by default and hidden only on evidence that it cannot play — a player
- * that refuses reports `onError` over postMessage, which is the one report that arrives
- * reliably. The photograph underneath is the poster, so the screen is never blank while the
- * film loads, and on a slow or data-saving connection the poster is all that loads.
+ * The threshold: a dark room with PORT's festival film running on the wall, figures of light
+ * being painted in the air, and one glowing way in.
  */
 export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
   const { t, lang, toggle } = useLang();
   const film = localizeFeatured(featuredVideo, lang);
-  const [filmUp, setFilmUp] = useState(false);
-  const [filmLive, setFilmLive] = useState(false);
-  const refused = useRef(false);
-  const revealTimer = useRef<number | null>(null);
   const enterRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     enterRef.current?.focus({ preventScroll: true });
   }, []);
 
-  useEffect(() => {
-    const connection = (navigator as Navigator & {
-      connection?: { saveData?: boolean; effectiveType?: string };
-    }).connection;
-    if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType ?? '')) return;
-    // A beat after the gate is on screen: the welcome never waits on an embed.
-    const id = window.setTimeout(() => setFilmUp(true), 500);
-    return () => window.clearTimeout(id);
-  }, []);
-
-  useEffect(
-    () => () => {
-      if (revealTimer.current !== null) window.clearTimeout(revealTimer.current);
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (!filmUp) return;
-    const onMessage = (event: MessageEvent) => {
-      if (typeof event.origin !== 'string' || !/youtube(-nocookie)?\.com$/.test(event.origin)) {
-        return;
-      }
-      let payload: unknown = event.data;
-      if (typeof payload === 'string') {
-        try {
-          payload = JSON.parse(payload);
-        } catch {
-          return;
-        }
-      }
-      if (!payload || typeof payload !== 'object') return;
-      if ((payload as { event?: unknown }).event !== 'onError') return;
-      refused.current = true;
-      if (revealTimer.current !== null) window.clearTimeout(revealTimer.current);
-      setFilmLive(false);
-    };
-    window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
-  }, [filmUp]);
-
-  const onFilmLoad = (event: SyntheticEvent<HTMLIFrameElement>) => {
-    event.currentTarget.contentWindow?.postMessage('{"event":"listening"}', '*');
-    revealTimer.current = window.setTimeout(() => {
-      if (!refused.current) setFilmLive(true);
-    }, REFUSAL_GRACE_MS);
-  };
-
   return (
     <div className="gate" role="dialog" aria-modal="true" aria-label={t('gateLabel')}>
-      {entranceImage ? (
-        <div
-          className={`gate-photo${filmLive ? ' is-behind-film' : ''}`}
-          style={{ backgroundImage: `url("${entranceImage.large}")` }}
-          aria-hidden="true"
-        />
-      ) : null}
-
-      {filmUp ? (
-        <div className={`gate-film${filmLive ? ' is-live' : ''}`} aria-hidden="true">
-          <iframe
-            src={embedUrl(featuredVideo.id, { autoplay: true, loop: true, controls: false, api: true })}
-            title={film.title}
-            tabIndex={-1}
-            allow="autoplay; encrypted-media"
-            referrerPolicy="strict-origin-when-cross-origin"
-            onLoad={onFilmLoad}
-          />
-        </div>
-      ) : null}
-
+      <FilmBackdrop
+        videoId={featuredVideo.id}
+        title={film.title}
+        poster={entranceImage?.large}
+        reducedMotion={reducedMotion}
+      />
       <div className="gate-veil" aria-hidden="true" />
       <LightPainting tone="dark" painters={4} interactive reducedMotion={reducedMotion} weight={1.1} speed={0.8} />
+      <PrismShards className="gate-prism" seed={7} />
       <div className="gate-grid" aria-hidden="true" />
 
-      {/* HUD corners — the room's instrument panel */}
       <div className="gate-hud" aria-hidden="true">
         <span className="hud-corner is-tl" />
         <span className="hud-corner is-tr" />
@@ -131,13 +53,7 @@ export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
           <i className="hud-dot" />
           <Decipher text="PORT // GALERI.CAHAYA" reducedMotion={reducedMotion} duration={900} />
         </span>
-        <button
-          type="button"
-          className="chip chip-dark"
-          onClick={toggle}
-          aria-label={t('switchLang')}
-          title={t('switchLang')}
-        >
+        <button type="button" className="chip chip-dark" onClick={toggle} aria-label={t('switchLang')} title={t('switchLang')}>
           <span className={lang === 'ms' ? 'is-on' : ''}>BM</span>
           <i aria-hidden="true">/</i>
           <span className={lang === 'en' ? 'is-on' : ''}>EN</span>
@@ -145,12 +61,17 @@ export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
       </div>
 
       <div className="gate-inner">
-        <Orb className="gate-orb" rings={10} period={36} />
         <p className="gate-kicker">
           <Decipher text={t('est')} reducedMotion={reducedMotion} delay={200} />
         </p>
-        <h1 className="gate-mark" data-text="PORT">
-          PORT
+        {/* Set in the logo's own lettering: PORT over "unity thru arts" */}
+        <h1 className="gate-mark wordmark" aria-label="PORT — unity thru arts">
+          <span className="wordmark-port" data-text="PORT" aria-hidden="true">
+            PORT
+          </span>
+          <span className="wordmark-tag" aria-hidden="true">
+            unity thru arts
+          </span>
         </h1>
         <p className="gate-sub">{t('subtitle')}</p>
 
@@ -169,9 +90,7 @@ export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
             <span className="btn-glow-label spectrum-text" data-text={t('enter')}>
               {t('enter')}
             </span>
-            <svg className="btn-glow-arrow" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="currentColor" d="M13.2 5.3 20 12l-6.8 6.7-1.4-1.4 4.3-4.3H4v-2h12.1l-4.3-4.3Z" />
-            </svg>
+            <i className="btn-glow-node" aria-hidden="true" />
           </button>
           <button type="button" className="btn btn-dark" onClick={onFlat}>
             {t('listView')}
@@ -197,7 +116,7 @@ export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
             <b>{film.title}</b>
           </span>
           <span className="gate-credit-sound">
-            {channel.handle} · {t('watchWithSound')} ↗
+            {channel.handle} · {t('watchWithSound')}
           </span>
         </a>
       </div>
