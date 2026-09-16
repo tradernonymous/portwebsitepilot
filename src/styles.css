@@ -2974,6 +2974,15 @@ button {
   background: rgba(17, 17, 17, 0.2);
 }
 
+.gate .gate-inner {
+  padding: clamp(1rem, 2vw, 1.75rem);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 22px;
+  background: rgba(0, 0, 0, 0.42);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(8px);
+}
+
 .gate .gate-kicker,
 .gate .gate-welcome,
 .gate .gate-welcome em,
