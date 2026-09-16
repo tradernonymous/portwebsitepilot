@@ -1298,7 +1298,9 @@ export class PortWorld {
       if (selected && stationId !== null) {
         // Bring the chosen work to the visitor instead of making them search a ring.
         monolith.group.position.set(0, 0, -HUB_RADIUS);
-        monolith.group.rotation.y = 0;
+        // The artwork mount is turned around inside the monolith; pi faces its image
+        // toward the visitor when the card is brought to the front of the room.
+        monolith.group.rotation.y = Math.PI;
       } else if (homePosition) {
         monolith.group.position.copy(homePosition);
         if (homeRotationY !== undefined) monolith.group.rotation.y = homeRotationY;
