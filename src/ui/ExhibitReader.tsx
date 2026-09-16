@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useDialogFocus } from '../lib/hooks';
 import type { Station } from '../content';
 
 type Props = {
@@ -12,11 +12,7 @@ type Props = {
 /** Full read of one work / programme, with its photographs. */
 export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props) {
   const exhibit = station.exhibits[index];
-  const scroller = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    scroller.current?.scrollTo({ top: 0, behavior: 'auto' });
-  }, [exhibit?.id]);
+  const scroller = useDialogFocus<HTMLDivElement>(exhibit?.id ?? '');
 
   if (!exhibit) return null;
 
@@ -57,7 +53,7 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
           </button>
         </div>
 
-        <div className="panel-body" ref={scroller}>
+        <div className="panel-body" ref={scroller} tabIndex={-1}>
           {hero ? (
             <figure className="reader-hero">
               <img src={hero.large} alt={hero.caption || exhibit.title} loading="lazy" />

@@ -262,6 +262,14 @@ export function CorridorRail({
   );
 }
 
-export function Hint({ children }: { children: ReactNode }) {
-  return <p className="hint">{children}</p>;
+/**
+ * The one-line gesture hint above the dock. It carries the whole first-run lesson, so it
+ * stays visible on every screen size, and it fades out once the visitor has acted on it.
+ */
+export function Hint({ children, retiring }: { children: ReactNode; retiring?: boolean }) {
+  return (
+    <p className={`hint${retiring ? ' is-done' : ''}`} aria-hidden={retiring ? true : undefined}>
+      {children}
+    </p>
+  );
 }

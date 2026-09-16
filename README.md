@@ -176,7 +176,14 @@ in the code is Railway-specific.
   analytics, no tracking. Fonts come from Google Fonts (free); everything else is local.
 - **Accessibility.** If a visitor's device has no WebGL, or they have asked their system to
   reduce motion, the site adapts: the animation is skipped and the plain list view is offered.
-  The dock, the rail and every gallery link work from the keyboard alone.
+  The dock, the rail and every gallery link work from the keyboard alone. Opening a work moves
+  focus into the panel, so it can be read and scrolled with the keyboard, and `←` `→` page
+  between works — matching the reader's own buttons. Walking the space with `↑` `↓` is
+  suspended while a panel is open, so reading never moves the camera behind it.
+- **Guidance.** A one-line hint above the dock teaches the gesture for the space you are in,
+  worded for the device (`Ketuk`/`Klik`, `Undur / Maju`/`Scroll`) and shown at every screen
+  size. Once you have dragged or tapped, it retires — learn the deck and the wing still
+  teaches itself when you step into it.
 - **Search engines.** The plain list view carries the full text of every station.
 - **Mobile.** Drag to look, tap to enter. The station dock along the bottom is a single row
   that scrolls sideways, with a soft fade on whichever side still has stations beyond it —

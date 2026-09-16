@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** True when the visitor has asked their OS to calm animation down. */
 export function useReducedMotion(): boolean {
@@ -32,6 +32,29 @@ export function useMediaQuery(query: string): boolean {
   }, [query]);
 
   return matches;
+}
+
+/**
+ * Focus a dialog's scroll container when it opens.
+ *
+ * Without this a work opened while the reader is up left focus on `<body>`: the panel could
+ * not be scrolled from the keyboard at all — its body is taller than the viewport — and a
+ * screen reader was left outside the dialog it had just announced.
+ *
+ * `key` re-runs it when the dialog swaps content (opening the next work), so the new one
+ * starts at the top and takes focus too.
+ */
+export function useDialogFocus<T extends HTMLElement>(key: string | number) {
+  const ref = useRef<T>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollTo({ top: 0, behavior: 'auto' });
+    el.focus({ preventScroll: true });
+  }, [key]);
+
+  return ref;
 }
 
 /** Cheap one-off capability probe — no context is created, the canvas is thrown away. */

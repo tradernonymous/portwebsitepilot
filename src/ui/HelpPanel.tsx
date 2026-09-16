@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useDialogFocus } from '../lib/hooks';
 
 type Props = {
   onClose: () => void;
@@ -6,6 +7,8 @@ type Props = {
 };
 
 export function HelpPanel({ onClose, reducedMotion }: Props) {
+  const scroller = useDialogFocus<HTMLDivElement>('help');
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -48,7 +51,7 @@ export function HelpPanel({ onClose, reducedMotion }: Props) {
           </button>
         </div>
 
-        <div className="panel-body">
+        <div className="panel-body" ref={scroller} tabIndex={-1}>
           <div className="help-grid">
             <div>
               <h4>Dek utama</h4>

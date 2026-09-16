@@ -666,8 +666,16 @@ button {
 
 .hint {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  /*
+   * Centred the same way as the dock, and for the same reason: `left: 50%` with a
+   * translate caps a fixed element's shrink-to-fit width at half the viewport, which
+   * would fold this line into a narrow column on a phone.
+   */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: fit-content;
+  max-width: min(760px, calc(100vw - 2rem));
   bottom: calc(max(1.2rem, env(safe-area-inset-bottom)) + 6.2rem);
   z-index: 18;
   font-family: var(--font-display);
@@ -675,9 +683,18 @@ button {
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--muted);
-  pointer-events: none;
   text-align: center;
-  animation: fade-in 1.2s var(--ease) both;
+  text-wrap: balance;
+  pointer-events: none;
+  /* `backwards` rather than `both`: the entrance still fades in, but the animation stops
+     owning the property afterwards, so the fade-out below can actually take effect. */
+  animation: fade-in 1.2s var(--ease) backwards;
+  transition: opacity 0.7s var(--ease);
+}
+
+/* Learned: the visitor has already dragged or tapped, so the lesson is spent. */
+.hint.is-done {
+  opacity: 0;
 }
 
 /* --------------------------------------------------------------- corridor rail */
@@ -918,6 +935,15 @@ button {
   overflow-y: auto;
   padding: 1.5rem 1.6rem 3rem;
   scrollbar-width: thin;
+}
+
+/*
+ * A dialog's body takes focus so it can be scrolled from the keyboard. Without this the
+ * browser would ring the whole panel as though it were a text field.
+ */
+.panel-body:focus,
+.panel-body:focus-visible {
+  outline: none;
 }
 
 .panel-body::-webkit-scrollbar {
@@ -1482,8 +1508,16 @@ button {
     max-height: 30vh;
   }
 
+  /*
+   * This line used to be hidden below tablet width, which left a phone with nothing but
+   * the dock's own label — and that label told you to click, on a device with no cursor,
+   * while the drag-to-look gesture that the whole space depends on went unmentioned.
+   */
   .hint {
-    display: none;
+    font-size: 0.55rem;
+    letter-spacing: 0.14em;
+    line-height: 1.55;
+    max-width: calc(100vw - 1.9rem);
   }
 
   .brand span {
@@ -1669,8 +1703,13 @@ button {
     font-size: 0.62rem;
   }
 
+  /* The vertical budget is gone, but the dock is compressed too, so it still fits. */
   .hint {
-    display: none;
+    font-size: 0.52rem;
+    letter-spacing: 0.12em;
+    line-height: 1.5;
+    max-width: calc(100vw - 1.6rem);
+    bottom: calc(max(0.5rem, env(safe-area-inset-bottom)) + 3.9rem);
   }
 
   .rail {

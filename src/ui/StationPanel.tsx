@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useDialogFocus } from '../lib/hooks';
 import { contact, googleMapEmbedUrl, partners, type Station } from '../content';
 
 type Props = {
@@ -7,11 +7,7 @@ type Props = {
 };
 
 export function StationPanel({ station, onClose }: Props) {
-  const scroller = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    scroller.current?.scrollTo({ top: 0, behavior: 'auto' });
-  }, [station.id]);
+  const scroller = useDialogFocus<HTMLDivElement>(station.id);
 
   return (
     <>
@@ -46,7 +42,7 @@ export function StationPanel({ station, onClose }: Props) {
           </button>
         </div>
 
-        <div className="panel-body" ref={scroller}>
+        <div className="panel-body" ref={scroller} tabIndex={-1}>
           <StationContent station={station} />
         </div>
       </section>

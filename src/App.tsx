@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { stationById, stations } from './content';
 import type { Phase, PortWorld } from './experience/PortWorld';
-import { detectWebGL, useHashRoute, useReducedMotion } from './lib/hooks';
+import { detectWebGL, useHashRoute, useMediaQuery, useReducedMotion } from './lib/hooks';
 import { CorridorRail, Dock, Hint, TopBar } from './ui/Hud';
 import { EntryGate } from './ui/EntryGate';
 import { ExhibitReader } from './ui/ExhibitReader';
@@ -42,6 +42,30 @@ export default function App() {
     route.kind === 'station' || route.kind === 'exhibit'
       ? stationById(route.stationId)
       : undefined;
+
+  /**
+   * Which space a hint belongs to. Kept apart so that learning the deck does not silence
+   * the wing, and stepping into a wing still gets its own one-time instruction.
+   */
+  const hintSpace = phase === 'corridor' && activeStation?.kind === 'corridor' ? 'corridor' : 'hub';
+  /** A phone has no cursor, so "click" and "scroll" are simply the wrong words on it. */
+  const coarsePointer = useMediaQuery('(pointer: coarse)');
+  /** Set once the visitor has clearly begun exploring the current space. */
+  const [taught, setTaught] = useState<string | null>(null);
+
+  // A first-run hint is help; the same hint still sitting there after you have started
+  // dragging and tapping is clutter. Retire it on the first deliberate input, per space.
+  useEffect(() => {
+    if (taught === hintSpace) return;
+    const retire = () => setTaught(hintSpace);
+    const events = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
+    for (const name of events) {
+      window.addEventListener(name, retire, { once: true, passive: true });
+    }
+    return () => {
+      for (const name of events) window.removeEventListener(name, retire);
+    };
+  }, [hintSpace, taught]);
 
   /* ---------------------------------------------------------------- world lifecycle */
 
@@ -138,6 +162,15 @@ export default function App() {
       return;
     }
 
+    // A work that does not exist — a truncated share link, a URL from an older build — is
+    // read as "no work named", so the visitor lands on the station itself instead of on a
+    // breadcrumb trailing an empty title with nothing open behind it. Two stations carry
+    // no works at all, which is why this also covers `/0` on those.
+    if (route.kind === 'exhibit' && route.index >= station.exhibits.length) {
+      navigate({ kind: 'station', stationId: station.id }, true);
+      return;
+    }
+
     if (station.kind === 'corridor') {
       if (openedStationRef.current !== station.id) {
         openedStationRef.current = station.id;
@@ -180,6 +213,29 @@ export default function App() {
         }
         return;
       }
+      // A panel open over the corridor owns the arrow keys. Reading a work with ↓ used to
+      // scroll nothing and walk the camera out from under it, because preventDefault
+      // suppressed the panel's own scrolling while the corridor shortcuts still fired.
+      if (route.kind === 'exhibit' && activeStation) {
+        const last = activeStation.exhibits.length - 1;
+        if (event.key === 'ArrowRight') {
+          navigate({
+            kind: 'exhibit',
+            stationId: activeStation.id,
+            index: Math.min(last, route.index + 1),
+          });
+          event.preventDefault();
+        } else if (event.key === 'ArrowLeft') {
+          navigate({
+            kind: 'exhibit',
+            stationId: activeStation.id,
+            index: Math.max(0, route.index - 1),
+          });
+          event.preventDefault();
+        }
+        return;
+      }
+      if (helpOpen) return;
       if (!world || world.getPhase() !== 'corridor') return;
       const step = 4;
       if (event.key === 'ArrowDown' || event.key === 's' || event.key === 'S') {
@@ -279,8 +335,10 @@ export default function App() {
     );
   }
 
-  const inCorridor = phase === 'corridor' && activeStation?.kind === 'corridor';
+  const inCorridor = hintSpace === 'corridor';
   const dimmed = route.kind === 'station' && activeStation?.kind !== 'corridor';
+  const crumbExhibit =
+    route.kind === 'exhibit' && activeStation ? activeStation.exhibits[route.index] : undefined;
 
   return (
     <>
@@ -306,13 +364,17 @@ export default function App() {
             onToggleFlat={toggleFlat}
             onHelp={() => setHelpOpen(true)}
             crumb={
-              route.kind === 'exhibit' && activeStation ? (
+              crumbExhibit && activeStation ? (
                 <>
-                  <button type="button" className="crumb-link" onClick={() => navigate({ kind: 'station', stationId: activeStation.id })}>
+                  <button
+                    type="button"
+                    className="crumb-link"
+                    onClick={() => navigate({ kind: 'station', stationId: activeStation.id })}
+                  >
                     {activeStation.label}
                   </button>
                   <span>/</span>
-                  <b>{activeStation.exhibits[route.index]?.title ?? ''}</b>
+                  <b>{crumbExhibit.title}</b>
                 </>
               ) : activeStation ? (
                 <b>{activeStation.label}</b>
@@ -341,13 +403,25 @@ export default function App() {
                 stations={stations}
                 activeId={hovered ?? activeStation?.id ?? null}
                 onSelect={selectStation}
-                label="Pilih stesen — atau klik monolit di hadapan anda"
+                label="Pilih stesen"
               />
-              <Hint>Seret untuk memandang · Klik monolit untuk masuk</Hint>
+              {/* The dock names the stations; the hint teaches the gesture. One line each,
+                  and the verb follows the device — a phone has no cursor to click with. */}
+              <Hint retiring={taught === hintSpace}>
+                {coarsePointer
+                  ? 'Seret untuk memandang · Ketuk monolit untuk masuk'
+                  : 'Seret untuk memandang · Klik monolit untuk masuk'}
+              </Hint>
             </>
           )}
 
-          {inCorridor ? <Hint>Scroll atau ↑ ↓ untuk berjalan · Klik bingkai untuk membaca</Hint> : null}
+          {inCorridor ? (
+            <Hint retiring={taught === hintSpace}>
+              {coarsePointer
+                ? 'Undur / Maju untuk berjalan · Ketuk bingkai untuk membaca'
+                : 'Scroll atau ↑ ↓ untuk berjalan · Klik bingkai untuk membaca'}
+            </Hint>
+          ) : null}
 
           {route.kind === 'station' && activeStation && activeStation.kind !== 'corridor' ? (
             <StationPanel station={activeStation} onClose={closeStation} />
