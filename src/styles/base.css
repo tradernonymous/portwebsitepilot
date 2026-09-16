@@ -293,6 +293,12 @@ a.btn-glow {
   color: var(--light-3);
 }
 
+/* on the white glass, controls carry their own white so a photo scrolling under stays behind them */
+.topbar:not(.is-on-dark) .icon-btn:not([aria-pressed='true']),
+.topbar:not(.is-on-dark) .chip {
+  background: var(--white);
+}
+
 .topbar-brand {
   display: grid;
   line-height: 1;

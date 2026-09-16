@@ -1,37 +1,31 @@
-# Drop-in assets
+# Drop-in assets — the walk into PORT
 
-## Photo of the PORT front / entrance
+When a visitor presses **Masuk ke PORT**, the camera walks into the real building. It uses the
+photographs in this folder — no code to change, just the right file names.
 
-Put a photo of the building here and name it **`entrance`** with any of these extensions:
+| File | Used for | Required |
+| --- | --- | --- |
+| `building.jpg` / `.jpeg` / `.png` / `.webp` | Stage 1: the street front of PORT. The camera moves towards the entrance. | Optional |
+| `entrance.jpg` / `.jpeg` / `.png` / `.webp` | Final stage: the lobby. The camera moves to the doorway, which opens into the gallery. Also the poster behind the gate while the film loads. | Supplied |
 
-```
-entrance.jpg
-entrance.jpeg
-entrance.png
-entrance.webp
-```
+Restart `npm run dev` (or rebuild) after adding or replacing a file.
 
-That is the whole process — no code to change. It is detected automatically and used in
-two places:
+## Getting a good result
 
-- behind the opening screen, blended into the dark under the PORT wordmark
-- at the end of the approach sequence, so the flythrough arrives at the real frontage
+- **Size matters.** The camera moves in close, so use photos **at least 2400px wide**
+  (3000–4000px is ideal), saved as `.webp` or high-quality `.jpg` under ~800 KB. The current
+  `entrance.webp` is only 680px wide, so it is kept softly lit and the light takes over early —
+  a larger photo of the same view will look much sharper.
+- **Landscape, eye level, doorway visible.** Stand back far enough that the door the camera
+  should walk through is clearly in frame.
+- **Where the camera aims.** The walk heads for a "focus" point, given as fractions of the
+  photo's width and height. Defaults: the street front aims at the centre, slightly low
+  (`x 0.5, y 0.6`); the lobby aims at its doorway (`x 0.37, y 0.54`). If your photo's door is
+  elsewhere, change the numbers in `entranceStages` in `src/content/index.ts`.
+- Only use photographs PORT owns or has permission to publish.
 
-Notes:
-
-- A **wide landscape** shot works best (roughly 16:9). It is masked with a soft radial
-  falloff, so the edges of the photo dissolve rather than ending in a hard rectangle —
-  you do not need to crop it precisely.
-- Aim for under ~800 KB. Anything larger slows the first paint, and the photo is only
-  ever shown softly lit and slightly blurred.
-- To revert to the default (the programme banner synced from portipoh.com), just delete
-  the file.
-
-If you would rather point at a URL than a file, create a `.env` file in the project root
-containing:
+To point at a URL instead of a file for the lobby, add to a `.env` file in the project root:
 
 ```
-VITE_PORT_ENTRANCE=https://example.com/your-photo.jpg
+VITE_PORT_ENTRANCE=https://example.com/your-lobby-photo.jpg
 ```
-
-The `.env` value wins over anything in this folder.

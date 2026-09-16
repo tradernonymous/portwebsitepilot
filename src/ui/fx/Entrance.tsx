@@ -78,7 +78,7 @@ export function Entrance({
 
       const q = Math.min(1, elapsed / total);
       if (shards.current) {
-        shards.current.style.opacity = String(Math.min(0.95, Math.max(0, (q - 0.15) / 0.35)));
+        shards.current.style.opacity = String(Math.min(0.7, Math.max(0, (q - 0.15) / 0.4)));
         shards.current.style.transform = `scale(${(1 + easeIn(q) * 1.6).toFixed(4)})`;
       }
 

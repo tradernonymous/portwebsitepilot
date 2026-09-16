@@ -1,40 +1,45 @@
 # PORT — People Of Remarkable Talents
 
-An explore-instead-of-scroll website for **PORT (People Of Remarkable Talents)**, the brand of
-Kampung Karyawan Amanjaya, Perak's state-funded cultural agency.
+A light gallery for **PORT (People Of Remarkable Talents)**, the brand of Kampung Karyawan
+Amanjaya, Perak's state-funded cultural agency.
 
-Instead of scrolling a page, a visitor walks in: a first-person approach to the PORT front,
-then a circular deck where seven illuminated stations stand around you. Choose one and you
-either step into a walkable gallery hung with PORT's real photographs, or a station panel
-opens over the space.
+White walls, a black dark room, and light painted across both. A visitor comes through the
+door of PORT's real building, walks a corridor of rooms joined by a single line of light, and
+steps into each room to see its works. Everything shown is PORT's own material, synced from
+`portipoh.com`; every effect — the light paintings, the prism shards, the plates — is
+generated in code, so there is nothing borrowed and nothing to license.
 
-Everything here is original artwork built from PORT's own material — the programmes,
-photographs, artist texts and contact details are synced from `portipoh.com`.
+Bahasa Melayu is the house language; the whole interface and all hand-written content also
+read in English (the **BM / EN** switch, remembered per visitor).
 
 ---
 
-## What a visitor actually does
+## What a visitor does
 
-1. **The gate.** PORT's frontage, blended into the dark, with the wordmark over it, and the
-   channel's festival film playing behind the words once it is running. Two ways in: *Masuk ke
-   PORT* (plays the approach) or *Langkau animasi* (straight to the deck).
-2. **The approach.** You fly along a lit corridor of rings, the building resolving ahead of
-   you, and step through the doorway into the space.
-3. **The deck.** Eight monoliths stand in a ring, each fronted by a real work. Drag to look
-   around, click one to enter, or use the dock along the bottom.
-4. **The gallery wings.** *Program Utama*, *Residensi Seni* and *Pameran* open into a corridor
-   with real photographs framed on the walls. Scroll or press ↑ ↓ to walk. Click a frame to
-   read the whole work. The station dock stays on screen here too, so you are never left
-   inside a wing with no way to reach another station.
-5. **Station panels.** *Tentang Kami*, *Arkib & Media*, *Program Terkini* and *Hubungi &
-   Kunjungi* open as panels over the deck, with the space dimmed behind — and *PORTCAST &
-   VIDEO* opens a screening room instead, with the recordings on shelves.
-6. **The plain list.** The icon at the top right shows the entire site as an ordinary
-   document — same content, no 3D. This is what phones-with-no-WebGL, screen readers and
-   search engines get, and it is one click away at all times.
+1. **The gate.** A dark room with PORT's festival film on the wall, prism light across it and
+   a light trail following the pointer. The wordmark is set in the logo's own lettering.
+   *SENI* / *ART* and the **Masuk ke PORT** button glow through the spectrum.
+2. **Walking in.** The camera moves into PORT's lobby towards its doorway, the prism light
+   ignites, and the doorway opens in white onto the gallery.
+3. **The screening room (hero).** *PORTCAST & VIDEO* leads the hall: its film plays full-bleed
+   and its programmes — Performances, Symposium, PORTCAST, Highlights — are titles that open
+   straight onto that shelf.
+4. **The main corridor.** Scrolling walks along the other seven rooms, hung on one continuous
+   line of light. The line lights up to where you are, and each room's node glows as you reach
+   it. On a wide screen the corridor slides sideways; on a phone the rooms stack and the line
+   runs down beside them. Click a room's title or picture to go in.
+5. **A room.** Its name at a light-painted door, then the works on the wall, then the rooms on
+   either side joined by light. Programme, residency and exhibition rooms also offer
+   **Jalan dalam 3D / Walk in 3D** — a walkable gallery corridor, loaded only when asked for.
+6. **A work.** Opens in a reader: the piece on the left (shown whole, never enlarged past its
+   own size), the wall text on the right, thumbnails beneath, and the neighbouring works by
+   name. `←` `→` move between works, `Esc` closes.
+7. **The text-only view.** The list icon at the top right shows the entire site as a plain
+   document — for screen readers, search engines and anyone who prefers reading.
 
-Every station and every work has its own web address (`#/s/program/2`), so a specific
-programme can be shared on WhatsApp and opens straight into the reader.
+Every room, work, shelf and 3D walk has its own address (`#/s/program/2`,
+`#/s/video/filem/simposium`, `#/s/residensi/jalan`), so any of them can be shared on WhatsApp.
+A shared link skips the gate; so does a reload once a visitor has come in.
 
 ---
 
@@ -43,19 +48,15 @@ programme can be shared on WhatsApp and opens straight into the reader.
 You need **Node.js 20 or newer** ([nodejs.org](https://nodejs.org) — the LTS button).
 
 ```bash
-npm install        # once, to fetch the libraries
-npm run dev        # start it, then open the link it prints
+npm install
+npm run dev
 ```
-
-Press `Ctrl + C` in that terminal to stop it.
-
-Other commands:
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Live preview while you work. Changes appear instantly. |
-| `npm run build` | Makes the production version into `dist/`. |
-| `npm start` | Runs the production version locally (run `build` first). |
+| `npm run dev` | Live preview while you work. |
+| `npm run build` | Builds the production version into `dist/`. |
+| `npm start` | Serves the production build (run `build` first). |
 | `npm run sync:content` | Re-reads portipoh.com and refreshes content + photos. |
 | `npm run typecheck` | Checks for mistakes without building. |
 
@@ -65,237 +66,112 @@ Other commands:
 
 ### The words
 
-Open **`src/content/index.ts`**. Each station is one block in the `stations` array:
-`label`, `tagline`, `intro`, and an `exhibits` list. Edit the text and save — the space
-updates immediately.
+- **Malay copy** — `src/content/index.ts`. Each room is one block in `rawStations`:
+  `label`, `tagline`, `intro`, `sections` and `exhibits`. Calls like `body(71, 0, 2)` pull
+  paragraphs from the synced site ("page 71, from paragraph 0, take 2"); replace them with a
+  plain list of sentences to write your own.
+- **English copy** — `src/content/en.ts`, keyed by the same ids. Anything without an English
+  entry stays in Malay rather than disappearing; long synced texts are marked in the reader
+  as original Bahasa Melayu.
+- **Interface words** (buttons, labels, the guide) — `src/content/i18n.ts`, both languages
+  side by side.
 
-Text pulled from the live site stays authentic as long as you leave the `body(71, 0, 2)`
-style calls alone. Those mean *"page #71, from paragraph 0, take 2"*. If you would rather
-write your own copy, replace them with plain text in a list, like:
+### The photographs, and why some works show a light plate
 
-```ts
-body: ['Ayat pertama anda di sini.', 'Ayat kedua.'],
-```
+Photos live in `public/media/` as `.webp`, produced by the sync. The content layer enforces
+three rules so the gallery never looks cheap:
 
-### The photographs
+1. A general event photograph is never presented as a specific work.
+2. Each image hangs on one work only, across the whole site.
+3. A file too small to hold a wall (under 480px) is left out rather than stretched.
 
-All photos live in `public/media/` as `.webp`, produced by the sync. To swap in your own,
-either replace a file with the same name, or drop a new one in and point at it:
+A photo whose file name names a person or project (e.g. `hafizuddin_3`) only hangs on the work
+that names them. A work left with no photograph gets its own **light plate** — a light painting
+exposed once for that work, always the same picture. To give a work a real photograph, add it
+to that work's `images` list in `src/content/index.ts`.
 
-```ts
-images: [{ small: '/media/your-photo.webp', large: '/media/your-photo.webp', caption: 'Keterangan' }],
-```
+### The building photographs (the walk in)
 
-### The PORT frontage
-
-This is the one image worth getting right. Drop a wide photo of the building into
-**`src/assets/`** named `entrance.jpg` (or `.png` / `.webp`) — it is picked up automatically,
-with no code change, and used both behind the opening screen and at the end of the approach.
-See `src/assets/README.md` for details.
-
-Until you do, it falls back to the site's programme banner.
-
-### The artwork on the deck
-
-Every station's monolith on the deck carries a real work, so the first space you stand in
-reads as a gallery rather than seven blank slabs. You do not have to choose anything: the deck
-gives each station a different piece automatically — the station's own gallery pieces first,
-then whatever cover the sync recorded for it, then the wider library — and it makes sure no two
-stations hang the same picture.
-
-To pin a specific work to a station, set `deckCover` on it:
-
-```ts
-{
-  id: 'pameran',
-  deckCover: images[3],   // or any GalleryImage, or a /media/... path you wrote by hand
-  ...
-}
-```
-
-The work is shown at its true proportions inside a uniform frame, so a tall poster and a wide
-photograph both sit correctly rather than being stretched to fit. Nothing needs cropping.
+See `src/assets/README.md`. In short: `src/assets/entrance.*` is the lobby the camera walks
+through (already supplied), and a street-front photo dropped at `src/assets/building.*` is added
+as the first stage of the walk automatically. **Use large photos (2400px wide or more)** — the
+camera moves in close.
 
 ### The films
 
-One station is a screening room rather than a wall: **PORTCAST & VIDEO** holds the channel's
-uploads, grouped into the programmes they came from — the interview series, the music
-symposium, the festival highlights — so a visitor picks a programme and then a recording,
-instead of scrolling a hundred uploads in reverse date order.
+`src/content/videos.ts`. Append an upload to the programme it belongs to; the hero, the
+screening room and the text-only view all read from there. `featuredVideo` is the film on the
+gate and in the hero. Videos must have embedding allowed on YouTube.
 
-Everything it shows lives in `src/content/videos.ts`. To add an upload, append it to the
-playlist it belongs to — the tabs, the player, the deck and the plain list view all read from
-there. The film behind the entry screen is `featuredVideo` in the same file.
+### Colours and type
 
-Those embeds are YouTube's own players, so a video always needs embedding allowed in its
-settings on YouTube, and the room keeps a link out to the channel for anything that cannot
-play in place. The film on the entry screen only appears once the player reports that it is
-really running; if YouTube will not serve it — embedding switched off, a blocked request, a
-slow connection — the PORT photograph stays as the backdrop instead of an error card.
-
-### The light in the room
-
-The space is lit with light paintings: broad, soft-edged bands of colour hanging in the black,
-the kind a long exposure of a moving light produces. They are generated in code from canvas
-gradients (`buildPaintings` in `src/experience/PortWorld.ts`) — no photographs, nothing to
-license, and a few kilobytes. Each band carries its own highlight that travels along it, the
-whole field turns very slowly, and the bands the pointer is near brighten and lean towards it.
-
-The deck has its own light in the same palette: a warm pool with one gold ring turning inside
-it, which drifts a little towards wherever you are looking. At the bottom of the screen the
-same idea is drawn in CSS (`.lightbed` in `src/styles.css`), so the station dock stands in the
-light the room is made of. To change the palette, edit `PIGMENTS` in `PortWorld.ts` and the
-three gradients in `.lightbed`.
-
-### Colours, and how much of each station there is
-
-Each station has an `accent` colour in `src/content/index.ts` that drives its monolith, its
-glyph and its panel. Change the hex value and everything follows.
-
-To add or remove a station, add or remove a block in `stations` — the deck re-arranges the
-ring by itself, and the dock picks it up automatically.
+`src/styles/tokens.css` holds the palette: white walls, the black dark room, and the light
+spectrum (cyan, violet, magenta, amber, lime) used only for strokes and glows. Each room's
+`accent` in `src/content/index.ts` tints its door and nodes. Fonts: **Quicksand** for the PORT
+wordmark (matching the logo), **Chakra Petch** for headings, **Sora** for text and
+**JetBrains Mono** for the HUD labels — all free from Google Fonts.
 
 ### The Google Map
 
-The contact station shows a styled placeholder. To show the real map, open
-[Google Maps](https://maps.google.com), find PORT Ipoh, choose **Share → Embed a map**, copy
-the `src="..."` address out of the code it gives you, and paste it at the bottom of
-`src/content/index.ts`:
-
-```ts
-export const googleMapEmbedUrl: string | undefined = 'https://www.google.com/maps/embed?pb=...';
-```
-
-A real Street View of the premises can go in the same slot. Note that Google's old
-key-free embed address no longer works, which is why this is a paste-in step.
+The contact room shows a styled placeholder. To show the real map, open Google Maps, find
+PORT Ipoh, choose **Share → Embed a map**, copy the `src="..."` address and paste it at
+`googleMapEmbedUrl` near the bottom of `src/content/index.ts`.
 
 ---
 
 ## Refreshing content from portipoh.com
 
-PORT staff add programmes to WordPress. To pull those into the site:
-
 ```bash
-npm run sync:content      # fetches pages + images, converts photos to .webp
+npm run sync:content
+npm run sync:content -- --fresh   # re-download every image
 ```
 
-Then edit `src/content/index.ts` to surface anything new as a station or exhibit. The sync
-is polite to the server, safe to re-run, and never runs on the live site — the visitor's
-browser only ever talks to your own deployment.
-
-Add `-- --fresh` to force re-downloading every image:
-
-```bash
-npm run sync:content -- --fresh
-```
+Then surface anything new in `src/content/index.ts` (and its English in `en.ts`).
 
 ---
 
-## Putting it online on Railway
+## Putting it online (Railway)
 
-The repo is already configured for Railway (`railway.json` plus a `Dockerfile`). You only
-need to do the account steps — everything technical is done.
-
-1. **Make sure the code is on GitHub.** It lives at
-   `https://github.com/tradernonymous/portwebsitepilot`. Pushing to `main` is all it takes to
-   trigger a fresh deploy once the project exists.
-2. **Create the Railway project.** Go to [railway.app](https://railway.app) and sign in with
-   GitHub.
-3. **New Project → Deploy from GitHub repo →** choose `portwebsitepilot`. Railway finds the
-   `Dockerfile`, runs one `npm ci` and one `npm run build`, then serves the result with
-   `node server.mjs`.
-4. **Wait for the build** (a couple of minutes the first time). The health check at `/healthz`
-   must answer before Railway marks it live.
-5. **Settings → Networking → Generate Domain.** That gives you a public
-   `*.up.railway.app` address. Open it.
-6. **Point the real domain at it.** In the same Networking panel choose *Custom Domain* and
-   enter `portipoh.com`. Railway shows a CNAME record — add that at whoever manages the
-   domain. Do this on a quiet day, as DNS changes take a little while to spread.
-
-### About the cost
-
-Railway has no permanent free tier any more: new accounts get a one-off trial credit, then
-usage is billed, which for a small static site like this is roughly **US$5/month** (it idles
-cheap, but the service must stay running). Set a spend limit under *Account → Usage limits* so
-there are no surprises.
-
-If that ever becomes a problem, the same repo deploys unchanged to Cloudflare Pages or Netlify
-free of charge — the build command is `npm run build` and the output folder is `dist`. Nothing
-in the code is Railway-specific.
+The repo is configured for Railway (`railway.json` + `Dockerfile`). Pushing to `main`
+redeploys an existing project. For a new project: **railway.app → New Project → Deploy from
+GitHub repo → portwebsitepilot**, wait for the `/healthz` check, then **Settings → Networking →
+Generate Domain** (and optionally add `portipoh.com` as a custom domain via the CNAME Railway
+shows). Railway bills usage after the trial credit — roughly US$5/month for a site like this;
+set a spend limit. The same repo deploys free to Cloudflare Pages or Netlify: build command
+`npm run build`, output folder `dist`.
 
 ---
 
 ## Things worth knowing
 
-- **Nothing is paid and no API keys are needed.** No map key, no font subscription, no
-  analytics, no tracking. Fonts come from Google Fonts (free); everything else is local.
-- **Accessibility.** If a visitor's device has no WebGL, or they have asked their system to
-  reduce motion, the site adapts: the animation is skipped and the plain list view is offered.
-  The dock, the rail and every gallery link work from the keyboard alone. Opening a work moves
-  focus into the panel, so it can be read and scrolled with the keyboard, and `←` `→` page
-  between works — matching the reader's own buttons. Walking the space with `↑` `↓` is
-  suspended while a panel is open, so reading never moves the camera behind it.
-- **Guidance.** A one-line hint above the dock teaches the gesture for the space you are in,
-  worded for the device (`Ketuk`/`Klik`, `Undur / Maju`/`Scroll`) and shown at every screen
-  size. Once you have dragged or tapped, it retires — learn the deck and the wing still
-  teaches itself when you step into it.
-- **Search engines.** The plain list view carries the full text of every station.
-- **Mobile.** Drag to look, tap to enter. The station dock along the bottom is a single row
-  that scrolls sideways, with a soft fade on whichever side still has stations beyond it —
-  there is no scrollbar. Below 860px it switches to each station's short name so more tabs
-  fit at once: at 390px wide the strip scrolls, and on a landscape phone all eight fit with
-  no scrolling at all. The list button in the top bar opens the full plain-text version of
-  everything.
-- **The dock stands in a wing too.** Standing in a gallery wing used to replace it with the
-  wing rail, which left a visitor with no way to reach another station. Now the rail sits
-  above the dock on a phone — a sheet across the width — and the teaching line moves to the
-  top of the screen so the three never overlap. The rail's own list scrolls, so every work in
-  a wing can be reached on any screen.
-- **Landscape phones.** The rail for the wing you are in becomes a left-hand column beside
-  the dock, the chrome compresses, and the top bar and dock respect the notch insets. A 16:9
-  film is fitted to the height of a short screen and centred rather than run below the fold.
-- **The light along the bottom** is the same light painting the room is filled with, drawn in
-  CSS (`.lightbed`), so the dock stands in the light the space is made of.
-- **Performance.** three.js is loaded in the background while the gate is on screen, so the
-  opening paints immediately. Gallery photographs load only for the station you are in, and
-  are released when you leave.
-- **`window.__PORT__`** exists in development builds only, and lets you inspect the live scene
-  from the browser console (`window.__PORT__.debug()`).
+- **No API keys, no tracking.** Fonts from Google Fonts; everything else is local.
+- **Performance.** Effects are built to stay smooth: light paintings stop drawing when off
+  screen; the prism light is painted once per layout and only its layers move; the corridor
+  moves by transform alone; nothing animates inside the large corridor SVG or under the frosted
+  top bar; three.js is only downloaded for a 3D walk and is torn down on exit.
+- **Reduced motion.** With the system setting on, the walk-in becomes a fade, light paintings
+  become still exposures, and the corridor stacks vertically.
+- **Keyboard.** Every room and work is a real link; the reader and guide take focus; `←` `→`
+  and `Esc` work in the reader; `↑` `↓` walk the 3D corridor.
 
 ## Where things live
 
 ```
-src/content/index.ts        the editorial layer — all station copy and exhibits
-src/content/site.json       generated by the sync; do not hand-edit
-src/content/glyphs.ts       the station icons, shared by the HUD and the 3D space
-src/experience/PortWorld.ts the three.js space: approach, deck, gallery corridor
-src/ui/                     the HUD, the entry gate, the panels and the plain list
-src/assets/                 drop your PORT frontage photo here
-public/media/               synced photographs (webp)
-scripts/sync-content.mjs    the portipoh.com sync
-server.mjs                  the production web server
-Dockerfile                  how the site is built and packaged for Railway
-.dockerignore               keeps node_modules and dist out of the build context
-railway.json                Railway build and deploy settings
+src/content/index.ts      editorial layer (Malay) + image curation rules
+src/content/en.ts         English edition of the content
+src/content/i18n.ts       interface words in both languages
+src/content/videos.ts     the film shelves
+src/lib/lang.tsx          language switch (remembered per visitor)
+src/ui/EntryGate.tsx      the gate
+src/ui/fx/                light painting, prism shards, entrance walk, decipher text
+src/ui/Hall.tsx           screening-room hero, corridor pipeline, figures, visit
+src/ui/RoomView.tsx       a room page
+src/ui/ExhibitReader.tsx  a work, up close
+src/ui/ImmersiveWalk.tsx  the optional 3D corridor (src/experience/PortWorld.ts)
+src/styles/               tokens, base, gate, hall, room, reader, video, walk, flat
+src/assets/               the building photographs for the walk in
+public/media/             synced photographs (webp)
 ```
-
-## Troubleshooting
-
-**The page is blank.** Run `npm run dev` and read the terminal; if it mentions a port already
-in use, another dev server is running — stop it, or change `server.port` in `vite.config.ts`.
-
-**No 3D, just the list.** The browser has no WebGL, or hardware acceleration is switched off.
-The site is designed to still work; try another browser.
-
-**The photos are missing after a clone.** They are committed, so this should not happen. If it
-does, run `npm run sync:content -- --fresh`.
-
-**A build fails on Railway but works locally.** The Dockerfile pins Node 22, so the version
-should match. If the failure line mentions `npm ci` and `EBUSY` on `node_modules/.cache`, that
-is the platform's auto-generated build running a second install over a mounted cache — the
-Dockerfile exists precisely to avoid it, so make sure `railway.json` still says
-`"builder": "DOCKERFILE"`. To reproduce the build locally, run the same two commands the
-image runs, in a folder with no `node_modules`: `npm ci --include=dev && npm run build`.
 
 ---
 
