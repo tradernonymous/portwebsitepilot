@@ -763,6 +763,21 @@
   .door-frame {
     aspect-ratio: 4 / 3;
   }
+
+  /* better mobile touch targets */
+  .btn-glow {
+    padding: 1.1rem 1.8rem;
+    font-size: 0.82rem;
+  }
+
+  .btn {
+    padding: 0.9rem 1.4rem;
+  }
+
+  /* smoother mobile transitions */
+  .door-frame {
+    transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease);
+  }
 }
 
 @media (max-width: 560px) {
