@@ -1,0 +1,228 @@
+/* ==========================================================================
+   Shared primitives — surfaces, lit edges, motion, and the editorial voice.
+
+   Everything here is used in at least two places. Nothing is a one-off: a
+   primitive that only ever appears once belongs next to the thing it styles,
+   not in this file.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- editorial voice */
+
+/*
+ * The gallery speaks in two registers. Labels, numbers and navigation stay in
+ * capitals and mono, the way a wall plaque does. The argument itself — the
+ * curatorial paragraph, the artist's note — is set in a serif, which is what
+ * separates a caption from something written to be read.
+ */
+.serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.serif-lede {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(1.08rem, 1.35vw, 1.28rem);
+  line-height: 1.58;
+  letter-spacing: 0;
+  color: var(--ink-2);
+}
+
+.serif-body p {
+  font-family: var(--font-serif);
+  font-size: clamp(1.02rem, 1.2vw, 1.14rem);
+  line-height: 1.64;
+  letter-spacing: 0;
+  color: var(--ink-2);
+}
+
+.measure {
+  max-width: var(--measure);
+}
+
+.serif-lede.measure {
+  max-width: 58ch;
+}
+
+/* ---------------------------------------------------------------- surfaces */
+
+.glass {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--glass-light);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+}
+
+.glass-dark {
+  border: 1px solid var(--rule-dark);
+  border-radius: var(--radius);
+  background: var(--glass-dark);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  color: var(--light);
+}
+
+/* ---------------------------------------------------------------- the lit edge */
+
+/*
+ * A border that lights up. A one-pixel ring is masked out of a gradient, so the
+ * gradient only ever shows at the very edge — no wrapper element, and it takes
+ * whatever radius its host already has.
+ */
+.lit {
+  position: relative;
+  isolation: isolate;
+}
+
+.lit::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--spectrum);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease);
+  pointer-events: none;
+}
+
+.lit:hover::after,
+.lit:focus-within::after,
+.lit.is-on::after {
+  opacity: 1;
+}
+
+/* the travelling version: one hotspot chasing round the edge, for the single card on a page that matters most */
+.lit-run::after {
+  background: conic-gradient(
+    from var(--beam-angle),
+    transparent 0turn 0.6turn,
+    var(--lp-cyan) 0.72turn,
+    var(--lp-magenta) 0.8turn,
+    transparent 0.92turn 1turn
+  );
+  opacity: 1;
+  animation: beam-run 5s linear infinite;
+}
+
+@keyframes beam-run {
+  to {
+    --beam-angle: 1turn;
+  }
+}
+
+/* ---------------------------------------------------------------- rise into place */
+
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition:
+    opacity var(--dur-4) var(--ease-out) var(--reveal-delay, 0ms),
+    transform var(--dur-4) var(--ease-out) var(--reveal-delay, 0ms);
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------------------------------------------------------------- ambient light fields */
+
+/*
+ * Aurora: a blurred band of the spectrum drifting behind a dark surface. A background,
+ * never a subject — it carries no meaning and never sits under running text unshielded.
+ */
+.aurora {
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    104deg,
+    #3de8ff 0%,
+    #8b5cff 14%,
+    #ff3dcb 28%,
+    #ffb13d 42%,
+    #3de8ff 56%
+  );
+  filter: blur(70px) saturate(1.5);
+  opacity: 0.26;
+  mix-blend-mode: screen;
+  animation: aurora-drift 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(-4%, -2%, 0) scale(1.05) rotate(-2deg);
+  }
+  100% {
+    transform: translate3d(4%, 3%, 0) scale(1.18) rotate(2deg);
+  }
+}
+
+/* a soft light the pointer carries across a surface */
+.spot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    520px circle at var(--mx, 50%) var(--my, 32%),
+    rgba(255, 255, 255, 0.13),
+    transparent 62%
+  );
+}
+
+/* ---------------------------------------------------------------- rhythm */
+
+.section {
+  padding: clamp(3.5rem, 8vw, 7rem) max(1.25rem, 5vw);
+}
+
+.rule-spectrum {
+  height: 2px;
+  border: 0;
+  margin: 0;
+  background: var(--spectrum);
+  background-size: 200% 100%;
+  animation: rule-flow 9s linear infinite;
+}
+
+@keyframes rule-flow {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/* a numbered section head: index, label, then the title */
+.section-head {
+  display: grid;
+  gap: 0.55rem;
+  max-width: 62ch;
+}
+
+.section-head h2 {
+  font-size: clamp(1.9rem, 4vw, 3.2rem);
+}
+
+/* ---------------------------------------------------------------- motion preferences */
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .aurora,
+  .lit-run::after,
+  .rule-spectrum {
+    animation: none;
+  }
+}
