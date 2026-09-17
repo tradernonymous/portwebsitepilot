@@ -242,8 +242,9 @@ body.is-gallery .chapter-rail {
   width: min(40rem, calc(100vw - 2rem));
 }
 
+/* Keep the persistent language and help controls usable while the picker is open. */
 .trail-scrim {
-  z-index: 140;
+  z-index: 120;
 }
 
 .trail-list {
