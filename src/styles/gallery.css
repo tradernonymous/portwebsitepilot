@@ -235,8 +235,3 @@ body.is-gallery .chapter-rail {
   color: var(--light-2);
   max-width: 34ch;
 }
-
-/* In the bar the eye's button keeps the walk's own shape; nothing new to learn. */
-.icon-btn.is-curator.is-veiled {
-  opacity: 0.45;
-}

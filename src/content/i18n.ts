@@ -195,10 +195,13 @@ const ms = {
     'Setiap karya digantung pada dinding ruang. Buka mana-mana karya untuk membaca kisahnya; gunakan ← → untuk beralih antara karya.',
   help3dTitle: 'Jalan dalam 3D',
   help3dBody:
-    'Ruang galeri tertentu boleh dijelajahi sebagai koridor 3D. Tatal atau tekan ↑ ↓ untuk berjalan, dan Esc untuk keluar.',
+    'Ruang galeri tertentu boleh dijelajahi sebagai koridor 3D. Leret atas / bawah untuk berjalan pada telefon; tatal atau tekan ↑ ↓ di komputer, dan Esc untuk keluar.',
   helpGalleryTitle: 'Mod galeri',
   helpGalleryBody:
     'Hidupkan mod galeri pada bar atas, kemudian gunakan anak panah untuk berjalan dari ruang ke ruang dan dari karya ke karya. Bacaan kedudukan menunjukkan di mana anda berada.',
+  helpCuratorTitle: 'Mata Kurator',
+  helpCuratorBody:
+    'Ikon mata pada bar atas memulakan tur berpandu: galeri bergerak sendiri dari hentian ke hentian, dengan catatan kurator di setiap satu. Tekan Rehat untuk mengambil alih.',
   helpA11yTitle: 'Kebolehcapaian',
   helpA11yBody:
     'Ikon senarai di kanan atas memaparkan seluruh laman sebagai dokumen biasa. Semua ruang boleh dicapai dengan papan kekunci.',
@@ -382,10 +385,13 @@ const en: Dict = {
     'Works hang on the walls of each room. Open any work to read its story, and use ← → to move between works.',
   help3dTitle: 'Walk in 3D',
   help3dBody:
-    'Some rooms can be explored as a 3D corridor. Scroll or press ↑ ↓ to walk, and Esc to leave.',
+    'Some rooms can be explored as a 3D corridor. Swipe up / down to walk on a phone; scroll or press ↑ ↓ on a computer, and Esc to leave.',
   helpGalleryTitle: 'Gallery mode',
   helpGalleryBody:
     'Switch on gallery mode in the top bar, then walk with the arrow keys from room to room and from work to work. The readout shows where you are.',
+  helpCuratorTitle: "Curator's Eye",
+  helpCuratorBody:
+    'The eye icon in the top bar begins a guided tour: the gallery walks itself from stop to stop, with a curator\u2019s note at each one. Pause to take over.',
   helpA11yTitle: 'Accessibility',
   helpA11yBody:
     'The list icon at the top right shows the whole site as a plain document. Every room can be reached with the keyboard.',

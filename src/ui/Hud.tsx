@@ -92,7 +92,7 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp, gallery, curator, pa
         {curator && gallery ? (
           <button
             type="button"
-            className={`icon-btn is-curator${gallery.active ? '' : ' is-veiled'}`}
+            className="icon-btn is-curator"
             aria-pressed={curator.active}
             onClick={() => {
               /* the tour rides on the walk: turning the tour on turns the walk on */
