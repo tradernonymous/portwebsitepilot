@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { contact, contentMeta, deckCovers, type Station } from '../content';
 import { localizeFeatured } from '../content/en';
 import { featuredVideo, thumbUrl, videoCount } from '../content/videos';
@@ -25,12 +25,33 @@ export function Hall({ reducedMotion }: Props) {
   const tour = tourOrder(stations);
   const hero = tour.find((s) => s.id === HERO_ROOM);
   const rooms = tour.filter((s) => s.id !== HERO_ROOM);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const p = maxScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0;
+      setScrollProgress(p);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    update();
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [reducedMotion]);
 
   return (
     <div className="hall">
-      {hero ? <HallHero station={hero} reducedMotion={reducedMotion} /> : null}
+      {hero ? <HallHero station={hero} reducedMotion={reducedMotion} scrollProgress={scrollProgress} /> : null}
       <Pipeline rooms={rooms} reducedMotion={reducedMotion} />
-      <HallStats stations={stations} reducedMotion={reducedMotion} />
+      <HallStats stations={stations} reducedMotion={reducedMotion} scrollProgress={scrollProgress} />
       <HallVisit />
     </div>
   );
@@ -38,7 +59,7 @@ export function Hall({ reducedMotion }: Props) {
 
 /* ================================================================== hero: the screening room */
 
-function HallHero({ station, reducedMotion }: { station: Station; reducedMotion: boolean }) {
+function HallHero({ station, reducedMotion, scrollProgress }: { station: Station; reducedMotion: boolean; scrollProgress: number }) {
   const { t, lang } = useLang();
   const film = localizeFeatured(featuredVideo, lang);
   const shelves = station.videoShelves ?? [];
@@ -54,7 +75,7 @@ function HallHero({ station, reducedMotion }: { station: Station; reducedMotion:
       />
       <div className="hall-hero-veil" aria-hidden="true" />
       <LightPainting tone="dark" painters={2} interactive reducedMotion={reducedMotion} speed={0.5} />
-      <RadiantLight sources={3} interactive reducedMotion={reducedMotion} weight={1.0} speed={0.6} seed={7} />
+      <RadiantLight sources={3} interactive reducedMotion={reducedMotion} weight={1.0} speed={0.6} seed={7} scrollProgress={scrollProgress} />
 
       <div className="hall-hero-hud" aria-hidden="true">
         <span className="hud-tag">
@@ -398,7 +419,7 @@ function Pipeline({ rooms, reducedMotion }: { rooms: Station[]; reducedMotion: b
 
 /* ================================================================== figures */
 
-function HallStats({ stations, reducedMotion }: { stations: Station[]; reducedMotion: boolean }) {
+function HallStats({ stations, reducedMotion, scrollProgress }: { stations: Station[]; reducedMotion: boolean; scrollProgress: number }) {
   const { t } = useLang();
   const works = stations.reduce((sum, s) => sum + s.exhibits.length, 0);
   const years = new Date().getFullYear() - 2011;
@@ -413,7 +434,7 @@ function HallStats({ stations, reducedMotion }: { stations: Station[]; reducedMo
   return (
     <section className="hall-stats" aria-label={t('collection')}>
       <LightPainting tone="dark" painters={2} still seed={2011} weight={1.0} />
-      <RadiantLight sources={4} reducedMotion weight={1.3} speed={0.4} seed={2011} />
+      <RadiantLight sources={4} reducedMotion weight={1.3} speed={0.4} seed={2011} scrollProgress={scrollProgress} />
       <div className="hall-stats-grid">
         {stats.map(([value, label]) => (
           <div key={label} className="stat">

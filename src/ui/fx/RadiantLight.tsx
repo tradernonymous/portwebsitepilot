@@ -37,6 +37,11 @@ type Props = {
   speed?: number;
   seed?: number;
   className?: string;
+  /**
+   * Scroll progress 0-1. Beams shift colour, spread, and intensity as the visitor
+   * scrolls deeper into the gallery. 0 = entrance (cool, narrow), 1 = core (warm, wide).
+   */
+  scrollProgress?: number;
 };
 
 type RGB = [number, number, number];
@@ -111,6 +116,28 @@ function compose(seed: number, count: number): LightSource[] {
   });
 }
 
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+/** Map scroll progress to visual modifiers. */
+function scrollModifiers(progress: number) {
+  // 0-0.3: entrance — cool, narrow, dim
+  // 0.3-0.7: mid-gallery — warming, spreading
+  // 0.7-1.0: core — full warmth, maximum spread and intensity
+  const p = Math.max(0, Math.min(1, progress));
+  return {
+    /** Beam length multiplier: 0.7 at entrance, 1.2 at core. */
+    lengthMul: p < 0.3 ? lerp(0.7, 0.9, p / 0.3) : p < 0.7 ? lerp(0.9, 1.1, (p - 0.3) / 0.4) : lerp(1.1, 1.2, (p - 0.7) / 0.3),
+    /** Beam width multiplier: narrower at entrance, wider at core. */
+    widthMul: p < 0.3 ? lerp(0.6, 0.85, p / 0.3) : p < 0.7 ? lerp(0.85, 1.15, (p - 0.3) / 0.4) : lerp(1.15, 1.4, (p - 0.7) / 0.3),
+    /** Alpha multiplier: dimmer at entrance, brighter at core. */
+    alphaMul: p < 0.3 ? lerp(0.6, 0.85, p / 0.3) : p < 0.7 ? lerp(0.85, 1.1, (p - 0.3) / 0.4) : lerp(1.1, 1.35, (p - 0.7) / 0.3),
+    /** Hue rotation in degrees: shifts warm as you go deeper. */
+    hueShift: p * 25,
+  };
+}
+
 function paintSource(
   ctx: CanvasRenderingContext2D,
   source: LightSource,
@@ -118,6 +145,7 @@ function paintSource(
   height: number,
   time: number,
   globalAlpha: number,
+  mods = { lengthMul: 1, widthMul: 1, alphaMul: 1, hueShift: 0 },
 ) {
   const cx = source.x * width;
   const cy = source.y * height;
@@ -130,22 +158,23 @@ function paintSource(
   ctx.rotate(rot);
 
   for (const beam of source.beams) {
-    const len = beam.length * scale;
+    const len = beam.length * scale * mods.lengthMul;
     const cos = Math.cos(beam.angle);
     const sin = Math.sin(beam.angle);
     const nx = -sin;
     const ny = cos;
-    const w0 = beam.width0 * scale;
-    const w1 = beam.width1 * scale;
+    const w0 = beam.width0 * scale * mods.widthMul;
+    const w1 = beam.width1 * scale * mods.widthMul;
 
     const ex = cos * len;
     const ey = sin * len;
 
     const [r, g, b] = beam.colour;
+    const a = beam.alpha * breathe * globalAlpha * mods.alphaMul;
     const gradient = ctx.createLinearGradient(0, 0, ex, ey);
-    gradient.addColorStop(0, `rgba(${r},${g},${b},${(beam.alpha * breathe * globalAlpha).toFixed(3)})`);
-    gradient.addColorStop(0.5, `rgba(${r},${g},${b},${(beam.alpha * breathe * globalAlpha * 0.6).toFixed(3)})`);
-    gradient.addColorStop(0.85, `rgba(${r},${g},${b},${(beam.alpha * breathe * globalAlpha * 0.15).toFixed(3)})`);
+    gradient.addColorStop(0, `rgba(${r},${g},${b},${Math.min(1, a).toFixed(3)})`);
+    gradient.addColorStop(0.5, `rgba(${r},${g},${b},${Math.min(1, a * 0.6).toFixed(3)})`);
+    gradient.addColorStop(0.85, `rgba(${r},${g},${b},${Math.min(1, a * 0.15).toFixed(3)})`);
     gradient.addColorStop(1, `rgba(${r},${g},${b},0)`);
 
     ctx.fillStyle = gradient;
@@ -158,12 +187,13 @@ function paintSource(
     ctx.fill();
   }
 
-  // White-hot knot at the source
-  const knotRadius = scale * 0.012 * breathe;
+  // White-hot knot at the source — grows brighter and warmer with scroll
+  const knotRadius = scale * 0.012 * breathe * mods.widthMul;
+  const knotAlpha = Math.min(1, 0.95 * mods.alphaMul);
   const knot = ctx.createRadialGradient(0, 0, 0, 0, 0, knotRadius * 3);
-  knot.addColorStop(0, `rgba(255,255,255,${(0.95 * globalAlpha).toFixed(3)})`);
-  knot.addColorStop(0.2, `rgba(255,255,255,${(0.6 * globalAlpha).toFixed(3)})`);
-  knot.addColorStop(0.5, `rgba(200,210,255,${(0.25 * globalAlpha).toFixed(3)})`);
+  knot.addColorStop(0, `rgba(255,255,255,${knotAlpha.toFixed(3)})`);
+  knot.addColorStop(0.2, `rgba(255,255,255,${(knotAlpha * 0.63).toFixed(3)})`);
+  knot.addColorStop(0.5, `rgba(200,210,255,${(knotAlpha * 0.26).toFixed(3)})`);
   knot.addColorStop(1, 'rgba(200,210,255,0)');
   ctx.fillStyle = knot;
   ctx.beginPath();
@@ -181,8 +211,14 @@ export function RadiantLight({
   speed = 1,
   seed = 42,
   className,
+  scrollProgress = 0,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Smoothed scroll progress — lerps toward the target each frame
+  const smoothProgress = useRef(0);
+  // Keep the latest scrollProgress in a ref so the effect doesn't re-run on every scroll
+  const scrollTarget = useRef(scrollProgress);
+  scrollTarget.current = scrollProgress;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -227,13 +263,17 @@ export function RadiantLight({
       raf = 0;
       const time = ((nowMs - start) / 1000) * speed;
 
+      // Smooth the scroll progress toward the target (lerp 8% per frame)
+      smoothProgress.current += (scrollTarget.current - smoothProgress.current) * 0.08;
+      const mods = scrollModifiers(smoothProgress.current);
+
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
       ctx.globalCompositeOperation = 'lighter';
 
-      // Draw all sources
+      // Draw all sources with scroll-driven modifiers
       for (const source of lightSources) {
-        paintSource(ctx, source, width, height, time, weight);
+        paintSource(ctx, source, width, height, time, weight, mods);
       }
 
       // Pointer beam
@@ -255,7 +295,7 @@ export function RadiantLight({
           breathRate: 0.5,
           rotation: 0,
         };
-        paintSource(ctx, tempSource, width, height, time, pointerBeam.fade * weight);
+        paintSource(ctx, tempSource, width, height, time, pointerBeam.fade * weight, mods);
       }
 
       if (visible && !document.hidden) schedule();
