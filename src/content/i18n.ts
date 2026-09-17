@@ -114,7 +114,6 @@ const ms = {
   curatorWorkNote: 'Dikurasi untuk dilihat dari dekat — dekati bila sedia.',
   curatorDone: 'Tamat tur — koridor berterusan tanpa anda.',
 
-  // --------------------------------------------------------------- curated trails
   trailMode: 'Laluan kurasi',
   trailKicker: 'Laluan PORT',
   trailTitle: 'Pilih perjalanan anda',
@@ -335,7 +334,6 @@ const en: Dict = {
   curatorWorkNote: 'Curated to be seen up close — approach when ready.',
   curatorDone: 'The tour ends — the corridor carries on without you.',
 
-  // --------------------------------------------------------------- curated trails
   trailMode: 'Curated trails',
   trailKicker: 'PORT trails',
   trailTitle: 'Choose your journey',

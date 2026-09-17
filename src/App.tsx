@@ -80,8 +80,6 @@ export default function App() {
     [trailId],
   );
 
-  /* A trail owns only the route changes made by its own controls. A manual link or a bad
-     address should not leave a stale progress card describing somewhere else. */
   useEffect(() => {
     if (!activeTrail) return;
     const expected = activeTrail.stops[trailIndex]?.route;

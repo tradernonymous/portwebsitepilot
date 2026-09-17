@@ -1,40 +1,30 @@
 import type { Route } from '../lib/hooks';
 
-export type TrailLanguageCopy = {
+type TrailCopy = {
   title: string;
   lede: string;
 };
 
-type BilingualText = {
+type LocalizedText = {
   ms: string;
   en: string;
-};
-
-export type TrailStop = {
-  route: Route;
-  label: BilingualText;
-  note: BilingualText;
 };
 
 export type CuratedTrail = {
   id: string;
   minutes: number;
-  ms: TrailLanguageCopy;
-  en: TrailLanguageCopy;
-  stops: TrailStop[];
+  copy: { ms: TrailCopy; en: TrailCopy };
+  stops: { route: Route; label: LocalizedText; note: LocalizedText }[];
 };
 
-/**
- * Editorial routes through the existing rooms. These are intentionally small: a visitor gets
- * a point of view, not another catalogue. The routes use real deep links, so every stop remains
- * shareable and the browser's back button still behaves normally.
- */
 export const curatedTrails: CuratedTrail[] = [
   {
     id: 'meet-port',
     minutes: 8,
-    ms: { title: 'Kenali PORT', lede: 'Dari siapa kami kepada apa yang kami jaga.' },
-    en: { title: 'Meet PORT', lede: 'From who we are to what we choose to keep.' },
+    copy: {
+      ms: { title: 'Kenali PORT', lede: 'Dari siapa kami kepada apa yang kami jaga.' },
+      en: { title: 'Meet PORT', lede: 'From who we are to what we choose to keep.' },
+    },
     stops: [
       {
         route: { kind: 'station', stationId: 'tentang' },
@@ -65,8 +55,10 @@ export const curatedTrails: CuratedTrail[] = [
   {
     id: 'artists-in-residence',
     minutes: 10,
-    ms: { title: 'Artis di PORT', lede: 'Ikuti bahan, studio dan suara para residen.' },
-    en: { title: 'Artists at PORT', lede: 'Follow the materials, studios, and voices of the residents.' },
+    copy: {
+      ms: { title: 'Artis di PORT', lede: 'Ikuti bahan, studio dan suara para residen.' },
+      en: { title: 'Artists at PORT', lede: 'Follow the materials, studios, and voices of the residents.' },
+    },
     stops: [
       {
         route: { kind: 'station', stationId: 'residensi' },
@@ -105,8 +97,10 @@ export const curatedTrails: CuratedTrail[] = [
   {
     id: 'moving-image',
     minutes: 9,
-    ms: { title: 'PORT dalam gerak', lede: 'Satu laluan melalui suara, muzik dan imej bergerak.' },
-    en: { title: 'PORT in motion', lede: 'A route through voices, music, and moving images.' },
+    copy: {
+      ms: { title: 'PORT dalam gerak', lede: 'Satu laluan melalui suara, muzik dan imej bergerak.' },
+      en: { title: 'PORT in motion', lede: 'A route through voices, music, and moving images.' },
+    },
     stops: [
       {
         route: { kind: 'station', stationId: 'video' },
@@ -135,11 +129,3 @@ export const curatedTrails: CuratedTrail[] = [
     ],
   },
 ];
-
-export function trailCopy(trail: CuratedTrail, lang: 'ms' | 'en'): TrailLanguageCopy {
-  return trail[lang];
-}
-
-export function stopCopy(stop: TrailStop, lang: 'ms' | 'en'): TrailLanguageCopy {
-  return { title: stop.label[lang], lede: stop.note[lang] };
-}

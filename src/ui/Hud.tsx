@@ -10,7 +10,6 @@ type TopBarProps = {
   onHelp: () => void;
   /** The visitor's notebook — the count is the invitation; zero is still worth showing. */
   notebook: { count: number; onToggle: () => void };
-  /** Curated editorial routes through the existing rooms and works. */
   trail: { active: boolean; onToggle: () => void } | null;
   /**
    * Present only where the page has stops to walk. Its absence is how the bar knows the mode

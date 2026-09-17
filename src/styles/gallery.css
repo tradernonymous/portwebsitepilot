@@ -237,10 +237,6 @@ body.is-gallery .chapter-rail {
   max-width: 34ch;
 }
 
-/* ============================================================================
-   Curated trails — a route picker and a quiet progress card
-   ============================================================================ */
-
 .trail-picker {
   z-index: 141;
   width: min(40rem, calc(100vw - 2rem));

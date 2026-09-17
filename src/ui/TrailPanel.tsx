@@ -1,22 +1,6 @@
-import type { CuratedTrail, TrailStop } from '../content/trails';
-import { stopCopy, trailCopy } from '../content/trails';
-import type { Lang } from '../content/i18n';
+import type { CuratedTrail } from '../content/trails';
 import { useDialogFocus } from '../lib/hooks';
 import { useLang } from '../lib/lang';
-
-function TrailCard({ trail, lang, onStart }: { trail: CuratedTrail; lang: Lang; onStart: () => void }) {
-  const copy = trailCopy(trail, lang);
-  return (
-    <button type="button" className="trail-card" onClick={onStart}>
-      <span className="trail-card-top">
-        <b>{copy.title}</b>
-        <i>{trail.minutes} min</i>
-      </span>
-      <span>{copy.lede}</span>
-      <small>{trail.stops.length} {lang === 'ms' ? 'hentian' : 'stops'} · {lang === 'ms' ? 'Mulakan' : 'Begin'} →</small>
-    </button>
-  );
-}
 
 export function TrailPanel({
   trails,
@@ -40,7 +24,7 @@ export function TrailPanel({
   onChange: () => void;
 }) {
   const { t, lang } = useLang();
-  const pickerRef = useDialogFocus<HTMLDivElement>(activeTrail ? 'active-trail' : open ? 'trail-picker' : 'closed');
+  const pickerRef = useDialogFocus<HTMLDivElement>(open && !activeTrail ? 'trail-picker' : 'closed');
   if (!open) return null;
 
   if (!activeTrail) {
@@ -66,30 +50,39 @@ export function TrailPanel({
             </button>
           </div>
           <div className="trail-list">
-            {trails.map((trail) => (
-              <TrailCard key={trail.id} trail={trail} lang={lang} onStart={() => onStart(trail)} />
-            ))}
+            {trails.map((trail) => {
+              const copy = trail.copy[lang];
+              return (
+                <button key={trail.id} type="button" className="trail-card" onClick={() => onStart(trail)}>
+                  <span className="trail-card-top">
+                    <b>{copy.title}</b>
+                    <i>{trail.minutes} min</i>
+                  </span>
+                  <span>{copy.lede}</span>
+                  <small>{trail.stops.length} {lang === 'ms' ? 'hentian' : 'stops'} · {lang === 'ms' ? 'Mulakan' : 'Begin'} →</small>
+                </button>
+              );
+            })}
           </div>
         </section>
       </>
     );
   }
 
-  const stop: TrailStop = activeTrail.stops[Math.max(0, Math.min(activeTrail.stops.length - 1, activeIndex))];
-  const copy = trailCopy(activeTrail, lang);
-  const stopText = stopCopy(stop, lang);
-  const done = activeIndex >= activeTrail.stops.length - 1;
+  const stop = activeTrail.stops[activeIndex];
+  const copy = activeTrail.copy[lang];
+  const done = activeIndex === activeTrail.stops.length - 1;
 
   return (
     <aside className={`trail-hud${done ? ' is-done' : ''}`} aria-label={t('trailTitle')}>
       <div className="trail-hud-head">
         <span className="panel-kicker">{t('trailKicker')}</span>
         <b>{copy.title}</b>
-        <span className="trail-count">{String(Math.min(activeIndex + 1, activeTrail.stops.length)).padStart(2, '0')} / {String(activeTrail.stops.length).padStart(2, '0')}</span>
+        <span className="trail-count">{String(activeIndex + 1).padStart(2, '0')} / {String(activeTrail.stops.length).padStart(2, '0')}</span>
       </div>
       <div className="trail-hud-body">
-        <strong>{stopText.title}</strong>
-        <p>{stopText.lede}</p>
+        <strong>{stop.label[lang]}</strong>
+        <p>{stop.note[lang]}</p>
       </div>
       {done ? <p className="trail-done">{t('trailDone')}</p> : null}
       <div className="trail-hud-actions">
