@@ -1,13 +1,10 @@
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
-import { entranceImage } from '../content';
 import { localizeFeatured } from '../content/en';
-import { channel, featuredVideo, watchUrl } from '../content/videos';
+import { channel, gateFilm, watchUrl } from '../content/videos';
 import { useLang } from '../lib/lang';
 import { FilmBackdrop } from './FilmBackdrop';
 import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
-import { RadiantLight } from './fx/RadiantLight';
-import { PrismShards } from './fx/PrismShards';
 import { Glyph } from './Glyph';
 
 type Props = {
@@ -17,12 +14,13 @@ type Props = {
 };
 
 /**
- * The threshold: a dark room with PORT's festival film running on the wall, figures of light
- * being painted in the air, and one glowing way in.
+ * The threshold: a dark room with PORT live on the wall — a full Projek Panggung set,
+ * running straight through — with figures of light being painted in the air, and one
+ * glowing way in.
  */
 export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
   const { t, lang, toggle } = useLang();
-  const film = localizeFeatured(featuredVideo, lang);
+  const film = localizeFeatured(gateFilm, lang);
   const enterRef = useRef<HTMLButtonElement>(null);
   const surface = useRef<HTMLDivElement>(null);
 
@@ -48,17 +46,10 @@ export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
       ref={surface}
       onPointerMove={light}
     >
-      <FilmBackdrop
-        videoId={featuredVideo.id}
-        title={film.title}
-        poster={entranceImage?.large}
-        reducedMotion={reducedMotion}
-      />
+      {/* The film itself is the poster: it is up from the first frame, with no photograph under it. */}
+      <FilmBackdrop videoId={gateFilm.id} title={film.title} reducedMotion={reducedMotion} />
       <div className="gate-veil" aria-hidden="true" />
-      <div className="aurora" aria-hidden="true" />
       <LightPainting tone="dark" painters={3} interactive reducedMotion={reducedMotion} weight={0.8} speed={0.6} />
-      <RadiantLight sources={5} interactive reducedMotion={reducedMotion} weight={1.2} speed={0.7} seed={13} />
-      <PrismShards className="gate-prism" seed={7} />
       <div className="gate-grid" aria-hidden="true" />
       <span className="spot" aria-hidden="true" />
 
@@ -126,7 +117,7 @@ export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
         {/* The film is mute and unclickable, so the credit is how anyone can reach it. */}
         <a
           className="gate-credit"
-          href={watchUrl(featuredVideo.id)}
+          href={watchUrl(gateFilm.id)}
           target="_blank"
           rel="noreferrer noopener"
           title={`${film.title} — ${channel.name}`}

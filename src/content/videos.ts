@@ -52,6 +52,18 @@ export const featuredVideo: PortVideo = {
   note: 'Sorotan Ipoh International Art Festival 2023, festival seni antarabangsa yang dianjurkan PORT di Ipoh.',
 };
 
+/**
+ * The film on the entry gate's wall: a full Projek Panggung set, played straight through —
+ * the room you step out of the dark into. Longer and looser than the festival cut; it is
+ * atmosphere, not a trailer. It leads nothing and appears nowhere else.
+ */
+export const gateFilm: PortVideo = {
+  id: 'qSdOF0OeU_U',
+  title: 'PROJEK PANGGUNG 2021 — BITTERSWEET PRE FEST SPECIAL GIG',
+  meta: 'Projek Panggung · 2021',
+  duration: '18:35',
+};
+
 /** YouTube's own poster frames — one request per card, and no artwork to maintain. */
 export function thumbUrl(id: string, size: 'mq' | 'hq' | 'sd' = 'hq'): string {
   return `https://i.ytimg.com/vi/${id}/${size}default.jpg`;
