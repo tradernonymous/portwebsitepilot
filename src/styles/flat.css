@@ -8,25 +8,6 @@
   padding: 7rem max(1.25rem, 4vw) 4rem;
 }
 
-/*
- * The plain document keeps its manners: no canvas, no motifs, nothing that moves. It exists
- * for search engines, screen readers and old devices, so it gets the typography and the
- * spacing of the gallery and none of its light.
- */
-.flat-hero {
-  padding-bottom: 2.4rem;
-}
-
-.flat-hero::after {
-  content: '';
-  display: block;
-  height: 2px;
-  margin-top: 2rem;
-  background: var(--spectrum);
-  background-size: 200% 100%;
-  animation: rule-flow 9s linear infinite;
-}
-
 .flat-hero h1 {
   font-family: 'Quicksand', var(--font-body);
   font-weight: 400;
@@ -66,12 +47,10 @@
   border-radius: 999px;
   font-size: 0.82rem;
   text-decoration: none;
-  transition: border-color var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease);
 }
 
 .flat-nav a:hover {
   border-color: var(--ink);
-  box-shadow: var(--shadow-1);
 }
 
 .flat-station {
@@ -98,10 +77,7 @@
 }
 
 .station-intro {
-  max-width: 68ch;
-  font-family: var(--font-serif);
-  font-size: clamp(1.02rem, 1.2vw, 1.14rem);
-  line-height: 1.62;
+  max-width: 72ch;
   color: var(--ink-2);
 }
 
@@ -117,17 +93,12 @@
   gap: 0.9rem;
   padding: 0.8rem;
   border: 1px solid var(--rule);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   color: var(--ink);
-  background: var(--white);
-  transition: border-color var(--dur-2) var(--ease), box-shadow var(--dur-3) var(--ease),
-    transform var(--dur-3) var(--ease-out);
 }
 
 .exhibit-card:hover {
-  border-color: transparent;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-2);
+  border-color: var(--ink);
 }
 
 .exhibit-card img,
@@ -158,9 +129,7 @@
 
 .exhibit-card p {
   margin: 0;
-  font-family: var(--font-serif);
-  font-size: 0.98rem;
-  line-height: 1.5;
+  font-size: 0.86rem;
   color: var(--ink-2);
 }
 
@@ -190,9 +159,9 @@
   max-height: min(84svh, 760px);
   display: flex;
   flex-direction: column;
-  border-radius: var(--radius-lg);
+  border-radius: calc(var(--radius) + 4px);
   background: var(--white);
-  box-shadow: var(--shadow-3);
+  box-shadow: 0 60px 120px -40px rgba(0, 0, 0, 0.7);
   overflow: hidden;
   animation: sheet-in 0.4s var(--ease-out) both;
 }
@@ -201,8 +170,6 @@
   content: '';
   height: 3px;
   background: var(--spectrum);
-  background-size: 200% 100%;
-  animation: rule-flow 9s linear infinite;
 }
 
 .panel-top {
@@ -228,9 +195,6 @@
 
 .panel-title .lede {
   margin: 0.7rem 0 0;
-  font-family: var(--font-serif);
-  font-size: 1.06rem;
-  line-height: 1.55;
   color: var(--ink-2);
 }
 
@@ -249,13 +213,7 @@
 .help-grid > div {
   padding: 1.1rem 1.2rem;
   border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  transition: border-color var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease);
-}
-
-.help-grid > div:hover {
-  border-color: var(--ink-3);
-  box-shadow: var(--shadow-1);
+  border-radius: var(--radius-sm);
 }
 
 .help-grid h4 {

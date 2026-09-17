@@ -98,7 +98,7 @@ type RailProps = {
 export function CorridorRail({ station, activeIndex, progress, onSelect, onWalk, onExit, onOpen }: RailProps) {
   const { t } = useLang();
   return (
-    <aside className="rail lit" aria-label={`${t('worksIn')} ${station.label}`}>
+    <aside className="rail" aria-label={`${t('worksIn')} ${station.label}`}>
       <div className="rail-head">
         <span className="rail-kicker">
           {t('walkKicker')} / {String(station.exhibits.length).padStart(2, '0')} {t('works')}
@@ -113,7 +113,7 @@ export function CorridorRail({ station, activeIndex, progress, onSelect, onWalk,
           <button
             key={ex.id}
             type="button"
-            className={`rail-item lit${i === activeIndex ? ' is-active' : ''}`}
+            className={`rail-item${i === activeIndex ? ' is-active' : ''}`}
             onClick={() => onSelect(i)}
           >
             <i>{String(i + 1).padStart(2, '0')}</i>

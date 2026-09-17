@@ -1,4 +1,4 @@
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef } from 'react';
 import { entranceImage } from '../content';
 import { localizeFeatured } from '../content/en';
 import { channel, featuredVideo, watchUrl } from '../content/videos';
@@ -6,7 +6,6 @@ import { useLang } from '../lib/lang';
 import { FilmBackdrop } from './FilmBackdrop';
 import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
-import { RadiantLight } from './fx/RadiantLight';
 import { PrismShards } from './fx/PrismShards';
 import { Glyph } from './Glyph';
 
@@ -24,30 +23,13 @@ export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
   const { t, lang, toggle } = useLang();
   const film = localizeFeatured(featuredVideo, lang);
   const enterRef = useRef<HTMLButtonElement>(null);
-  const surface = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     enterRef.current?.focus({ preventScroll: true });
   }, []);
 
-  /** The light the pointer drags across the room before you have chosen anything. */
-  const light = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (reducedMotion || event.pointerType === 'touch') return;
-    const el = surface.current;
-    if (!el) return;
-    el.style.setProperty('--mx', `${(event.clientX / window.innerWidth) * 100}%`);
-    el.style.setProperty('--my', `${(event.clientY / window.innerHeight) * 100}%`);
-  };
-
   return (
-    <div
-      className="gate"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('gateLabel')}
-      ref={surface}
-      onPointerMove={light}
-    >
+    <div className="gate" role="dialog" aria-modal="true" aria-label={t('gateLabel')}>
       <FilmBackdrop
         videoId={featuredVideo.id}
         title={film.title}
@@ -55,12 +37,9 @@ export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
         reducedMotion={reducedMotion}
       />
       <div className="gate-veil" aria-hidden="true" />
-      <div className="aurora" aria-hidden="true" />
-      <LightPainting tone="dark" painters={3} interactive reducedMotion={reducedMotion} weight={0.8} speed={0.6} />
-      <RadiantLight sources={5} interactive reducedMotion={reducedMotion} weight={1.2} speed={0.7} seed={13} />
+      <LightPainting tone="dark" painters={4} interactive reducedMotion={reducedMotion} weight={1.1} speed={0.8} />
       <PrismShards className="gate-prism" seed={7} />
       <div className="gate-grid" aria-hidden="true" />
-      <span className="spot" aria-hidden="true" />
 
       <div className="gate-hud" aria-hidden="true">
         <span className="hud-corner is-tl" />

@@ -15,7 +15,7 @@ export function FlatView() {
       <header className="flat-hero">
         <h1>PORT</h1>
         <p className="flat-sub">{t('subtitle')}</p>
-        <p className="serif-lede">{t('flatIntro')}</p>
+        <p>{t('flatIntro')}</p>
       </header>
 
       <nav className="flat-nav" aria-label={t('stationsNav')}>

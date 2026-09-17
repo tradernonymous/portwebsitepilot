@@ -4,7 +4,6 @@ import { useLang } from './lib/lang';
 import { EntryGate } from './ui/EntryGate';
 import { ExhibitReader } from './ui/ExhibitReader';
 import { FlatView } from './ui/FlatView';
-import { AmbientVeil } from './ui/fx/AmbientVeil';
 import { Entrance } from './ui/fx/Entrance';
 import { Hall } from './ui/Hall';
 import { HelpPanel } from './ui/HelpPanel';
@@ -207,8 +206,6 @@ export default function App() {
       ) : null}
       {help}
       {entrance}
-      {/* remounts on every route change, so the light replays as the room changes */}
-      {reducedMotion ? null : <AmbientVeil key={pageKey} />}
     </>
   );
 }

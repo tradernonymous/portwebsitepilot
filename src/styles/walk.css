@@ -27,22 +27,8 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-3);
-  animation: walk-pulse 1.8s ease-in-out infinite alternate;
 }
 
-@keyframes walk-pulse {
-  from {
-    opacity: 0.45;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/*
- * The rail is the only surface the walk shows, so it carries the whole language: it floats
- * on glass over the 3D room, with the lit edge reserved for whatever is being looked at.
- */
 .rail {
   position: fixed;
   top: max(1rem, env(safe-area-inset-top));
@@ -53,16 +39,12 @@
   flex-direction: column;
   gap: 0.9rem;
   padding: 1.2rem;
-  border-radius: var(--radius-lg);
-  background: var(--glass-light);
+  border-radius: calc(var(--radius) + 2px);
+  background: rgba(252, 252, 250, 0.9);
   border: 1px solid var(--rule);
-  box-shadow: var(--shadow-3);
-  backdrop-filter: blur(18px) saturate(1.4);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
-}
-
-.rail-item.is-active::after {
-  opacity: 1;
+  box-shadow: 0 30px 70px -40px rgba(11, 11, 15, 0.5);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .rail-kicker {
@@ -102,14 +84,12 @@
 }
 
 .rail-item {
-  position: relative;
   display: grid;
   grid-template-columns: 2rem minmax(0, 1fr);
   gap: 0.4rem;
   padding: 0.55rem 0.5rem;
   border-radius: var(--radius-sm);
   text-align: left;
-  transition: background var(--dur-2) var(--ease);
 }
 
 .rail-item i {
@@ -182,18 +162,15 @@
   bottom: max(1.2rem, env(safe-area-inset-bottom));
   translate: -50% 0;
   margin: 0;
-  padding: 0.65rem 1.15rem;
+  padding: 0.6rem 1.1rem;
   border-radius: 999px;
-  border: 1px solid var(--rule-dark);
-  background: rgba(5, 5, 7, 0.76);
+  background: rgba(5, 5, 7, 0.82);
   color: var(--light);
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   white-space: nowrap;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: opacity var(--dur-3) var(--ease);
+  transition: opacity 0.6s var(--ease);
 }
 
 .hint.is-done {

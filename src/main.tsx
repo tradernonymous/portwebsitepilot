@@ -4,8 +4,6 @@ import App from './App';
 import { LangProvider } from './lib/lang';
 import './styles/tokens.css';
 import './styles/base.css';
-import './styles/ui.css';
-import './styles/motifs.css';
 import './styles/fx.css';
 import './styles/gate.css';
 import './styles/hall.css';

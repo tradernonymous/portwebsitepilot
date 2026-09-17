@@ -5,7 +5,6 @@ import { useDialogFocus } from '../lib/hooks';
 import { useLang } from '../lib/lang';
 import { pad } from '../lib/order';
 import { Artwork, LightPlate } from './Artwork';
-import { Motif } from './fx/Motif';
 
 type Props = {
   station: Station;
@@ -49,8 +48,6 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
       <div className="reader-scrim" onClick={onClose} role="presentation" />
       <section className="reader-sheet">
         <div className="reader-media">
-          {/* atmosphere behind the piece, so the work hangs in a room rather than on a panel */}
-          <Motif kind="fog" />
           <div className="reader-stage">
             {image ? (
               <Artwork
@@ -115,7 +112,7 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
           {exhibit.body.length ? (
             <>
               {bodyIsOriginal(exhibit.id, lang) ? <p className="original-language">{t('originalLanguage')}</p> : null}
-              <div className="prose serif-body">
+              <div className="prose">
                 {exhibit.body.map((para) => (
                   <p key={para}>{para}</p>
                 ))}

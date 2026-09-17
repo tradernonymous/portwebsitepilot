@@ -11,10 +11,9 @@
   max-width: 72ch;
 }
 
-/* the family comes from `.serif-body`; size and colour are set here to suit the screening room */
 .video-intro p {
   color: var(--ink-2);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
 
 .video-body {
@@ -35,8 +34,8 @@
   position: relative;
   aspect-ratio: 16 / 9;
   background: var(--void);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-violet), 0 0 0 1px var(--rule);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 40px 80px -40px rgba(90, 46, 224, 0.55), 0 0 0 1px var(--rule);
 }
 
 .video-stage .hud-corner {
@@ -132,9 +131,6 @@
 
 .video-note {
   margin: 0.4rem 0 0;
-  font-family: var(--font-serif);
-  font-size: 1.02rem;
-  line-height: 1.5;
   color: var(--ink-2);
 }
 
@@ -185,7 +181,7 @@
   background: var(--spectrum);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform var(--dur-3) var(--ease-out);
+  transition: transform 0.35s var(--ease-out);
 }
 
 .video-programme:hover,
@@ -199,10 +195,8 @@
 
 .video-tagline {
   margin: 0;
-  font-family: var(--font-serif);
-  font-size: 1.02rem;
-  line-height: 1.5;
   color: var(--ink-2);
+  font-size: 0.92rem;
 }
 
 .video-list {
@@ -220,24 +214,18 @@
   gap: 0.9rem;
   align-items: center;
   padding: 0.45rem;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   text-align: left;
-  transition: background var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
+  transition: background 0.2s var(--ease);
 }
 
 .video-card:hover {
   background: var(--paper);
-  transform: translateX(2px);
 }
 
 .video-card.is-playing {
   background: var(--void);
   color: var(--light);
-}
-
-/* the lit ring has to survive the dark fill of the playing card */
-.video-card.is-playing::after {
-  opacity: 1;
 }
 
 .video-thumb {

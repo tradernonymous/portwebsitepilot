@@ -31,18 +31,6 @@
   animation: sheet-in 0.45s var(--ease-out) both;
 }
 
-/* a hairline of the spectrum along the top edge: the sheet's signature */
-.reader-sheet::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  z-index: 3;
-  height: 2px;
-  background: var(--spectrum);
-  background-size: 200% 100%;
-  animation: rule-flow 9s linear infinite;
-}
-
 @keyframes sheet-in {
   from {
     opacity: 0;
@@ -57,24 +45,14 @@
 }
 
 .reader-media {
-  position: relative;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   min-height: 0;
-  overflow: hidden;
-  isolation: isolate;
   background: radial-gradient(circle at 50% 45%, #1a1a24, var(--void) 70%);
-}
-
-/* the atmosphere sits behind the piece, under everything else in the panel */
-.reader-media .motif {
-  z-index: 0;
-  opacity: 0.7;
 }
 
 .reader-stage {
   position: relative;
-  z-index: 1;
   display: grid;
   place-items: center;
   min-height: 0;
@@ -96,8 +74,6 @@
 }
 
 .reader-thumbs {
-  position: relative;
-  z-index: 1;
   display: flex;
   gap: 0.5rem;
   padding: 0.8rem 1rem 1rem;
@@ -130,7 +106,6 @@
 
 .reader-thumb.is-active {
   outline-color: var(--lp-cyan);
-  box-shadow: 0 0 0 1px var(--lp-violet), 0 0 18px rgba(139, 92, 255, 0.45);
 }
 
 .reader-text {
@@ -159,9 +134,7 @@
 }
 
 .reader-lede {
-  font-family: var(--font-serif);
-  font-size: clamp(1.08rem, 1.3vw, 1.24rem);
-  line-height: 1.55;
+  font-size: 1.08rem;
   color: var(--ink-2);
 }
 
