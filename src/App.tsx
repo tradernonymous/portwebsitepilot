@@ -220,11 +220,18 @@ export default function App() {
     const onKey = (event: KeyboardEvent) => {
       if (route.kind === 'walk') return; // the walk owns its keys
       if (event.key === 'Escape') {
+        /*
+         * One Esc dismisses one layer — the topmost. Help and the notebook close themselves
+         * and stop here; only with no panel open does Esc reach the reader underneath.
+         * Closing the notebook used to fall through and close the work as well, throwing the
+         * visitor out of what they were reading just for having peeked at their notebook.
+         */
         if (helpOpen) setHelpOpen(false);
+        else if (notebookOpen) setNotebookOpen(false);
         else if (route.kind === 'exhibit') navigate({ kind: 'station', stationId: route.stationId });
         return;
       }
-      if (route.kind === 'exhibit' && station && !helpOpen) {
+      if (route.kind === 'exhibit' && station && !helpOpen && !notebookOpen) {
         const last = station.exhibits.length - 1;
         if (event.key === 'ArrowRight' && route.index < last) {
           navigate({ kind: 'exhibit', stationId: station.id, index: route.index + 1 }, true);
@@ -235,7 +242,7 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [route, station, navigate, helpOpen]);
+  }, [route, station, navigate, helpOpen, notebookOpen]);
 
   /* ---------------------------------------------------------------- render */
 
