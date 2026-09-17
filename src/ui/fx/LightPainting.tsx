@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { onFrame } from '../../lib/frame';
+import { getScrollState } from '../../lib/scroll';
 
 /**
  * Light painting, drawn live.
@@ -8,10 +10,13 @@ import { useEffect, useRef } from 'react';
  * A handful of "painters" move along slow, never-repeating curves (a sum of sines), and each
  * keeps a short tail of where it has been. The pointer is a painter too.
  *
+ * A painter also leans into the visitor's movement: scroll hard and the strokes run brighter
+ * and carry further, and the light settles again when the page does. The speed comes from the
+ * shared scroll state, so the light and the page are moving to the same clock.
+ *
  * Built to be cheap: no per-frame allocation beyond a few colour strings, a fixed number of
- * strokes per frame, device-pixel-ratio capped, and the loop stops whenever the canvas is off
- * screen or the tab is hidden. With reduced motion — or `still` — it renders one long
- * exposure and never animates at all.
+ * strokes per frame, device-pixel-ratio capped, and the loop only runs while the canvas is on
+ * screen. With reduced motion — or `still` — it renders one long exposure and never animates.
  */
 
 export const SPECTRUM = ['#3de8ff', '#8b5cff', '#ff3dcb', '#ffb13d', '#6dff9c'];
@@ -134,9 +139,9 @@ export function LightPainting({
     let width = 0;
     let height = 0;
     let dpr = 1;
-    let raf = 0;
-    let visible = true;
-    let last = performance.now();
+    /** How hard the page is moving, smoothed — the painters answer to it. */
+    let vigour = 0;
+    let stopFrames: (() => void) | null = null;
 
     const makePainter = (index: number): Painter => {
       const harmonics = 3;
@@ -192,7 +197,6 @@ export function LightPainting({
       pointer.ts[pointer.head] = performance.now() / 1000;
       pointer.head = (pointer.head + 1) % POINTER_MAX;
       pointer.count = Math.min(POINTER_MAX, pointer.count + 1);
-      if (!raf && visible && !frozen) schedule();
     };
 
     /* ------------------------------------------------------------ drawing */
@@ -234,11 +238,19 @@ export function LightPainting({
         xs[i] = p.trail[idx * 2];
         ys[i] = p.trail[idx * 2 + 1];
       }
-      strokeTrail(xs, ys, n, p.hue, 0.8, p.width * Math.max(1, Math.min(width, height) / 700), 1);
+      strokeTrail(
+        xs,
+        ys,
+        n,
+        p.hue,
+        0.8,
+        p.width * Math.max(1, Math.min(width, height) / 700),
+        1 + vigour * 0.55,
+      );
       if (n > 0 && dark) {
         const sprite = sprites[Math.floor(((p.hue % colours.length) + colours.length) % colours.length)];
-        const r = 18 * p.width;
-        ctx.globalAlpha = 0.9;
+        const r = 18 * p.width * (1 + vigour * 0.8);
+        ctx.globalAlpha = Math.min(1, 0.9 + vigour * 0.1);
         ctx.drawImage(sprite, xs[n - 1] - r, ys[n - 1] - r, r * 2, r * 2);
         ctx.globalAlpha = 1;
       }
@@ -262,7 +274,7 @@ export function LightPainting({
       pointer.hue += 0.02;
       strokeTrail(pxs, pys, n, pointer.hue, 2.2, 2.2 * weight, fade);
       if (dark) {
-        const r = 26 * fade;
+        const r = 26 * fade * (1 + vigour * 0.6);
         ctx.globalAlpha = fade;
         ctx.drawImage(sprites[Math.floor(pointer.hue) % sprites.length], pxs[n - 1] - r, pys[n - 1] - r, r * 2, r * 2);
         ctx.globalAlpha = 1;
@@ -317,10 +329,8 @@ export function LightPainting({
       }
     };
 
-    const frame = (nowMs: number) => {
-      raf = 0;
-      const dt = Math.min(0.1, (nowMs - last) / 1000);
-      last = nowMs;
+    const frame = (nowMs: number, dt: number) => {
+      vigour += (getScrollState().speed - vigour) * 0.08;
       beginFrame();
       for (const p of crowd) {
         p.time += dt * 0.9 * speed;
@@ -333,11 +343,6 @@ export function LightPainting({
         drawPainter(p);
       }
       if (interactive) drawPointer(nowMs / 1000);
-      if (visible && !document.hidden) schedule();
-    };
-
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(frame);
     };
 
     const resize = () => {
@@ -357,31 +362,23 @@ export function LightPainting({
     const observer = new ResizeObserver(resize);
     observer.observe(canvas);
 
+    /* Subscribe only while the canvas is on screen; a frozen exposure never subscribes. */
     const io = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      if (visible && !frozen) {
-        last = performance.now();
-        schedule();
+      if (entry.isIntersecting) {
+        if (!stopFrames && !frozen) stopFrames = onFrame(frame);
+      } else if (stopFrames) {
+        stopFrames();
+        stopFrames = null;
       }
     });
     io.observe(canvas);
 
-    const onVisibility = () => {
-      if (!document.hidden && visible && !frozen) {
-        last = performance.now();
-        schedule();
-      }
-    };
-    document.addEventListener('visibilitychange', onVisibility);
     if (interactive && !frozen) window.addEventListener('pointermove', onPointer, { passive: true });
 
-    if (!frozen) schedule();
-
     return () => {
-      cancelAnimationFrame(raf);
+      stopFrames?.();
       observer.disconnect();
       io.disconnect();
-      document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('pointermove', onPointer);
     };
     // palette is compared by content so an inline array literal does not restart the loop

@@ -6,6 +6,7 @@ import { useLang } from '../lib/lang';
 import { pad } from '../lib/order';
 import { Artwork, LightPlate } from './Artwork';
 import { Motif } from './fx/Motif';
+import { SplitText } from './fx/SplitText';
 
 type Props = {
   station: Station;
@@ -98,7 +99,10 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
               </svg>
             </button>
           </div>
-          <h2 className="reader-title">{exhibit.title}</h2>
+          {/* keyed on the work, so stepping to the next one sets its title again */}
+          <h2 className="reader-title">
+            <SplitText key={exhibit.id} text={exhibit.title} stagger={22} />
+          </h2>
           <p className="reader-lede">{exhibit.tagline}</p>
 
           <dl className="reader-facts">

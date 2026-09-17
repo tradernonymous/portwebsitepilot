@@ -158,6 +158,13 @@
   overflow: hidden;
   box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
   transform: perspective(1000px) rotateY(-10deg) rotateX(3deg);
+  /*
+   * The plate drifts against the light behind it — read against the layer's own lag on the
+   * hero, the foreground leading is what makes the two feel like separate planes. `translate`
+   * is the individual transform property, so it composes with the tilt above instead of
+   * replacing it.
+   */
+  translate: 0 calc(var(--depth, 0px) * -0.55);
 }
 
 .room-hero-cover .artwork {

@@ -17,6 +17,21 @@
 }
 
 /*
+ * Which stop the walk is standing on.
+ *
+ * The readout alone is not enough. A works wall lays several works on one row, so stepping
+ * along it changes the readout while the page does not move at all — and there would be no
+ * way to see which work Enter is about to open. On the hall, where the stops are stacked, the
+ * same outline draws the extent of the chapter you are standing in.
+ *
+ * `outline` is the right tool: it takes no space, so marking a stop never moves the page.
+ */
+[data-stop].is-walked {
+  outline: 1px solid rgba(139, 92, 255, 0.55);
+  outline-offset: -1px;
+}
+
+/*
  * The chapter rail and the readout are both answers to "where am I". Showing two at once is
  * noise, and on a phone they would sit on top of each other, so while the mode is on the
  * readout takes the rail's place.

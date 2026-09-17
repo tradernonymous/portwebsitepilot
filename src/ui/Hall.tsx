@@ -12,6 +12,7 @@ import { featuredVideo, thumbUrl, videoCount } from '../content/videos';
 import { hrefFor } from '../lib/hooks';
 import { useLang } from '../lib/lang';
 import { HERO_ROOM, pad, tourOrder } from '../lib/order';
+import { scrollToY, useDepth } from '../lib/scroll';
 import { Artwork, LightPlate } from './Artwork';
 import { ChapterRail, type Chapter } from './ChapterRail';
 import { DoorReveal } from './DoorReveal';
@@ -22,6 +23,7 @@ import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
 import { Motif } from './fx/Motif';
 import { RadiantLight } from './fx/RadiantLight';
+import { SplitText } from './fx/SplitText';
 
 type Props = {
   reducedMotion: boolean;
@@ -112,6 +114,8 @@ function Threshold({
   const film = localizeFeatured(featuredVideo, lang);
   const shelves = station.videoShelves ?? [];
   const surface = useRef<HTMLElement>(null);
+  /* The room's light drifts against the page as the hero passes, so the hall starts deep. */
+  useDepth(surface, 0.1, reducedMotion);
 
   /** The light the pointer carries across the room. */
   const light = (event: ReactPointerEvent<HTMLElement>) => {
@@ -144,7 +148,14 @@ function Threshold({
       />
       <div className="threshold-veil" aria-hidden="true" />
       <div className="aurora" aria-hidden="true" />
-      <LightPainting tone="dark" painters={2} interactive reducedMotion={reducedMotion} speed={0.5} />
+      <LightPainting
+        tone="dark"
+        painters={2}
+        interactive
+        reducedMotion={reducedMotion}
+        speed={0.5}
+        className="depth-layer"
+      />
       <RadiantLight
         sources={3}
         interactive
@@ -153,6 +164,7 @@ function Threshold({
         speed={0.6}
         seed={7}
         scrollProgress={scrollProgress}
+        className="depth-layer"
       />
       <span className="spot" aria-hidden="true" />
 
@@ -171,10 +183,17 @@ function Threshold({
           <Decipher text={`${t('nowShowing')} · ${t('filmKicker')}`} reducedMotion={reducedMotion} />
         </p>
         <h1 id="threshold-title" className="threshold-title">
-          {t('hallTitleA')}{' '}
-          <em className="spectrum-text" data-text={t('hallTitleB')}>
-            {t('hallTitleB')}
-          </em>
+          <SplitText text={t('hallTitleA')} reducedMotion={reducedMotion} delay={140} />{' '}
+          {/*
+           * The glowing line keeps its whole-word treatment — a gradient clipped to text cannot
+           * be per-letter without each letter restarting the spectrum — so it rises as one beat
+           * in a wrapper of its own, once the plain words have finished arriving.
+           */}
+          <span className={reducedMotion ? undefined : 'em-rise'}>
+            <em className="spectrum-text" data-text={t('hallTitleB')}>
+              {t('hallTitleB')}
+            </em>
+          </span>
         </h1>
         <p className="threshold-lede serif-lede">{station.tagline}</p>
 
@@ -210,7 +229,8 @@ function Threshold({
               const target = document.getElementById('ch-rooms');
               if (!target) return;
               event.preventDefault();
-              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              /* through the engine, so this is the same glide as the wheel and the arrow keys */
+              scrollToY(window.scrollY + target.getBoundingClientRect().top, !reducedMotion);
             }}
           >
             {t('beginTour')}
@@ -285,6 +305,9 @@ function RoomPanel({
   const href = hrefFor({ kind: 'station', stationId: room.id });
   const motif = motifFor(room);
   const number = index + 2;
+  /* A room's air moves a little slower than the room, which is what reads as depth. */
+  const panel = useRef<HTMLElement>(null);
+  useDepth(panel, 0.08, reducedMotion);
   const count =
     room.exhibits.length > 0 ? `${pad(room.exhibits.length)} ${t('works')}` : t('profile');
 
@@ -302,6 +325,7 @@ function RoomPanel({
 
   return (
     <article
+      ref={panel}
       className={`room-panel${index % 2 ? ' is-flipped' : ''}`}
       data-stop
       data-stop-label={room.label}
@@ -309,8 +333,15 @@ function RoomPanel({
       data-stop-href={href}
       style={{ ['--panel-accent' as string]: room.accent }}
     >
-      <Motif kind={motif} />
-      <LightPainting tone="dark" still painters={3} seed={number * 977} weight={0.85} />
+      <Motif kind={motif} className="depth-layer" />
+      <LightPainting
+        tone="dark"
+        still
+        painters={3}
+        seed={number * 977}
+        weight={0.85}
+        className="depth-layer"
+      />
 
       <div className="room-panel-inner">
         <Reveal className="room-panel-copy">
@@ -361,6 +392,8 @@ function Figures({
     [pad(videoCount()), t('statFilms')],
   ];
   const titles = Array.from(new Set(stations.flatMap((s) => s.exhibits.map((e) => e.title))));
+  const section = useRef<HTMLElement>(null);
+  useDepth(section, 0.09, reducedMotion);
 
   return (
     <section
@@ -371,8 +404,9 @@ function Figures({
       data-stop-group={t('chapterFigures')}
       className="figures"
       aria-label={t('collection')}
+      ref={section}
     >
-      <Motif kind="tubes" />
+      <Motif kind="tubes" className="depth-layer" />
       <RadiantLight
         sources={4}
         reducedMotion={reducedMotion}
@@ -380,6 +414,7 @@ function Figures({
         speed={0.4}
         seed={2011}
         scrollProgress={scrollProgress}
+        className="depth-layer"
       />
 
       <div className="figures-inner">
@@ -421,6 +456,8 @@ function Visit({ reducedMotion }: { reducedMotion: boolean }) {
   const { t, stations } = useLang();
   const contactRoom = stations.find((s) => s.id === 'hubungi');
   const mapsQuery = encodeURIComponent('PORT Ipoh, Jalan Sultan Azlan Shah, 31400 Ipoh, Perak');
+  const section = useRef<HTMLElement>(null);
+  useDepth(section, 0.09, reducedMotion);
 
   return (
     <>
@@ -432,9 +469,17 @@ function Visit({ reducedMotion }: { reducedMotion: boolean }) {
         data-stop-group={t('chapterVisit')}
         className="visit"
         aria-labelledby="visit-title"
+        ref={section}
       >
-        <Motif kind="aperture" />
-        <RadiantLight sources={3} weight={1.05} speed={0.45} seed={77} reducedMotion={reducedMotion} />
+        <Motif kind="aperture" className="depth-layer" />
+        <RadiantLight
+          sources={3}
+          weight={1.05}
+          speed={0.45}
+          seed={77}
+          reducedMotion={reducedMotion}
+          className="depth-layer"
+        />
         <LightPainting
           tone="dark"
           painters={2}
@@ -442,6 +487,7 @@ function Visit({ reducedMotion }: { reducedMotion: boolean }) {
           seed={77}
           weight={0.95}
           reducedMotion={reducedMotion}
+          className="depth-layer"
         />
         <div className="visit-veil" aria-hidden="true" />
 

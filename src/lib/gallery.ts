@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { onFrame } from './frame';
+import { scrollSettling, scrollToY } from './scroll';
 
 /** What the readout needs to describe where the visitor is standing. */
 export type GalleryPosition = {
@@ -90,40 +92,67 @@ export function useGalleryWalk(options: {
    * the state only exists to re-render the readout.
    */
   const cursorRef = useRef(0);
-  const [cursor, setCursor] = useState(0);
-  const [total, setTotal] = useState(0);
-  /** While a step is animating, scroll events are the animation talking, not the visitor. */
-  const stepping = useRef(0);
+  /**
+   * The stop being stood on, in the form the readout needs it.
+   *
+   * It is an object rather than an index on purpose. `place` is called again whenever the stops
+   * are re-read — a new page, or a language switch that renames them all — and a plain index
+   * would very often be the same number it already was, so React would skip the render and the
+   * readout would sit there wearing the previous language.
+   */
+  const [here, setHere] = useState<GalleryPosition | null>(null);
 
+  /**
+   * Move the walk to a stop, and mark it.
+   *
+   * The mark matters because a stop is not always somewhere to scroll to. A works wall lays
+   * several works out on one row, so stepping along it changes the readout without the page
+   * moving at all — and without a mark the visitor has no way to see which work Enter would
+   * open. The class is moved rather than toggled so exactly one stop is ever marked.
+   */
   const place = useCallback((index: number) => {
+    const stops = stopsRef.current;
+    const from = stops[cursorRef.current]?.el;
+    const to = stops[index];
+    if (from && from !== to?.el) from.classList.remove('is-walked');
+    to?.el.classList.add('is-walked');
     cursorRef.current = index;
-    setCursor(index);
+    setHere(
+      to ? { index, total: stops.length, label: to.label, group: to.group, href: to.href } : null,
+    );
   }, []);
 
   const load = useCallback(() => {
     stopsRef.current = readStops();
-    setTotal(stopsRef.current.length);
     place(stopsRef.current.length ? nearest(stopsRef.current) : 0);
   }, [place]);
 
   useEffect(() => {
     if (!active) {
+      /* unmark before the stops are forgotten, or the mark outlives the mode */
+      stopsRef.current.forEach((stop) => stop.el.classList.remove('is-walked'));
       stopsRef.current = [];
-      setTotal(0);
-      place(0);
+      cursorRef.current = 0;
+      setHere(null);
       return;
     }
     load();
-  }, [active, stopKey, load, place]);
+  }, [active, stopKey, load]);
 
+  /**
+   * Step to a stop through the scroll engine rather than `scrollIntoView`, so the keyboard walk
+   * and the wheel share one glide instead of two animations fighting over the page. Where a
+   * stop should come to rest is already declared in CSS as its `scroll-margin-top`, so the top
+   * bar's height stays written down in one place.
+   */
   const goTo = useCallback(
     (next: number) => {
       const stops = stopsRef.current;
       if (!stops.length) return;
       const target = stops[Math.max(0, Math.min(stops.length - 1, next))];
       place(target.index);
-      stepping.current = performance.now() + 800;
-      target.el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+      const margin = parseFloat(getComputedStyle(target.el).scrollMarginTop) || 0;
+      scrollToY(window.scrollY + target.el.getBoundingClientRect().top - margin, !reducedMotion);
     },
     [place, reducedMotion],
   );
@@ -178,35 +207,24 @@ export function useGalleryWalk(options: {
     return () => window.removeEventListener('keydown', onKey);
   }, [active, goTo, onExit]);
 
-  /* Scrolling by hand still moves the position, once the mode's own scrolling has stopped. */
+  /*
+   * Scrolling by hand still moves the position, once the engine's own glide has finished —
+   * which it reports, so there is no guess at how long a step takes to settle.
+   */
   useEffect(() => {
     if (!active) return;
-    let raf = 0;
-    const onScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        if (performance.now() < stepping.current) return;
-        const stops = stopsRef.current;
-        if (!stops.length) return;
-        const at = nearest(stops);
-        if (at !== cursorRef.current) place(at);
-      });
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', onScroll);
-    };
+    return onFrame(() => {
+      if (scrollSettling()) return;
+      const stops = stopsRef.current;
+      if (!stops.length) return;
+      const at = nearest(stops);
+      if (at !== cursorRef.current) place(at);
+    });
   }, [active, place]);
 
-  const stop = stopsRef.current[cursor];
   return {
     /** Null until the stops have been read, or when there are none. */
-    position:
-      stop && total
-        ? ({ index: cursor, total, label: stop.label, group: stop.group, href: stop.href } satisfies GalleryPosition)
-        : null,
+    position: here,
     /** Walking continues after a room is opened, so the new page's stops need reading. */
     reload: load,
   };

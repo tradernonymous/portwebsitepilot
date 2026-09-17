@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { onFrame } from '../../lib/frame';
+import { getScrollState } from '../../lib/scroll';
 
 /**
  * Radiant Light — Stephen Knapp–inspired lightpainting.
@@ -11,6 +13,9 @@ import { useEffect, useRef } from 'react';
  * Each "source" is a bright point that casts a fan of colour beams at angles determined
  * by a seed. The beams breathe slowly (opacity oscillation) and a subtle rotation gives
  * the sense of light shifting on a gallery wall. The pointer adds its own temporary beam.
+ *
+ * The beams also open up when the visitor moves: scrolling hard stretches and brightens
+ * them, and they settle back as the page comes to rest.
  */
 
 const BEAM_COLOURS = [
@@ -121,20 +126,56 @@ function lerp(a: number, b: number, t: number) {
 }
 
 /** Map scroll progress to visual modifiers. */
-function scrollModifiers(progress: number) {
-  // 0-0.3: entrance — cool, narrow, dim
-  // 0.3-0.7: mid-gallery — warming, spreading
-  // 0.7-1.0: core — full warmth, maximum spread and intensity
+type Modifiers = {
+  /** Beam length multiplier. */
+  lengthMul: number;
+  /** Beam width multiplier. */
+  widthMul: number;
+  /** Alpha multiplier. */
+  alphaMul: number;
+  /** Hue rotation in degrees. */
+  hueShift: number;
+};
+
+/** The resting look, for a frozen panel — shared so nothing allocates per frame. */
+const NEUTRAL: Modifiers = { lengthMul: 1, widthMul: 1, alphaMul: 1, hueShift: 0 };
+
+/**
+ * Map where the visitor is, and how fast they are moving, onto the light.
+ *
+ * Position sets the palette: cool and narrow at the entrance (0-0.3), spreading through the
+ * middle (0.3-0.7), full warmth and spread at the core (0.7-1). Speed then opens the beams
+ * further on top of that, so a hard scroll flares the light and stopping lets it settle.
+ */
+function scrollModifiers(progress: number, speed: number, out: Modifiers) {
   const p = Math.max(0, Math.min(1, progress));
+  const entry = p < 0.3;
+  const middle = p < 0.7;
+  const t = entry ? p / 0.3 : middle ? (p - 0.3) / 0.4 : (p - 0.7) / 0.3;
+
+  out.lengthMul = (entry ? lerp(0.7, 0.9, t) : middle ? lerp(0.9, 1.1, t) : lerp(1.1, 1.2, t)) * (1 + speed * 0.3);
+  out.widthMul = entry ? lerp(0.6, 0.85, t) : middle ? lerp(0.85, 1.15, t) : lerp(1.15, 1.4, t);
+  out.alphaMul =
+    (entry ? lerp(0.6, 0.85, t) : middle ? lerp(0.85, 1.1, t) : lerp(1.1, 1.35, t)) * (1 + speed * 0.45);
+  out.hueShift = p * 25;
+}
+
+/** The pointer's own beam, allocated once and rewritten each frame. */
+function pointerSource(): LightSource {
   return {
-    /** Beam length multiplier: 0.7 at entrance, 1.2 at core. */
-    lengthMul: p < 0.3 ? lerp(0.7, 0.9, p / 0.3) : p < 0.7 ? lerp(0.9, 1.1, (p - 0.3) / 0.4) : lerp(1.1, 1.2, (p - 0.7) / 0.3),
-    /** Beam width multiplier: narrower at entrance, wider at core. */
-    widthMul: p < 0.3 ? lerp(0.6, 0.85, p / 0.3) : p < 0.7 ? lerp(0.85, 1.15, (p - 0.3) / 0.4) : lerp(1.15, 1.4, (p - 0.7) / 0.3),
-    /** Alpha multiplier: dimmer at entrance, brighter at core. */
-    alphaMul: p < 0.3 ? lerp(0.6, 0.85, p / 0.3) : p < 0.7 ? lerp(0.85, 1.1, (p - 0.3) / 0.4) : lerp(1.1, 1.35, (p - 0.7) / 0.3),
-    /** Hue rotation in degrees: shifts warm as you go deeper. */
-    hueShift: p * 25,
+    x: 0,
+    y: 0,
+    beams: Array.from({ length: 6 }, (_, i) => ({
+      angle: 0,
+      length: 0.15,
+      width0: 0.0003,
+      width1: 0.008,
+      colour: hexToRgb(BEAM_COLOURS[i % BEAM_COLOURS.length]),
+      alpha: 0.5,
+    })),
+    phase: 0,
+    breathRate: 0.5,
+    rotation: 0,
   };
 }
 
@@ -145,7 +186,7 @@ function paintSource(
   height: number,
   time: number,
   globalAlpha: number,
-  mods = { lengthMul: 1, widthMul: 1, alphaMul: 1, hueShift: 0 },
+  mods: Modifiers = NEUTRAL,
 ) {
   const cx = source.x * width;
   const cy = source.y * height;
@@ -226,16 +267,17 @@ export function RadiantLight({
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
-    let lightSources = compose(seed, sources);
+    const lightSources = compose(seed, sources);
     let width = 0;
     let height = 0;
     let dpr = 1;
-    let raf = 0;
-    let visible = true;
-    let start = performance.now();
+    let stopFrames: (() => void) | null = null;
 
     // Pointer beam state
     const pointerBeam = { x: 0, y: 0, active: false, fade: 0 };
+    const pointer = pointerSource();
+    /* One modifiers object, rewritten every frame — never reallocated. */
+    const mods: Modifiers = { lengthMul: 1, widthMul: 1, alphaMul: 1, hueShift: 0 };
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -256,16 +298,14 @@ export function RadiantLight({
       pointerBeam.y = y;
       pointerBeam.active = true;
       pointerBeam.fade = 1;
-      if (!raf && visible) schedule();
     };
 
-    const frame = (nowMs: number) => {
-      raf = 0;
-      const time = ((nowMs - start) / 1000) * speed;
+    const frame = (_nowMs: number, _dt: number, elapsed: number) => {
+      const time = elapsed * speed;
 
       // Smooth the scroll progress toward the target (lerp 8% per frame)
       smoothProgress.current += (scrollTarget.current - smoothProgress.current) * 0.08;
-      const mods = scrollModifiers(smoothProgress.current);
+      scrollModifiers(smoothProgress.current, getScrollState().speed, mods);
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
@@ -280,72 +320,57 @@ export function RadiantLight({
       if (interactive && pointerBeam.active && pointerBeam.fade > 0.01) {
         pointerBeam.fade *= 0.96;
         if (pointerBeam.fade < 0.01) pointerBeam.active = false;
-        const tempSource: LightSource = {
-          x: pointerBeam.x / width,
-          y: pointerBeam.y / height,
-          beams: Array.from({ length: 6 }, (_, i) => ({
-            angle: (i / 6) * Math.PI * 2 + time * 0.3,
-            length: 0.15 + Math.sin(time * 0.5 + i) * 0.05,
-            width0: 0.0003,
-            width1: 0.008,
-            colour: hexToRgb(BEAM_COLOURS[i % BEAM_COLOURS.length]),
-            alpha: 0.5,
-          })),
-          phase: time,
-          breathRate: 0.5,
-          rotation: 0,
-        };
-        paintSource(ctx, tempSource, width, height, time, pointerBeam.fade * weight, mods);
+        pointer.x = pointerBeam.x / width;
+        pointer.y = pointerBeam.y / height;
+        pointer.phase = time;
+        for (let i = 0; i < pointer.beams.length; i += 1) {
+          const beam = pointer.beams[i];
+          beam.angle = (i / pointer.beams.length) * Math.PI * 2 + time * 0.3;
+          beam.length = 0.15 + Math.sin(time * 0.5 + i) * 0.05;
+        }
+        paintSource(ctx, pointer, width, height, time, pointerBeam.fade * weight, mods);
       }
-
-      if (visible && !document.hidden) schedule();
     };
 
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(frame);
+    /* One long exposure, for a visitor who has asked for no motion. */
+    const drawStill = () => {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+      ctx.globalCompositeOperation = 'lighter';
+      for (const source of lightSources) paintSource(ctx, source, width, height, 2.5, weight);
     };
 
     resize();
-    const ro = new ResizeObserver(resize);
+    const ro = new ResizeObserver(() => {
+      resize();
+      if (reducedMotion) drawStill();
+    });
     ro.observe(canvas);
 
-    const io = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      if (visible) {
-        start = performance.now();
-        schedule();
-      }
-    });
-    io.observe(canvas);
+    let io: IntersectionObserver | null = null;
+    if (reducedMotion) {
+      drawStill();
+    } else {
+      /* Subscribe only while the canvas is on screen. */
+      io = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          if (!stopFrames) stopFrames = onFrame(frame);
+        } else if (stopFrames) {
+          stopFrames();
+          stopFrames = null;
+        }
+      });
+      io.observe(canvas);
+    }
 
-    const onVisibility = () => {
-      if (!document.hidden && visible) {
-        start = performance.now();
-        schedule();
-      }
-    };
-    document.addEventListener('visibilitychange', onVisibility);
     if (interactive && !reducedMotion) {
       window.addEventListener('pointermove', onPointer, { passive: true });
     }
 
-    if (!reducedMotion) schedule();
-    else {
-      // Frozen: render one frame
-      resize();
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, width, height);
-      ctx.globalCompositeOperation = 'lighter';
-      for (const source of lightSources) {
-        paintSource(ctx, source, width, height, 2.5, weight);
-      }
-    }
-
     return () => {
-      cancelAnimationFrame(raf);
+      stopFrames?.();
       ro.disconnect();
-      io.disconnect();
-      document.removeEventListener('visibilitychange', onVisibility);
+      io?.disconnect();
       window.removeEventListener('pointermove', onPointer);
     };
   }, [sources, interactive, reducedMotion, weight, speed, seed]);

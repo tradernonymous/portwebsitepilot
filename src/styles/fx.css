@@ -12,6 +12,89 @@
   pointer-events: none;
 }
 
+/* ---------------------------------------------------------------- depth */
+
+/*
+ * A layer that drifts against the page as it passes. `--depth` is written in pixels by
+ * `useDepth` on the layer's container, so nothing here runs a loop of its own.
+ *
+ * `inset-block` opens the layer past both edges of its section and `height: auto` lets that
+ * take effect — without the extra room, a layer drifting down would expose an edge above it.
+ */
+.depth-layer {
+  inset-block: -12%;
+  height: auto;
+  translate: 0 var(--depth, 0px);
+}
+
+/* ---------------------------------------------------------------- kinetic display type */
+
+/*
+ * Letters rising out of their own clipped slot, each a beat after the one before. The mask is
+ * `overflow: hidden` on the character's box, so the letter itself never has to be clipped —
+ * which is the visual difference between type arriving and type fading in.
+ *
+ * The padding/margin pair keeps the box tall enough for a descender to live in without
+ * letting it push the line box around, and aligning the boxes at the bottom keeps every
+ * letter on its real baseline.
+ */
+.split-text {
+  display: inline;
+}
+
+.split-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.split-char {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  /*
+   * The mask clips at the padding edge, so this is the room a descender gets. The hall's
+   * headline runs `line-height` below `font-size` — the ink is taller than the box — so at
+   * 95px type a `y` or a `g` hangs about 10px under the box and a thinner allowance would
+   * shave it. The negative margin hands the same amount back so the line box is unaffected.
+   */
+  padding-bottom: 0.24em;
+  margin-bottom: -0.24em;
+}
+
+.split-char > span {
+  display: inline-block;
+  transform: translateY(120%);
+  animation: split-rise 820ms var(--ease-out) both;
+  animation-delay: calc(var(--i) * var(--split-step, 24ms) + var(--split-delay, 0ms));
+}
+
+@keyframes split-rise {
+  to {
+    transform: translateY(0);
+  }
+}
+
+/*
+ * A whole element arriving as one beat, for type that cannot be split — a word whose gradient
+ * is clipped to its own text has to stay in one piece. The wrapper carries the rise so the
+ * element inside keeps its own animation, and its blurred glow does not inherit this one.
+ */
+.em-rise {
+  display: inline-block;
+  animation: em-rise 780ms var(--ease-out) 340ms both;
+}
+
+@keyframes em-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* ---------------------------------------------------------------- spectrum text */
 
 /*
@@ -428,6 +511,37 @@
   overflow: hidden;
 }
 
+/*
+ * The wash covers the instant the old page is replaced by the new one. Without it the swap is
+ * visible for the first frames — you see the wrong room for a blink — and no amount of bloom
+ * afterwards hides a flash that already happened. It is opaque on frame one and gone in under
+ * a quarter second, which is fast enough to read as the lights going down rather than as a
+ * black screen.
+ */
+.route-veil-wash {
+  position: absolute;
+  inset: 0;
+  animation: veil-wash 240ms var(--ease-out) both;
+}
+
+.route-veil[data-wash='dark'] .route-veil-wash {
+  background: radial-gradient(130% 100% at 50% 42%, var(--void-2), var(--void) 70%);
+}
+
+/* the plain list is a white document; a black flash there would be a bug, not a transition */
+.route-veil[data-wash='light'] .route-veil-wash {
+  background: radial-gradient(130% 100% at 50% 42%, var(--white), var(--paper) 70%);
+}
+
+@keyframes veil-wash {
+  0% {
+    opacity: 0.98;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 .route-veil-bloom {
   position: absolute;
   left: 50%;
@@ -500,7 +614,15 @@
   .prism-fan,
   .hud-dot,
   .route-veil-bloom,
-  .route-veil-line {
+  .route-veil-line,
+  .route-veil-wash {
     animation: none !important;
+  }
+
+  /* never leave a letter parked below its mask for someone who wants no motion */
+  .split-char > span,
+  .em-rise {
+    transform: none;
+    opacity: 1;
   }
 }

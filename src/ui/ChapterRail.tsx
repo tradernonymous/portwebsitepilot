@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useReducedMotion } from '../lib/hooks';
+import { scrollToY } from '../lib/scroll';
 
 export type Chapter = { id: string; label: string };
 
@@ -12,6 +14,7 @@ export type Chapter = { id: string; label: string };
  */
 export function ChapterRail({ chapters }: { chapters: Chapter[] }) {
   const [active, setActive] = useState(0);
+  const calm = useReducedMotion();
 
   useEffect(() => {
     const els = chapters
@@ -48,7 +51,8 @@ export function ChapterRail({ chapters }: { chapters: Chapter[] }) {
                 const target = document.getElementById(chapter.id);
                 if (!target) return;
                 event.preventDefault();
-                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                /* through the engine, so the rail, the wheel and the arrow keys share one glide */
+                scrollToY(window.scrollY + target.getBoundingClientRect().top, !calm);
               }}
             >
               <i aria-hidden="true" />

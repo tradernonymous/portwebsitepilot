@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useGalleryWalk } from './lib/gallery';
 import { detectWebGL, useHashRoute, useReducedMotion } from './lib/hooks';
 import { useLang } from './lib/lang';
+import { startScrollEngine } from './lib/scroll';
 import { EntryGate } from './ui/EntryGate';
 import { ExhibitReader } from './ui/ExhibitReader';
 import { FlatView } from './ui/FlatView';
@@ -92,6 +93,16 @@ export default function App() {
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
   }, [pageKey]);
+
+  /* ---------------------------------------------------------------- motion */
+
+  /**
+   * The scroll engine, for the whole app. It owns the glide and publishes the one scroll state
+   * that the light, the depth and the keyboard walk all read, so they move to the same clock.
+   * Restarted when the motion preference changes, because that is what decides whether the
+   * page glides at all.
+   */
+  useEffect(() => startScrollEngine(reducedMotion), [reducedMotion]);
 
   /* ---------------------------------------------------------------- gallery mode */
 
@@ -263,7 +274,7 @@ export default function App() {
       {help}
       {entrance}
       {/* remounts on every route change, so the light replays as the room changes */}
-      {reducedMotion ? null : <AmbientVeil key={pageKey} />}
+      {reducedMotion ? null : <AmbientVeil key={pageKey} dark={route.kind !== 'flat'} />}
     </>
   );
 }

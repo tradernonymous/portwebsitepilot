@@ -1,14 +1,16 @@
+import { useRef } from 'react';
 import { deckCovers, type Station } from '../content';
 import { motifFor } from '../content/motifs';
 import { hrefFor } from '../lib/hooks';
 import { useLang } from '../lib/lang';
 import { pad, roomNumber, tourOrder } from '../lib/order';
+import { useDepth } from '../lib/scroll';
 import { Artwork, LightPlate } from './Artwork';
 import { Reveal } from './Reveal';
-import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
 import { Motif } from './fx/Motif';
 import { RadiantLight } from './fx/RadiantLight';
+import { SplitText } from './fx/SplitText';
 import { ContactContent } from './StationPanel';
 import { VideoRoom } from './VideoRoom';
 
@@ -38,10 +40,14 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
   const cover = deckCovers.get(station.id);
   const canWalk = webgl && station.kind === 'corridor' && station.exhibits.length > 0;
   const motif = motifFor(station);
+  const hero = useRef<HTMLElement>(null);
+  /* The room's light and its cover plate drift apart from each other as the door is passed. */
+  useDepth(hero, 0.1, reducedMotion);
 
   return (
     <article className="room" style={{ ['--room-accent' as string]: station.accent }}>
       <header
+        ref={hero}
         className="room-hero"
         data-hero
         data-stop
@@ -58,13 +64,21 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
         <div className="room-hero-veil" aria-hidden="true" />
         {/* motif first, painting over it: the room's borrowed language, then PORT's own light */}
         <Motif kind={motif} />
-        <LightPainting tone="dark" still painters={3} seed={number * 977} weight={0.9} />
+        <LightPainting
+          tone="dark"
+          still
+          painters={3}
+          seed={number * 977}
+          weight={0.9}
+          className="depth-layer"
+        />
         <RadiantLight
           sources={3}
           reducedMotion={reducedMotion}
           weight={1.0}
           speed={0.5}
           seed={number * 113}
+          className="depth-layer"
         />
         <div className="room-hero-scrim" aria-hidden="true" />
 
@@ -74,7 +88,7 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
             {t('roomOf')} {pad(tour.length)}
           </p>
           <h1 className="room-title">
-            <Decipher text={station.label} reducedMotion={reducedMotion} duration={650} />
+            <SplitText text={station.label} reducedMotion={reducedMotion} stagger={36} delay={90} />
           </h1>
           <p className="room-tagline serif-lede">{station.tagline}</p>
           {station.kind !== 'video' ? (
