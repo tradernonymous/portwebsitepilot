@@ -8,6 +8,8 @@ type TopBarProps = {
   flat: boolean;
   onToggleFlat: () => void;
   onHelp: () => void;
+  /** The visitor's notebook — the count is the invitation; zero is still worth showing. */
+  notebook: { count: number; onToggle: () => void };
   /**
    * Present only where the page has stops to walk. Its absence is how the bar knows the mode
    * means nothing here, rather than the mode having to ask what page it is on.
@@ -27,7 +29,7 @@ type TopBarProps = {
  * light) and turns to white glass once the page has scrolled onto the gallery wall, so its
  * words are always legible against whatever is behind them.
  */
-export function TopBar({ crumb, flat, onToggleFlat, onHelp, gallery, curator, pageKey }: TopBarProps) {
+export function TopBar({ crumb, flat, onToggleFlat, onHelp, notebook, gallery, curator, pageKey }: TopBarProps) {
   const { t, lang, toggle } = useLang();
   const [onDark, setOnDark] = useState(true);
   const barRef = useRef<HTMLElement>(null);
@@ -111,6 +113,22 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp, gallery, curator, pa
             </svg>
           </button>
         ) : null}
+        <button
+          type="button"
+          className={`icon-btn is-notebook${notebook.count > 0 ? ' has-works' : ''}`}
+          onClick={notebook.onToggle}
+          aria-label={`${t('notebookToggle')}${notebook.count > 0 ? ` · ${notebook.count}` : ''}`}
+          title={t('notebookToggle')}
+          data-cursor="open"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M6 2h13a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 2v16h12V4H6Zm2 3h8v2H8V7Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z"
+            />
+          </svg>
+          {notebook.count > 0 ? <b className="notebook-count" aria-hidden="true">{notebook.count}</b> : null}
+        </button>
         <button type="button" className="chip" onClick={toggle} aria-label={t('switchLang')} title={t('switchLang')}>
           <span className={lang === 'ms' ? 'is-on' : ''}>BM</span>
           <i aria-hidden="true">/</i>

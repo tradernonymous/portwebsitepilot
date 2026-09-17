@@ -546,3 +546,36 @@
     justify-items: start;
   }
 }
+
+/* The kept mark on a wall frame — a small bookmark on the frame's corner. */
+.work-kept {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 999px;
+  background: rgba(5, 5, 7, 0.72);
+  color: var(--light-3);
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity var(--dur-2, 0.24s) var(--ease-out, ease-out), transform var(--dur-2, 0.24s) var(--ease-out, ease-out);
+}
+
+.work:hover .work-kept,
+.work:focus-visible .work-kept,
+.work-kept.is-on {
+  opacity: 1;
+  transform: none;
+}
+
+.work-kept.is-on {
+  color: #3de8ff;
+}
+
+/* The whole card carries the state too, for the walk and the eye. */
+.work.is-kept .work-plaque .work-title {
+  color: #3de8ff;
+}

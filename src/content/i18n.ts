@@ -114,6 +114,19 @@ const ms = {
   curatorWorkNote: 'Dikurasi untuk dilihat dari dekat — dekati bila sedia.',
   curatorDone: 'Tamat tur — koridor berterusan tanpa anda.',
 
+  // --------------------------------------------------------------- the visitor's notebook
+  notebook: 'Kunjungan saya',
+  notebookToggle: 'Karya yang disimpan',
+  notebookTitle: 'Kunjungan saya',
+  notebookLede: 'Karya yang anda simpan semasa menerokai galeri — kekal dalam pelayar anda sahaja.',
+  keep: 'Simpan karya',
+  kept: 'Disimpan',
+  notebookEmpty: 'Belum ada karya disimpan. Buka mana-mana karya dan tekan Simpan — ia akan menunggu di sini.',
+  notebookShare: 'Kongsi senarai',
+  notebookCopied: 'Senarai disalin ke papan keratan.',
+  notebookClear: 'Kosongkan',
+  notebookClose: 'Tutup buku',
+
   // ---------------------------------------------------------------- room
   room: 'Ruang',
   roomOf: 'daripada',
@@ -310,6 +323,19 @@ const en: Dict = {
   curatorVisit: 'The way in. PORT lives at Kampung Karyawan Amanjaya, Ipoh — come for a screening, stay for the rooms.',
   curatorWorkNote: 'Curated to be seen up close — approach when ready.',
   curatorDone: 'The tour ends — the corridor carries on without you.',
+
+  // --------------------------------------------------------------- the visitor's notebook
+  notebook: 'My visit',
+  notebookToggle: 'Works you kept',
+  notebookTitle: 'My visit',
+  notebookLede: "The works you kept while walking the gallery — held in your browser alone.",
+  keep: 'Keep this work',
+  kept: 'Kept',
+  notebookEmpty: 'Nothing kept yet. Open any work and press Keep — it will wait here.',
+  notebookShare: 'Share the list',
+  notebookCopied: 'List copied to the clipboard.',
+  notebookClear: 'Clear',
+  notebookClose: 'Close the book',
 
   room: 'Room',
   roomOf: 'of',

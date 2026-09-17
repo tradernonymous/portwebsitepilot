@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { deckCovers, type Station } from '../content';
 import { motifFor } from '../content/motifs';
 import { hrefFor } from '../lib/hooks';
+import { useCollected } from '../lib/collected';
 import { useLang } from '../lib/lang';
 import { pad, roomNumber, tourOrder } from '../lib/order';
 import { useDepth } from '../lib/scroll';
@@ -32,6 +33,8 @@ type Props = {
  */
 export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
   const { t, stations } = useLang();
+  const { works: collected } = useCollected();
+  const keptIds = new Set(collected.filter((w) => w.stationId === station.id).map((w) => w.exhibitId));
   const tour = tourOrder(stations);
   const number = roomNumber(stations, station.id);
   const index = number - 1;
@@ -157,7 +160,7 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
               {station.exhibits.map((work, i) => (
                 <Reveal key={work.id} delay={(i % 3) * 90}>
                   <a
-                    className="work"
+                    className={`work${keptIds.has(work.id) ? ' is-kept' : ''}`}
                     href={hrefFor({ kind: 'exhibit', stationId: station.id, index: i })}
                     data-stop
                     data-stop-label={work.title}
@@ -172,6 +175,13 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
                       )}
                       <span className="hud-corner is-tl" />
                       <span className="hud-corner is-br" />
+                      {/* the kept mark: a bookmark hanging on the frame's corner, not a button —
+                          the whole wall card is one link into the reader, where keeping happens */}
+                      <span className={`work-kept${keptIds.has(work.id) ? ' is-on' : ''}`} aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24">
+                          <path fill="currentColor" d="M5 3h14a2 2 0 0 1 2 2v16l-9-4.6L3 21V5a2 2 0 0 1 2-2Z" />
+                        </svg>
+                      </span>
                     </span>
                     <span className="work-plaque">
                       <span className="work-meta">

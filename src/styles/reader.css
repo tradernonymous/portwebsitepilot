@@ -370,3 +370,22 @@
     max-height: 48svh;
   }
 }
+
+/* ==========================================================================
+   The visitor's notebook — the keep control in the reader
+   ========================================================================== */
+
+.reader-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* The bookmark: quiet until kept, spectrum once it is. */
+.keep-btn.is-kept {
+  color: #3de8ff;
+}
+
+.keep-btn.is-kept:hover {
+  color: #7dedff;
+}

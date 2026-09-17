@@ -226,3 +226,121 @@
     animation: none;
   }
 }
+
+/* ==========================================================================
+   The visitor's notebook — the panel, the count, the actions
+   ========================================================================== */
+
+.notebook-empty {
+  margin: 0;
+  padding: 2.2rem 0.4rem;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--light-2);
+  max-width: 40ch;
+}
+
+.notebook-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.notebook-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.55rem 0.7rem 0.55rem 0.55rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--dur-2, 0.2s) ease, background var(--dur-2, 0.2s) ease;
+}
+
+.notebook-row:hover {
+  border-color: var(--rule-strong);
+  background: color-mix(in srgb, var(--void-2, #0d0d12) 55%, transparent);
+}
+
+.notebook-thumb {
+  display: block;
+  width: 72px;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: calc(var(--radius, 8px) - 2px);
+  background: var(--void-2, #0d0d12);
+}
+
+.notebook-thumb.is-plate {
+  /* no image — a quiet dark plate with the house spectrum hairline keeps the row honest */
+  background:
+    linear-gradient(120deg, rgba(61, 232, 255, 0.4), rgba(139, 92, 255, 0.35), rgba(255, 177, 61, 0.35)) 0 0 / 100% 2px no-repeat,
+    var(--void-2, #0d0d12);
+}
+
+.notebook-row-text {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.notebook-row-text b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notebook-row-text small {
+  color: var(--light-3);
+}
+
+.notebook-row > i {
+  color: var(--light-3);
+}
+
+.notebook-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  margin-top: 1.1rem;
+}
+
+.notebook-ack {
+  margin: 0 auto 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--light-2);
+  min-height: 1em;
+}
+
+.notebook-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #3de8ff;
+  color: #050507;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+.icon-btn.is-notebook {
+  position: relative;
+}

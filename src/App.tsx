@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCollected } from './lib/collected';
 import { useGalleryWalk } from './lib/gallery';
 import { detectWebGL, useHashRoute, useReducedMotion } from './lib/hooks';
 import { ErrorBoundary } from './lib/errors';
@@ -28,6 +29,7 @@ import { RoomView } from './ui/RoomView';
 const FlatView = lazy(() => import('./ui/FlatView').then((m) => ({ default: m.FlatView })));
 const ImmersiveWalk = lazy(() => import('./ui/ImmersiveWalk').then((m) => ({ default: m.ImmersiveWalk })));
 const ExhibitReader = lazy(() => import('./ui/ExhibitReader').then((m) => ({ default: m.ExhibitReader })));
+const NotebookPanel = lazy(() => import('./ui/NotebookPanel').then((m) => ({ default: m.NotebookPanel })));
 
 const ENTERED_KEY = 'port.entered';
 
@@ -52,6 +54,8 @@ export default function App() {
   const [entered, setEntered] = useState(() => route.kind !== 'hub' || alreadyEntered());
   const [entering, setEntering] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [notebookOpen, setNotebookOpen] = useState(false);
+  const { works: collected } = useCollected();
 
   const markEntered = useCallback(() => {
     setEntered(true);
@@ -237,7 +241,12 @@ export default function App() {
 
   const help = helpOpen ? <HelpPanel onClose={() => setHelpOpen(false)} reducedMotion={reducedMotion} /> : null;
   /* A dialog owns the screen and the keys, so the readout stands down with them. */
-  const reading = helpOpen || route.kind === 'exhibit';
+  const reading = helpOpen || notebookOpen || route.kind === 'exhibit';
+  const notebook = notebookOpen ? (
+    <Suspense fallback={null}>
+      <NotebookPanel onClose={() => setNotebookOpen(false)} />
+    </Suspense>
+  ) : null;
   const readout =
     galleryOn && galleryPosition && !reading ? (
       curatorOn ? (
@@ -306,6 +315,7 @@ export default function App() {
         flat={route.kind === 'flat'}
         onToggleFlat={() => navigate(route.kind === 'flat' ? { kind: 'hub' } : { kind: 'flat' })}
         onHelp={() => setHelpOpen(true)}
+        notebook={{ count: collected.length, onToggle: () => setNotebookOpen((open) => !open) }}
         gallery={galleryToggleable ? { active: gallery, onToggle: () => setGallery((on) => !on) } : null}
         curator={galleryToggleable ? { active: curator, onToggle: () => setCurator((on) => !on) } : null}
         crumb={
@@ -360,6 +370,7 @@ export default function App() {
       ) : null}
       {readout}
       {help}
+      {notebook}
       {entrance}
       {/* remounts on every route change, so the light replays as the room changes */}
       {reducedMotion ? null : <AmbientVeil key={pageKey} dark={route.kind !== 'flat'} />}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Station } from '../content';
 import { bodyIsOriginal } from '../content/en';
+import { useCollected } from '../lib/collected';
 import { useDialogFocus } from '../lib/hooks';
 import { useLang } from '../lib/lang';
 import { pad } from '../lib/order';
@@ -27,6 +28,8 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
   const mediaRef = useRef<HTMLDivElement>(null);
   const { t, lang } = useLang();
   const [shown, setShown] = useState(0);
+  const { has, toggle } = useCollected();
+  const kept = has({ exhibitId: exhibit?.id ?? '', stationId: station.id });
 
   useEffect(() => setShown(0), [exhibit?.id]);
 
@@ -126,14 +129,34 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
             <p className="kicker">
               {station.label} · {pad(index + 1)} / {pad(count)}
             </p>
-            <button type="button" className="icon-btn" onClick={onClose} aria-label={t('close')} title={t('close')} data-cursor="close">
-              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3Z"
-                />
-              </svg>
-            </button>
+            <div className="reader-tools">
+              <button
+                type="button"
+                className={`icon-btn keep-btn${kept ? ' is-kept' : ''}`}
+                onClick={() => toggle({ exhibitId: exhibit.id, stationId: station.id })}
+                aria-pressed={kept}
+                aria-label={t(kept ? 'kept' : 'keep')}
+                title={t(kept ? 'kept' : 'keep')}
+                data-cursor="view"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d={kept
+                      ? 'M5 3h14a2 2 0 0 1 2 2v16l-9-4.6L3 21V5a2 2 0 0 1 2-2Z'
+                      : 'M6 2h12a2 2 0 0 1 2 2v17l-8-4.1L4 21V4a2 2 0 0 1 2-2Zm0 2v13.6l6-3.1 6 3.1V4H6Z'}
+                  />
+                </svg>
+              </button>
+              <button type="button" className="icon-btn" onClick={onClose} aria-label={t('close')} title={t('close')} data-cursor="close">
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6.3Z"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
           {/* keyed on the work, so stepping to the next one sets its title again */}
           <h2 className="reader-title">
