@@ -12,7 +12,7 @@ export default defineConfig({
     port: 4180,
   },
   build: {
-    target: 'es2020',
+    target: 'es2022',
     chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {

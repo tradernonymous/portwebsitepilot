@@ -513,3 +513,84 @@ a.btn-glow {
     scroll-behavior: auto !important;
   }
 }
+
+/* ==========================================================================
+   Crash panel — what an ErrorBoundary shows instead of nothing
+   ========================================================================== */
+
+.crash {
+  min-height: 60vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.4rem;
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.crash-title {
+  margin: 0;
+  font-family: var(--font-display, var(--font-body, serif));
+  font-size: clamp(1.4rem, 3.4vw, 2.1rem);
+  color: var(--light, #f7f7fb);
+}
+
+.crash-title-ms {
+  font-size: clamp(1rem, 2.2vw, 1.35rem);
+  color: var(--light-2, #c9c9d4);
+}
+
+.crash-body {
+  margin: 0.9rem 0 0;
+  max-width: 34rem;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--light-2, #c9c9d4);
+}
+
+.crash-body [lang='ms'] {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--light-3, #9a9aa8);
+}
+
+.crash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.6rem;
+  justify-content: center;
+}
+
+.crash-retry {
+  border: 1px solid var(--rule-dark, rgba(247, 247, 251, 0.16));
+  background: var(--void-2, #0d0d12);
+  color: var(--light, #f7f7fb);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.8rem 1.5rem;
+  cursor: pointer;
+}
+
+.crash-retry:hover {
+  background: var(--void-3, #16161d);
+}
+
+.crash-flat {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--rule-dark, rgba(247, 247, 251, 0.16));
+  color: var(--light, #f7f7fb);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.8rem 1.5rem;
+  text-decoration: none;
+}
+
+.crash-flat:hover {
+  background: var(--void-2, #0d0d12);
+}

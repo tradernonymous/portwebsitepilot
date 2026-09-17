@@ -25,6 +25,8 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
   const [progress, setProgress] = useState(0);
   const [reading, setReading] = useState<number | null>(null);
   const [taught, setTaught] = useState(false);
+  /** Set when three.js will not load — the wing then answers with the way back out. */
+  const [failed, setFailed] = useState(false);
   const coarse = useMediaQuery('(pointer: coarse)');
 
   useEffect(() => {
@@ -32,20 +34,31 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
     if (!canvas) return;
     let cancelled = false;
     let world: PortWorld | null = null;
-    void import('../experience/PortWorld').then(({ PortWorld: World }) => {
-      if (cancelled) return;
-      world = new World(canvas, {
-        stations: [station],
-        reducedMotion,
-        corridorOnly: true,
-        onReady: () => setReady(true),
-        onExhibitSelect: (index) => setReading(index),
-        onExhibitFocus: (index) => setActive(index),
+    /*
+     * The 3D module is a route-gated 500 kB chunk. If it fails to arrive — a dead network,
+     * a stale deployment serving a hashed name that no longer exists — the promise rejects
+     * and the visitor is told, rather than staring at a black canvas that will never start.
+     */
+    import('../experience/PortWorld')
+      .then(({ PortWorld: World }) => {
+        if (cancelled) return;
+        world = new World(canvas, {
+          stations: [station],
+          reducedMotion,
+          corridorOnly: true,
+          onReady: () => setReady(true),
+          onExhibitSelect: (index) => setReading(index),
+          onExhibitFocus: (index) => setActive(index),
+        });
+        worldRef.current = world;
+        world.mount();
+        world.openCorridor(station);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        console.error('[port:walk] three.js failed to load', error);
+        setFailed(true);
       });
-      worldRef.current = world;
-      world.mount();
-      world.openCorridor(station);
-    });
     const poll = window.setInterval(() => setProgress(worldRef.current?.getWalkProgress() ?? 0), 160);
     return () => {
       cancelled = true;
@@ -110,7 +123,17 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
   return (
     <div className="walk">
       <canvas ref={canvasRef} className="walk-canvas" aria-hidden="true" />
-      {!ready ? <p className="walk-loading">{t('loading3d')}</p> : null}
+      {failed ? (
+        <div className="walk-failed" role="alert">
+          <p>The 3D wing could not be opened.</p>
+          <p lang="ms">Sayap 3D tidak dapat dibuka.</p>
+          <button type="button" className="btn btn-dark" onClick={onExit}>
+            {t('backToRoom')}
+          </button>
+        </div>
+      ) : !ready ? (
+        <p className="walk-loading">{t('loading3d')}</p>
+      ) : null}
       <CorridorRail
         station={station}
         activeIndex={active}

@@ -30,6 +30,32 @@
   animation: walk-pulse 1.8s ease-in-out infinite alternate;
 }
 
+/* The wing that will not open: same stage as the loading note, with a way back out. */
+.walk-failed {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+.walk-failed p {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.walk-failed .btn {
+  margin-top: 1rem;
+}
+}
+
 @keyframes walk-pulse {
   from {
     opacity: 0.45;

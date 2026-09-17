@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useGalleryWalk } from './lib/gallery';
 import { detectWebGL, useHashRoute, useReducedMotion } from './lib/hooks';
+import { ErrorBoundary } from './lib/errors';
 import { useLang } from './lib/lang';
 import { startScrollEngine } from './lib/scroll';
 import { EntryGate } from './ui/EntryGate';
@@ -206,11 +207,13 @@ export default function App() {
   if (route.kind === 'walk' && station) {
     return (
       <>
-        <ImmersiveWalk
-          station={station}
-          reducedMotion={reducedMotion}
-          onExit={() => navigate({ kind: 'station', stationId: station.id })}
-        />
+        <ErrorBoundary name="walk" flat>
+          <ImmersiveWalk
+            station={station}
+            reducedMotion={reducedMotion}
+            onExit={() => navigate({ kind: 'station', stationId: station.id })}
+          />
+        </ErrorBoundary>
         {help}
         <Cursor />
       </>
@@ -246,32 +249,36 @@ export default function App() {
         }
       />
       <main id="content">
-        {route.kind === 'flat' ? (
-          <FlatView />
-        ) : station ? (
-          <RoomView
-            station={station}
-            shelf={route.kind === 'station' ? route.shelf : undefined}
-            reducedMotion={reducedMotion}
-            webgl={webgl}
-          />
-        ) : (
-          <Hall reducedMotion={reducedMotion} />
-        )}
+        <ErrorBoundary name="page" flat>
+          {route.kind === 'flat' ? (
+            <FlatView />
+          ) : station ? (
+            <RoomView
+              station={station}
+              shelf={route.kind === 'station' ? route.shelf : undefined}
+              reducedMotion={reducedMotion}
+              webgl={webgl}
+            />
+          ) : (
+            <Hall reducedMotion={reducedMotion} />
+          )}
+        </ErrorBoundary>
       </main>
       {station && exhibitIndex >= 0 && crumbWork ? (
-        <ExhibitReader
-          station={station}
-          index={exhibitIndex}
-          onClose={() => navigate({ kind: 'station', stationId: station.id })}
-          onPrev={() => navigate({ kind: 'exhibit', stationId: station.id, index: Math.max(0, exhibitIndex - 1) }, true)}
-          onNext={() =>
-            navigate(
-              { kind: 'exhibit', stationId: station.id, index: Math.min(station.exhibits.length - 1, exhibitIndex + 1) },
-              true,
-            )
-          }
-        />
+        <ErrorBoundary name="reader">
+          <ExhibitReader
+            station={station}
+            index={exhibitIndex}
+            onClose={() => navigate({ kind: 'station', stationId: station.id })}
+            onPrev={() => navigate({ kind: 'exhibit', stationId: station.id, index: Math.max(0, exhibitIndex - 1) }, true)}
+            onNext={() =>
+              navigate(
+                { kind: 'exhibit', stationId: station.id, index: Math.min(station.exhibits.length - 1, exhibitIndex + 1) },
+                true,
+              )
+            }
+          />
+        </ErrorBoundary>
       ) : null}
       {readout}
       {help}
