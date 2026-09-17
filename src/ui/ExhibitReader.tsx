@@ -15,6 +15,8 @@ type Props = {
   onClose: () => void;
   onPrev: () => void;
   onNext: () => void;
+  /** Another modal is above this reader; remove it from the active accessibility tree. */
+  suspended?: boolean;
 };
 
 /**
@@ -22,7 +24,7 @@ type Props = {
  * size, and its label and story on the right — the way a gallery puts the wall text beside
  * the piece rather than under a heap of thumbnails.
  */
-export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props) {
+export function ExhibitReader({ station, index, onClose, onPrev, onNext, suspended = false }: Props) {
   const exhibit = station.exhibits[index];
   const scroller = useDialogFocus<HTMLDivElement>(exhibit?.id ?? '');
   const mediaRef = useRef<HTMLDivElement>(null);
@@ -74,7 +76,14 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
   const nextWork = index < count - 1 ? station.exhibits[index + 1] : undefined;
 
   return (
-    <div className="reader" role="dialog" aria-modal="true" aria-label={exhibit.title}>
+    <div
+      className="reader"
+      role="dialog"
+      aria-modal={suspended ? undefined : true}
+      aria-hidden={suspended ? true : undefined}
+      inert={suspended ? true : undefined}
+      aria-label={exhibit.title}
+    >
       <div className="reader-scrim" onClick={onClose} role="presentation" />
       <section className="reader-sheet">
         <div className="reader-media" ref={mediaRef}>

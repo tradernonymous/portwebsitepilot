@@ -114,6 +114,17 @@ const ms = {
   curatorWorkNote: 'Dikurasi untuk dilihat dari dekat — dekati bila sedia.',
   curatorDone: 'Tamat tur — koridor berterusan tanpa anda.',
 
+  // --------------------------------------------------------------- curated trails
+  trailMode: 'Laluan kurasi',
+  trailKicker: 'Laluan PORT',
+  trailTitle: 'Pilih perjalanan anda',
+  trailLede: 'Tiga cara untuk masuk lebih dalam — dipilih oleh rumah ini, bukan oleh algoritma.',
+  trailChange: 'Laluan lain',
+  trailPrevious: 'Sebelum',
+  trailNext: 'Seterusnya',
+  trailExit: 'Tamatkan laluan',
+  trailDone: 'Anda telah sampai ke penghujung laluan. Ruang lain masih menunggu.',
+
   // --------------------------------------------------------------- the visitor's notebook
   notebook: 'Kunjungan saya',
   notebookToggle: 'Karya yang disimpan',
@@ -323,6 +334,17 @@ const en: Dict = {
   curatorVisit: 'The way in. PORT lives at Kampung Karyawan Amanjaya, Ipoh — come for a screening, stay for the rooms.',
   curatorWorkNote: 'Curated to be seen up close — approach when ready.',
   curatorDone: 'The tour ends — the corridor carries on without you.',
+
+  // --------------------------------------------------------------- curated trails
+  trailMode: 'Curated trails',
+  trailKicker: 'PORT trails',
+  trailTitle: 'Choose your journey',
+  trailLede: 'Three ways to go deeper — chosen by this house, not by an algorithm.',
+  trailChange: 'Other trails',
+  trailPrevious: 'Previous',
+  trailNext: 'Next',
+  trailExit: 'End trail',
+  trailDone: 'You have reached the end of this trail. Other rooms are still waiting.',
 
   // --------------------------------------------------------------- the visitor's notebook
   notebook: 'My visit',

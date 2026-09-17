@@ -10,6 +10,8 @@ type TopBarProps = {
   onHelp: () => void;
   /** The visitor's notebook — the count is the invitation; zero is still worth showing. */
   notebook: { count: number; onToggle: () => void };
+  /** Curated editorial routes through the existing rooms and works. */
+  trail: { active: boolean; onToggle: () => void } | null;
   /**
    * Present only where the page has stops to walk. Its absence is how the bar knows the mode
    * means nothing here, rather than the mode having to ask what page it is on.
@@ -29,7 +31,7 @@ type TopBarProps = {
  * light) and turns to white glass once the page has scrolled onto the gallery wall, so its
  * words are always legible against whatever is behind them.
  */
-export function TopBar({ crumb, flat, onToggleFlat, onHelp, notebook, gallery, curator, pageKey }: TopBarProps) {
+export function TopBar({ crumb, flat, onToggleFlat, onHelp, notebook, trail, gallery, curator, pageKey }: TopBarProps) {
   const { t, lang, toggle } = useLang();
   const [onDark, setOnDark] = useState(true);
   const barRef = useRef<HTMLElement>(null);
@@ -69,6 +71,21 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp, notebook, gallery, c
       </a>
       {crumb ? <nav className="topbar-crumb">{crumb}</nav> : <span className="topbar-spacer" />}
       <div className="topbar-tools">
+        {trail ? (
+          <button
+            type="button"
+            className="icon-btn is-trails"
+            aria-pressed={trail.active}
+            onClick={trail.onToggle}
+            title={t('trailMode')}
+            aria-label={t('trailMode')}
+            data-cursor="walk"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M12 2a5 5 0 0 0-3 9v2.2A5.5 5.5 0 0 0 5.5 18.5 3.5 3.5 0 0 0 9 22h6a3.5 3.5 0 0 0 3.5-3.5A5.5 5.5 0 0 0 15 13.2V11a5 5 0 0 0-3-9Zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-1 9.1v1.8a3.5 3.5 0 0 0-3.5 3.5A1.5 1.5 0 0 0 9 20h6a1.5 1.5 0 0 0 1.5-1.5A3.5 3.5 0 0 0 13 14.9v-1.8a5 5 0 0 1-2 0Z" />
+            </svg>
+          </button>
+        ) : null}
         {gallery ? (
           <button
             type="button"

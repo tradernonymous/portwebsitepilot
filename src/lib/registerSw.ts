@@ -1,13 +1,22 @@
 /**
  * The page side of the service worker.
  *
- * Registration waits for the page's own `load`: the gallery's first paint should never wait
- * in a worker's queue. An update found later does not hard-reload anybody — the new worker
- * waits until this tab is hidden or closed, and the visit after that opens the new build.
+ * Registration is production-only. A service worker over a Vite dev server can cache source
+ * modules and make Preview show an older application than the files on disk — a particularly
+ * misleading failure for a gallery under development. When a previous build did register on
+ * localhost, unregister it once so the dev surface returns to the network immediately.
  */
 export function registerServiceWorker(): void {
   if (!('serviceWorker' in navigator)) return;
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+
+  if (import.meta.env.DEV) {
+    void navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) void registration.unregister();
+    });
+    return;
+  }
+
+  if (location.protocol !== 'https:') return;
 
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch((error: unknown) => {

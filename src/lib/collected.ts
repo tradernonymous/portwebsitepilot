@@ -31,9 +31,20 @@ function read(): Stored {
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return { version: VERSION, works: [] };
-    const parsed = JSON.parse(raw) as Stored;
+    const parsed = JSON.parse(raw) as Partial<Stored>;
     if (parsed.version !== VERSION || !Array.isArray(parsed.works)) return { version: VERSION, works: [] };
-    return parsed;
+
+    /* Storage is user-editable input. Keep only the exact shape the rest of the store reads. */
+    const works = parsed.works.filter(
+      (work): work is CollectedWork =>
+        Boolean(work) &&
+        typeof work === 'object' &&
+        typeof (work as CollectedWork).exhibitId === 'string' &&
+        typeof (work as CollectedWork).stationId === 'string' &&
+        (work as CollectedWork).exhibitId.length > 0 &&
+        (work as CollectedWork).stationId.length > 0,
+    );
+    return { version: VERSION, works };
   } catch {
     return { version: VERSION, works: [] };
   }

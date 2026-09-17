@@ -1,7 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCollected } from './lib/collected';
+import { curatedTrails, type CuratedTrail } from './content/trails';
 import { useGalleryWalk } from './lib/gallery';
-import { detectWebGL, useHashRoute, useReducedMotion } from './lib/hooks';
+import { detectWebGL, useHashRoute, useReducedMotion, type Route } from './lib/hooks';
 import { ErrorBoundary } from './lib/errors';
 import { useLang } from './lib/lang';
 import { startScrollEngine } from './lib/scroll';
@@ -16,6 +17,7 @@ import { Hall } from './ui/Hall';
 import { HelpPanel } from './ui/HelpPanel';
 import { TopBar } from './ui/Hud';
 import { RoomView } from './ui/RoomView';
+import { TrailPanel } from './ui/TrailPanel';
 
 /*
  * The three surfaces a visitor only reaches by asking for them. Keeping them out of the
@@ -32,6 +34,19 @@ const ExhibitReader = lazy(() => import('./ui/ExhibitReader').then((m) => ({ def
 const NotebookPanel = lazy(() => import('./ui/NotebookPanel').then((m) => ({ default: m.NotebookPanel })));
 
 const ENTERED_KEY = 'port.entered';
+
+function sameRoute(a: Route, b: Route): boolean {
+  if (a.kind !== b.kind) return false;
+  if (a.kind === 'hub' || a.kind === 'flat') return true;
+  if (a.kind === 'walk' && b.kind === 'walk') return a.stationId === b.stationId;
+  if (a.kind === 'exhibit' && b.kind === 'exhibit') {
+    return a.stationId === b.stationId && a.index === b.index;
+  }
+  if (a.kind === 'station' && b.kind === 'station') {
+    return a.stationId === b.stationId && a.shelf === b.shelf;
+  }
+  return false;
+}
 
 function alreadyEntered(): boolean {
   try {
@@ -55,7 +70,31 @@ export default function App() {
   const [entering, setEntering] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [notebookOpen, setNotebookOpen] = useState(false);
+  const [trailOpen, setTrailOpen] = useState(false);
+  const [trailId, setTrailId] = useState<string | null>(null);
+  const [trailIndex, setTrailIndex] = useState(0);
+  const trailNavigation = useRef(false);
   const { works: collected } = useCollected();
+  const activeTrail = useMemo<CuratedTrail | null>(
+    () => curatedTrails.find((trail) => trail.id === trailId) ?? null,
+    [trailId],
+  );
+
+  /* A trail owns only the route changes made by its own controls. A manual link or a bad
+     address should not leave a stale progress card describing somewhere else. */
+  useEffect(() => {
+    if (!activeTrail) return;
+    const expected = activeTrail.stops[trailIndex]?.route;
+    if (!expected) return;
+    if (sameRoute(route, expected)) {
+      trailNavigation.current = false;
+      return;
+    }
+    if (trailNavigation.current) return;
+    setTrailId(null);
+    setTrailIndex(0);
+    setTrailOpen(false);
+  }, [route, activeTrail, trailIndex]);
 
   const markEntered = useCallback(() => {
     setEntered(true);
@@ -228,6 +267,7 @@ export default function App() {
          */
         if (helpOpen) setHelpOpen(false);
         else if (notebookOpen) setNotebookOpen(false);
+        else if (trailOpen) setTrailOpen(false);
         else if (route.kind === 'exhibit') navigate({ kind: 'station', stationId: route.stationId });
         return;
       }
@@ -242,13 +282,13 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [route, station, navigate, helpOpen, notebookOpen]);
+  }, [route, station, navigate, helpOpen, notebookOpen, trailOpen]);
 
   /* ---------------------------------------------------------------- render */
 
   const help = helpOpen ? <HelpPanel onClose={() => setHelpOpen(false)} reducedMotion={reducedMotion} /> : null;
   /* A dialog owns the screen and the keys, so the readout stands down with them. */
-  const reading = helpOpen || notebookOpen || route.kind === 'exhibit';
+  const reading = helpOpen || notebookOpen || trailOpen || route.kind === 'exhibit';
   const notebook = notebookOpen ? (
     <Suspense fallback={null}>
       <NotebookPanel onClose={() => setNotebookOpen(false)} />
@@ -323,6 +363,11 @@ export default function App() {
         onToggleFlat={() => navigate(route.kind === 'flat' ? { kind: 'hub' } : { kind: 'flat' })}
         onHelp={() => setHelpOpen(true)}
         notebook={{ count: collected.length, onToggle: () => setNotebookOpen((open) => !open) }}
+        trail={
+          route.kind === 'hub' || route.kind === 'station' || route.kind === 'exhibit'
+            ? { active: Boolean(activeTrail), onToggle: () => setTrailOpen((open) => !open) }
+            : null
+        }
         gallery={galleryToggleable ? { active: gallery, onToggle: () => setGallery((on) => !on) } : null}
         curator={galleryToggleable ? { active: curator, onToggle: () => setCurator((on) => !on) } : null}
         crumb={
@@ -371,6 +416,7 @@ export default function App() {
                   true,
                 )
               }
+              suspended={helpOpen || notebookOpen || trailOpen}
             />
           </Suspense>
         </ErrorBoundary>
@@ -378,6 +424,38 @@ export default function App() {
       {readout}
       {help}
       {notebook}
+      <TrailPanel
+        trails={curatedTrails}
+        activeTrail={activeTrail}
+        activeIndex={trailIndex}
+        open={trailOpen || Boolean(activeTrail)}
+        onStart={(trail) => {
+          trailNavigation.current = true;
+          setTrailId(trail.id);
+          setTrailIndex(0);
+          setTrailOpen(false);
+          navigate(trail.stops[0].route);
+        }}
+        onNavigate={(index) => {
+          if (!activeTrail) return;
+          const next = Math.max(0, Math.min(activeTrail.stops.length - 1, index));
+          trailNavigation.current = true;
+          setTrailIndex(next);
+          navigate(activeTrail.stops[next].route);
+        }}
+        onExit={() => {
+          trailNavigation.current = false;
+          setTrailId(null);
+          setTrailIndex(0);
+          setTrailOpen(false);
+        }}
+        onClose={() => setTrailOpen(false)}
+        onChange={() => {
+          setTrailId(null);
+          setTrailIndex(0);
+          setTrailOpen(true);
+        }}
+      />
       {entrance}
       {/* remounts on every route change, so the light replays as the room changes */}
       {reducedMotion ? null : <AmbientVeil key={pageKey} dark={route.kind !== 'flat'} />}

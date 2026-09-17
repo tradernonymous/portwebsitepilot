@@ -258,7 +258,9 @@ a.btn-glow {
 .topbar {
   position: fixed;
   inset: 0 0 auto;
-  z-index: 50;
+  /* stay above the reader scrim so its notebook/help controls remain reachable;
+     reader content is made inert when another modal opens */
+  z-index: 130;
   display: flex;
   align-items: center;
   gap: 1.25rem;
