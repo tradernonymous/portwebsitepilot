@@ -55,7 +55,7 @@ export function Hall({ reducedMotion }: Props) {
       <Exhibition reducedMotion={reducedMotion} />
       <Pipeline rooms={rooms} reducedMotion={reducedMotion} />
       <HallStats stations={stations} reducedMotion={reducedMotion} scrollProgress={scrollProgress} />
-      <HallVisit />
+      <HallVisit reducedMotion={reducedMotion} />
     </div>
   );
 }
@@ -491,7 +491,7 @@ function HallStats({ stations, reducedMotion, scrollProgress }: { stations: Stat
   );
 }
 
-function HallVisit() {
+function HallVisit({ reducedMotion }: { reducedMotion: boolean }) {
   const { t, stations } = useLang();
   const contactRoom = stations.find((s) => s.id === 'hubungi');
   const mapsQuery = encodeURIComponent('PORT Ipoh, Jalan Sultan Azlan Shah, 31400 Ipoh, Perak');
@@ -499,46 +499,55 @@ function HallVisit() {
   return (
     <>
       <section className="hall-visit" aria-labelledby="visit-title">
-        <div>
-          <p className="kicker">{t('visitKicker')}</p>
-          <h2 id="visit-title">{t('visitTitle')}</h2>
-          {contactRoom ? <p className="hall-visit-lede">{contactRoom.intro[1]}</p> : null}
+        {/* The last room of the gallery: light on a dark wall, and the address on glass. */}
+        <LightPainting tone="dark" painters={2} still seed={77} weight={1.0} reducedMotion={reducedMotion} />
+        <RadiantLight sources={3} weight={1.15} speed={0.45} seed={77} reducedMotion={reducedMotion} />
+        <div className="hall-visit-veil" aria-hidden="true" />
+
+        <div className="hall-visit-inner">
+          <div className="hall-visit-lead">
+            <p className="kicker kicker-dark">{t('visitKicker')}</p>
+            <h2 id="visit-title">{t('visitTitle')}</h2>
+            {contactRoom ? <p className="hall-visit-lede">{contactRoom.intro[1]}</p> : null}
+            <p className="hall-visit-note">{t('visitNote')}</p>
+          </div>
+
+          <dl className="hall-visit-card">
+            <div>
+              <dt>{t('address')}</dt>
+              <dd>
+                {contact.name}
+                <br />
+                {contact.addressLines.join(', ')}
+              </dd>
+            </div>
+            <div>
+              <dt>{t('phone')}</dt>
+              <dd>
+                <a href={contact.phoneHref}>{contact.phone}</a>
+              </dd>
+            </div>
+            <div>
+              <dt>{t('email')}</dt>
+              <dd>
+                <a href={`mailto:${contact.email}`}>{contact.email}</a>
+              </dd>
+            </div>
+            <div className="hall-visit-links">
+              <a className="btn btn-dark" href={hrefFor({ kind: 'station', stationId: 'hubungi' })}>
+                {t('contact')}
+              </a>
+              <a
+                className="btn btn-dark"
+                href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                {t('directions')}
+              </a>
+            </div>
+          </dl>
         </div>
-        <dl className="hall-visit-card">
-          <div>
-            <dt>{t('address')}</dt>
-            <dd>
-              {contact.name}
-              <br />
-              {contact.addressLines.join(', ')}
-            </dd>
-          </div>
-          <div>
-            <dt>{t('phone')}</dt>
-            <dd>
-              <a href={contact.phoneHref}>{contact.phone}</a>
-            </dd>
-          </div>
-          <div>
-            <dt>{t('email')}</dt>
-            <dd>
-              <a href={`mailto:${contact.email}`}>{contact.email}</a>
-            </dd>
-          </div>
-          <div className="hall-visit-links">
-            <a className="btn btn-primary" href={hrefFor({ kind: 'station', stationId: 'hubungi' })}>
-              {t('contact')}
-            </a>
-            <a
-              className="btn"
-              href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              {t('directions')}
-            </a>
-          </div>
-        </dl>
       </section>
       <footer className="site-footer">
         <div className="site-footer-brand">

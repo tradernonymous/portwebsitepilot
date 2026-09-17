@@ -223,7 +223,7 @@
   gap: clamp(1.2rem, 2.5vw, 2rem);
 }
 
-.exhibit-card {
+.onview-card {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: 1rem;
@@ -231,7 +231,7 @@
   text-decoration: none;
 }
 
-.exhibit-card-frame {
+.onview-card-frame {
   position: relative;
   display: block;
   aspect-ratio: 4 / 5;
@@ -242,13 +242,13 @@
   transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease);
 }
 
-.exhibit-card:hover .exhibit-card-frame,
-.exhibit-card:focus-visible .exhibit-card-frame {
+.onview-card:hover .onview-card-frame,
+.onview-card:focus-visible .onview-card-frame {
   transform: translateY(-3px);
   box-shadow: 0 40px 70px -34px rgba(90, 46, 224, 0.45), 0 0 0 1px var(--lp-violet);
 }
 
-.exhibit-card-frame .artwork {
+.onview-card-frame .artwork {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -256,12 +256,12 @@
   transition: transform 0.8s var(--ease-out);
 }
 
-.exhibit-card:hover .exhibit-card-frame .artwork {
+.onview-card:hover .onview-card-frame .artwork {
   transform: scale(1.06);
 }
 
 /* the wall label, top-left, the way a gallery numbers a show */
-.exhibit-card-no {
+.onview-card-no {
   position: absolute;
   top: 0;
   left: 0;
@@ -278,7 +278,7 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
-.exhibit-card-frame .hud-corner {
+.onview-card-frame .hud-corner {
   color: var(--light);
   width: 18px;
   height: 18px;
@@ -286,18 +286,18 @@
   transition: opacity 0.35s var(--ease);
 }
 
-.exhibit-card:hover .exhibit-card-frame .hud-corner,
-.exhibit-card:focus-visible .exhibit-card-frame .hud-corner {
+.onview-card:hover .onview-card-frame .hud-corner,
+.onview-card:focus-visible .onview-card-frame .hud-corner {
   opacity: 0.9;
 }
 
-.exhibit-card-body {
+.onview-card-body {
   display: grid;
   gap: 0.35rem;
   align-content: start;
 }
 
-.exhibit-card-room {
+.onview-card-room {
   font-family: var(--font-mono);
   font-size: 0.68rem;
   font-weight: 600;
@@ -306,21 +306,21 @@
   color: var(--lp-violet-ink);
 }
 
-.exhibit-card-body b {
+.onview-card-body b {
   font-family: var(--font-display);
   font-size: clamp(1.15rem, 1.6vw, 1.4rem);
   font-weight: 600;
   line-height: 1.15;
 }
 
-.exhibit-card-meta {
+.onview-card-meta {
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.06em;
   color: var(--ink-3);
 }
 
-.exhibit-card-text {
+.onview-card-text {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -330,7 +330,7 @@
   font-size: 0.92rem;
 }
 
-.exhibit-card-cta {
+.onview-card-cta {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -343,16 +343,16 @@
   transition: color 0.3s var(--ease);
 }
 
-.exhibit-card-cta i {
+.onview-card-cta i {
   font-style: normal;
   transition: transform 0.35s var(--ease-out);
 }
 
-.exhibit-card:hover .exhibit-card-cta {
+.onview-card:hover .onview-card-cta {
   color: var(--lp-violet-ink);
 }
 
-.exhibit-card:hover .exhibit-card-cta i {
+.onview-card:hover .onview-card-cta i {
   transform: translateX(5px);
 }
 
@@ -838,34 +838,87 @@
 
 /* ---------------------------------------------------------------- visit */
 
+/*
+ * The last room of the gallery rather than a business card at the bottom of one: the same
+ * painted wall as the hero, and the address on a pane of glass hanging in front of it.
+ */
 .hall-visit {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--void);
+  color: var(--light);
+  padding: clamp(4rem, 9vw, 7rem) max(1.25rem, 5vw) clamp(4.5rem, 10vw, 7.5rem);
+}
+
+.hall-visit .light-painting {
+  opacity: 0.6;
+  z-index: -2;
+}
+
+.hall-visit .radiant-light {
+  opacity: 0.8;
+  z-index: -2;
+  mix-blend-mode: screen;
+}
+
+/* keeps the copy readable however bright the light behind it gets */
+.hall-visit-veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 78% 70% at 30% 42%,
+    rgba(5, 5, 7, 0.2) 0%,
+    rgba(5, 5, 7, 0.66) 52%,
+    rgba(5, 5, 7, 0.92) 100%
+  );
+}
+
+.hall-visit-inner {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: clamp(2rem, 6vw, 6rem);
   align-items: start;
-  padding: clamp(4rem, 9vw, 7rem) max(1.25rem, 5vw);
 }
 
 .hall-visit h2 {
   font-size: clamp(2rem, 4.6vw, 3.6rem);
+  color: var(--light);
 }
 
 .hall-visit-lede {
   margin-top: 1rem;
   max-width: 44ch;
-  color: var(--ink-2);
+  color: var(--light-2);
   font-size: 1.05rem;
+}
+
+.hall-visit-note {
+  margin: 1.5rem 0 0;
+  max-width: 40ch;
+  padding-left: 0.9rem;
+  border-left: 2px solid transparent;
+  border-image: var(--spectrum) 1;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--light-3);
 }
 
 .hall-visit-card {
   margin: 0;
   display: grid;
   gap: 1.2rem;
-  padding: 1.8rem;
-  border: 1px solid var(--rule);
+  padding: 1.9rem;
+  border: 1px solid var(--rule-dark-strong);
   border-radius: var(--radius);
-  background: var(--white);
-  box-shadow: 0 30px 60px -40px rgba(90, 46, 224, 0.35);
+  background: linear-gradient(160deg, rgba(247, 247, 251, 0.09), rgba(247, 247, 251, 0.03));
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  box-shadow: 0 40px 80px -50px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.09);
 }
 
 .hall-visit-card dt {
@@ -873,12 +926,17 @@
   font-size: 0.7rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--light-3);
 }
 
 .hall-visit-card dd {
   margin: 0.15rem 0 0;
   font-size: 1.05rem;
+  color: var(--light);
+}
+
+.hall-visit-card dd a {
+  color: var(--light);
 }
 
 .hall-visit-links {
@@ -898,11 +956,11 @@
     gap: clamp(1.8rem, 6vw, 2.6rem);
   }
 
-  .exhibit-card-frame {
+  .onview-card-frame {
     aspect-ratio: 3 / 2;
   }
 
-  .hall-visit {
+  .hall-visit-inner {
     grid-template-columns: 1fr;
   }
 

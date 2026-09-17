@@ -44,21 +44,21 @@ export function Exhibition({ reducedMotion }: Props) {
         {featured.map(({ station, work, index }, i) => (
           <a
             key={work.id}
-            className="exhibit-card"
+            className="onview-card"
             href={hrefFor({ kind: 'exhibit', stationId: station.id, index })}
           >
-            <span className="exhibit-card-frame">
+            <span className="onview-card-frame">
               <Artwork image={work.images[0]} alt={work.title} sizes="(max-width: 900px) 92vw, 30vw" />
-              <span className="exhibit-card-no">{pad(i + 1)}</span>
+              <span className="onview-card-no">{pad(i + 1)}</span>
               <span className="hud-corner is-tl" />
               <span className="hud-corner is-br" />
             </span>
-            <span className="exhibit-card-body">
-              <span className="exhibit-card-room">{station.label}</span>
+            <span className="onview-card-body">
+              <span className="onview-card-room">{station.label}</span>
               <b>{work.title}</b>
-              <span className="exhibit-card-meta">{work.meta}</span>
-              <span className="exhibit-card-text">{work.body[0] ?? work.tagline}</span>
-              <span className="exhibit-card-cta">
+              <span className="onview-card-meta">{work.meta}</span>
+              <span className="onview-card-text">{work.body[0] ?? work.tagline}</span>
+              <span className="onview-card-cta">
                 {t('openWork')}
                 <i aria-hidden="true">→</i>
               </span>
