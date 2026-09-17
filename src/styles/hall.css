@@ -253,9 +253,10 @@
 
 .pipeline-bar {
   width: 180px;
-  height: 2px;
+  height: 3px;
   background: var(--rule);
   overflow: hidden;
+  border-radius: 2px;
 }
 
 .pipeline-bar span {
@@ -384,8 +385,13 @@
   aspect-ratio: 4 / 5;
   color: var(--ink);
   transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
-  transition: transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease);
-  box-shadow: 0 30px 60px -30px rgba(11, 11, 15, 0.35);
+  transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease), border-color 0.4s var(--ease);
+  box-shadow: 0 30px 60px -30px rgba(11, 11, 15, 0.35), 0 0 0 1px var(--rule);
+  border-radius: 2px;
+}
+
+.door-frame:hover {
+  box-shadow: 0 40px 80px -30px rgba(139, 92, 255, 0.4), 0 0 0 1px var(--lp-violet), 0 0 40px -10px rgba(139, 92, 255, 0.25);
 }
 
 .pipeline.is-horizontal .door-frame {
