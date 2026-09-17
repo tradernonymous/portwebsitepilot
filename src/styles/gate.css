@@ -27,6 +27,15 @@
     linear-gradient(180deg, rgba(5, 5, 7, 0.72) 0%, rgba(5, 5, 7, 0.3) 30%, rgba(5, 5, 7, 0.35) 65%, rgba(5, 5, 7, 0.9) 100%);
 }
 
+/*
+ * The gate is three layers of light: a slow aurora far behind, the prism installation across
+ * the wall, and the lightpainting on top of both. The aurora is kept faint on purpose — it is
+ * there to stop the dark reading as flat, not to compete with the film.
+ */
+.gate .aurora {
+  opacity: 0.16;
+}
+
 .gate .light-painting {
   mix-blend-mode: screen;
 }
@@ -34,6 +43,11 @@
 .gate .radiant-light {
   mix-blend-mode: screen;
   opacity: 0.9;
+}
+
+/* the light the pointer carries, above the grid but under every piece of copy */
+.gate .spot {
+  z-index: 1;
 }
 
 /* the prism installation across the far wall, above the floor */
@@ -213,7 +227,10 @@
 
 .gate-line {
   margin: 0 0 2.1rem;
-  font-size: clamp(0.92rem, 1.6vw, 1.05rem);
+  max-width: 46ch;
+  font-family: var(--font-serif);
+  font-size: clamp(1.02rem, 1.7vw, 1.18rem);
+  line-height: 1.5;
   color: var(--light-2);
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9);
 }
