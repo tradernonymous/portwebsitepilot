@@ -313,6 +313,14 @@ export class PortWorld {
   private dragging = false;
   private moved = 0;
   private pointer = { x: 0, y: 0 };
+  /*
+   * The touch walk. A phone has no wheel, so a vertical swipe is the stride: one axis per
+   * gesture, decided by which way the finger travels first, so looking around never turns
+   * into walking by accident. The flick at lift-off keeps its momentum, as a stride does.
+   */
+  private touchWalk = { active: false, axis: 'none' as 'none' | 'y' | 'x', startX: 0, startY: 0, lastX: 0, lastY: 0, lastT: 0, velocity: 0 };
+  /** A flick's carry, bleeding off every frame until it is spent. */
+  private flickCarry = 0;
   private look = { yaw: 0, pitch: 0, ty: 0, tp: 0 };
   private hovered: string | null = null;
   private entryT = 0;
@@ -1963,27 +1971,92 @@ export class PortWorld {
   }
 
   private onPointerDown = (event: PointerEvent) => {
-    this.canvas.setPointerCapture?.(event.pointerId);
+    /*
+     * Capture can legitimately fail — a pointer already gone (a `pointercancel` that won the
+     * race, a stylus that left the digitiser). Losing capture costs nothing; throwing here
+     * would kill the whole gesture, so it is caught and ignored.
+     */
+    try {
+      this.canvas.setPointerCapture?.(event.pointerId);
+    } catch {
+      /* the gesture proceeds without capture */
+    }
     this.dragging = true;
     this.moved = 0;
     this.setPointer(event);
+    /* A fresh gesture: the axis is undecided until the finger declares itself. */
+    this.touchWalk.active = event.pointerType === 'touch';
+    this.touchWalk.axis = 'none';
+    this.touchWalk.startX = event.clientX;
+    this.touchWalk.startY = event.clientY;
+    this.touchWalk.lastX = event.clientX;
+    this.touchWalk.lastY = event.clientY;
+    this.touchWalk.lastT = performance.now();
+    this.touchWalk.velocity = 0;
+    this.flickCarry = 0;
   };
 
   private onPointerMove = (event: PointerEvent) => {
     this.setPointer(event);
     this.hasPointer = true;
-    if (this.dragging) {
-      this.moved += Math.abs(event.movementX) + Math.abs(event.movementY);
-      const speed = this.phase === 'entry' ? 0.0008 : 0.0032;
-      this.look.ty -= event.movementX * speed;
-      this.look.tp = clamp(this.look.tp - event.movementY * speed, -0.85, 0.85);
+    if (!this.dragging) return;
+
+    /*
+     * Touch first: the stride is measured from the gesture's own axis, so the other axis is
+     * left to whatever it was doing — looking, usually. The axis locks on the first few
+     * pixels of travel and stays locked until the finger lifts.
+     */
+    if (this.touchWalk.active) {
+      const dx = event.clientX - this.touchWalk.startX;
+      const dy = event.clientY - this.touchWalk.startY;
+      if (this.touchWalk.axis === 'none' && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+        this.touchWalk.axis = Math.abs(dy) > Math.abs(dx) ? 'y' : 'x';
+      }
+      if (this.touchWalk.axis === 'y' && this.phase === 'corridor') {
+        const now = performance.now();
+        const dt = Math.max(1, now - this.touchWalk.lastT);
+        const stride = (event.clientY - this.touchWalk.lastY) * 0.028;
+        this.touchWalk.velocity = (event.clientY - this.touchWalk.lastY) / dt;
+        this.walk(stride);
+      }
+      /*
+       * Distance travelled, from client coordinates — `movementX/Y` are zero for touch
+       * pointers on Safari, and the tap guard lives on this number: without it a look-around
+       * drag would end inside the tap threshold and open whatever was under the finger.
+       */
+      this.moved +=
+        Math.abs(event.clientX - this.touchWalk.lastX) + Math.abs(event.clientY - this.touchWalk.lastY);
+      this.touchWalk.lastX = event.clientX;
+      this.touchWalk.lastY = event.clientY;
+      this.touchWalk.lastT = performance.now();
+      return;
     }
+
+    this.moved += Math.abs(event.movementX) + Math.abs(event.movementY);
+    const speed = this.phase === 'entry' ? 0.0008 : 0.0032;
+    this.look.ty -= event.movementX * speed;
+    this.look.tp = clamp(this.look.tp - event.movementY * speed, -0.85, 0.85);
   };
 
   private onPointerUp = (event: PointerEvent) => {
     const wasDragging = this.dragging;
+    const wasTouchWalk = this.touchWalk.active && this.touchWalk.axis === 'y';
     this.dragging = false;
-    this.canvas.releasePointerCapture?.(event.pointerId);
+    /*
+     * A quick vertical drag is a flick: whatever pace the finger was keeping carries on and
+     * bleeds off in the frame loop, the way a stride does when you stop trying.
+     */
+    if (wasTouchWalk && Math.abs(this.touchWalk.velocity) > 0.35) {
+      this.flickCarry = this.touchWalk.velocity * 260;
+    }
+    this.touchWalk.active = false;
+    this.touchWalk.axis = 'none';
+    this.touchWalk.velocity = 0;
+    try {
+      this.canvas.releasePointerCapture?.(event.pointerId);
+    } catch {
+      /* nothing to release — the pointer was never captured, or is already gone */
+    }
     if (!wasDragging || this.moved > 12) return;
     this.pick();
   };
@@ -2112,6 +2185,12 @@ export class PortWorld {
       this.warpT += delta;
       this.look.ty += delta * 1.4;
     } else if (this.phase === 'corridor') {
+      /* A flick's carry bleeds off here — the stride continues, then settles. */
+      if (this.flickCarry !== 0) {
+        this.walk(this.flickCarry * delta);
+        this.flickCarry *= Math.pow(0.018, delta);
+        if (Math.abs(this.flickCarry) < 2) this.flickCarry = 0;
+      }
       this.corridorWalk = this.reduced
         ? this.corridorTarget
         : THREE.MathUtils.damp(this.corridorWalk, this.corridorTarget, 3.2, delta);
