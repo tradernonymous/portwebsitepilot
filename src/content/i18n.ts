@@ -77,6 +77,15 @@ const ms = {
   motto: 'Unity Thru Arts',
   footerSource: 'Kandungan diselaraskan daripada',
 
+  // ---------------------------------------------------------------- gallery mode
+  galleryMode: 'Mod galeri · papan kekunci',
+  galleryKeys: '← → atau ↑ ↓ untuk berjalan · Enter untuk masuk · Esc untuk keluar',
+  galleryKeysRoom: '← → atau ↑ ↓ untuk menatal karya · Enter untuk membuka · Esc untuk keluar',
+  galleryKeysPlain: '← → atau ↑ ↓ untuk berjalan · Esc untuk keluar',
+  galleryExit: 'Keluar',
+  galleryStop: 'Hentian',
+  galleryWork: 'Karya',
+
   // ---------------------------------------------------------------- room
   room: 'Ruang',
   roomOf: 'daripada',
@@ -158,6 +167,9 @@ const ms = {
   help3dTitle: 'Jalan dalam 3D',
   help3dBody:
     'Ruang galeri tertentu boleh dijelajahi sebagai koridor 3D. Tatal atau tekan ↑ ↓ untuk berjalan, dan Esc untuk keluar.',
+  helpGalleryTitle: 'Mod galeri',
+  helpGalleryBody:
+    'Hidupkan mod galeri pada bar atas, kemudian gunakan anak panah untuk berjalan dari ruang ke ruang dan dari karya ke karya. Bacaan kedudukan menunjukkan di mana anda berada.',
   helpA11yTitle: 'Kebolehcapaian',
   helpA11yBody:
     'Ikon senarai di kanan atas memaparkan seluruh laman sebagai dokumen biasa. Semua ruang boleh dicapai dengan papan kekunci.',
@@ -231,6 +243,14 @@ const en: Dict = {
   directions: 'Open in Google Maps',
   motto: 'Unity Thru Arts',
   footerSource: 'Content synced from',
+
+  galleryMode: 'Gallery mode · keyboard',
+  galleryKeys: '← → or ↑ ↓ to walk · Enter to open · Esc to exit',
+  galleryKeysRoom: '← → or ↑ ↓ to step through works · Enter to open · Esc to exit',
+  galleryKeysPlain: '← → or ↑ ↓ to walk · Esc to exit',
+  galleryExit: 'Exit',
+  galleryStop: 'Stop',
+  galleryWork: 'Work',
 
   room: 'Room',
   roomOf: 'of',
@@ -306,6 +326,9 @@ const en: Dict = {
   help3dTitle: 'Walk in 3D',
   help3dBody:
     'Some rooms can be explored as a 3D corridor. Scroll or press ↑ ↓ to walk, and Esc to leave.',
+  helpGalleryTitle: 'Gallery mode',
+  helpGalleryBody:
+    'Switch on gallery mode in the top bar, then walk with the arrow keys from room to room and from work to work. The readout shows where you are.',
   helpA11yTitle: 'Accessibility',
   helpA11yBody:
     'The list icon at the top right shows the whole site as a plain document. Every room can be reached with the keyboard.',

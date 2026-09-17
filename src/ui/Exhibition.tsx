@@ -35,7 +35,15 @@ export function Exhibition({ reducedMotion, id }: Props) {
   if (!featured.length) return null;
 
   return (
-    <section id={id} data-chapter className="exhibition" aria-labelledby="exhibition-title">
+    <section
+      id={id}
+      data-chapter
+      data-stop
+      data-stop-label={t('exhibitionTitle')}
+      data-stop-group={t('chapterOnView')}
+      className="exhibition"
+      aria-labelledby="exhibition-title"
+    >
       <header className="exhibition-head">
         <p className="kicker">{t('exhibitionKicker')}</p>
         <h2 id="exhibition-title">{t('exhibitionTitle')}</h2>

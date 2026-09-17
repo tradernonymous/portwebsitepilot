@@ -1,0 +1,196 @@
+/* ==========================================================================
+   Gallery mode
+
+   A keyboard walk through the gallery, with a readout saying where you are.
+
+   The mode is a layer over the normal page, not a different page: it only
+   changes what the arrow keys do and adds one panel. Everything else — the
+   chapters, the rooms, the works — is the markup that was already there.
+   ========================================================================== */
+
+/*
+ * Every walkable stop stops just clear of the fixed bar, so stepping to one
+ * lands its heading in the open rather than under the top bar.
+ */
+[data-stop] {
+  scroll-margin-top: 4.75rem;
+}
+
+/*
+ * The chapter rail and the readout are both answers to "where am I". Showing two at once is
+ * noise, and on a phone they would sit on top of each other, so while the mode is on the
+ * readout takes the rail's place.
+ */
+body.is-gallery .chapter-rail {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease);
+}
+
+/*
+ * Spelled out at full specificity because the bar's dark-glass rule outranks the generic
+ * `.icon-btn[aria-pressed]`, which would otherwise hide that the mode is on — exactly where
+ * it matters, since the switch sits over the dark hero half the time.
+ */
+.topbar .icon-btn.is-gallery[aria-pressed='true'] {
+  border-color: var(--lp-violet);
+  background: rgba(139, 92, 255, 0.22);
+  color: var(--light);
+  box-shadow: 0 0 0 4px rgba(139, 92, 255, 0.16);
+}
+
+.gallery-hud {
+  position: fixed;
+  left: max(0.9rem, 2vw);
+  bottom: max(0.9rem, env(safe-area-inset-bottom));
+  z-index: 60;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+  width: min(26rem, calc(100vw - 1.8rem));
+  padding: 0.75rem 0.9rem 0.7rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule-dark);
+  background: rgba(5, 5, 7, 0.82);
+  color: var(--light);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: var(--shadow-3);
+  animation: gallery-hud-in var(--dur-3) var(--ease-out) both;
+}
+
+/* The house spectrum, as a hairline along the top edge. */
+.gallery-hud::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--spectrum);
+  opacity: 0.75;
+}
+
+.gallery-hud-pos {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: baseline;
+  gap: 0.28rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  color: var(--light-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.gallery-hud-pos b {
+  font-size: 1.5rem;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--light);
+}
+
+.gallery-hud-pos i {
+  font-style: normal;
+  opacity: 0.5;
+}
+
+.gallery-hud-text {
+  grid-area: 1 / 2;
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.gallery-hud-text small {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--light-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gallery-hud-text b {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1.06rem;
+  line-height: 1.2;
+  color: var(--light);
+  /* room names can be long; two lines is the ceiling before the panel grows */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gallery-hud-keys {
+  grid-area: 2 / 1 / 2 / -1;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--rule-dark);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  color: var(--light-3);
+}
+
+.gallery-hud-exit {
+  grid-area: 3 / 1 / 3 / -1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.34rem 0.7rem;
+  border: 1px solid var(--rule-dark-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--light-2);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+    background var(--dur-1) var(--ease);
+}
+
+.gallery-hud-exit i {
+  font-style: normal;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  background: rgba(247, 247, 251, 0.1);
+  letter-spacing: 0.08em;
+}
+
+.gallery-hud-exit:hover,
+.gallery-hud-exit:focus-visible {
+  color: var(--void);
+  background: var(--light);
+  border-color: var(--light);
+}
+
+@keyframes gallery-hud-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.7rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .gallery-hud {
+    width: calc(100vw - 1.8rem);
+    padding: 0.7rem 0.85rem 0.65rem;
+  }
+
+  .gallery-hud-keys {
+    font-size: 0.55rem;
+  }
+}

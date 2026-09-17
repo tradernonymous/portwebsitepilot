@@ -8,6 +8,11 @@ type TopBarProps = {
   flat: boolean;
   onToggleFlat: () => void;
   onHelp: () => void;
+  /**
+   * Present only where the page has stops to walk. Its absence is how the bar knows the mode
+   * means nothing here, rather than the mode having to ask what page it is on.
+   */
+  gallery: { active: boolean; onToggle: () => void } | null;
   /** Changes whenever the page underneath changes, so the bar re-reads what it sits on. */
   pageKey: string;
 };
@@ -17,7 +22,7 @@ type TopBarProps = {
  * light) and turns to white glass once the page has scrolled onto the gallery wall, so its
  * words are always legible against whatever is behind them.
  */
-export function TopBar({ crumb, flat, onToggleFlat, onHelp, pageKey }: TopBarProps) {
+export function TopBar({ crumb, flat, onToggleFlat, onHelp, gallery, pageKey }: TopBarProps) {
   const { t, lang, toggle } = useLang();
   const [onDark, setOnDark] = useState(true);
 
@@ -50,6 +55,27 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp, pageKey }: TopBarPro
       </a>
       {crumb ? <nav className="topbar-crumb">{crumb}</nav> : <span className="topbar-spacer" />}
       <div className="topbar-tools">
+        {gallery ? (
+          <button
+            type="button"
+            className="icon-btn is-gallery"
+            aria-pressed={gallery.active}
+            onClick={gallery.onToggle}
+            title={t('galleryMode')}
+            aria-label={t('galleryMode')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 2v10h16V7H4Z"
+              />
+              <path
+                fill="currentColor"
+                d="M5 8h2v2H5V8Zm3 0h2v2H8V8Zm3 0h2v2h-2V8Zm3 0h2v2h-2V8Zm3 0h2v2h-2V8ZM5 11h2v2H5v-2Zm3 0h2v2H8v-2Zm3 0h2v2h-2v-2Zm3 0h2v2h-2v-2Zm3 0h2v2h-2v-2ZM5 14h2v2H5v-2Zm5 0h4v2h-4v-2Zm5 0h4v2h-4v-2Z"
+              />
+            </svg>
+          </button>
+        ) : null}
         <button type="button" className="chip" onClick={toggle} aria-label={t('switchLang')} title={t('switchLang')}>
           <span className={lang === 'ms' ? 'is-on' : ''}>BM</span>
           <i aria-hidden="true">/</i>

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useGalleryWalk } from './lib/gallery';
 import { detectWebGL, useHashRoute, useReducedMotion } from './lib/hooks';
 import { useLang } from './lib/lang';
 import { EntryGate } from './ui/EntryGate';
 import { ExhibitReader } from './ui/ExhibitReader';
 import { FlatView } from './ui/FlatView';
+import { GalleryHud } from './ui/GalleryHud';
 import { AmbientVeil } from './ui/fx/AmbientVeil';
 import { Entrance } from './ui/fx/Entrance';
 import { Hall } from './ui/Hall';
@@ -26,7 +28,7 @@ export default function App() {
   const reducedMotion = useReducedMotion();
   const webgl = useMemo(() => detectWebGL(), []);
   const { route, navigate } = useHashRoute();
-  const { stations, t } = useLang();
+  const { stations, t, lang } = useLang();
 
   /**
    * The gate greets a first visit. A shared link to a room, or a reload after coming in,
@@ -91,6 +93,51 @@ export default function App() {
     }
   }, [pageKey]);
 
+  /* ---------------------------------------------------------------- gallery mode */
+
+  /**
+   * Gallery mode. Off by default, because taking the arrow keys is a bold thing to do to a
+   * page; where it is offered a reader can turn it on, walk with the arrows, and leave with
+   * Escape. It stays on across a step into a room, so walking chapters and walking works are
+   * one continuous walk.
+   */
+  const [gallery, setGallery] = useState(false);
+  /*
+   * Two different questions, kept apart on purpose.
+   *
+   * `supported` is where the walk survives — a work opened over a room is still the same page,
+   * so reading one does not end the walk. `toggleable` is where the button belongs: offering it
+   * over an open reader would put a control on screen that the reader is covering.
+   */
+  const gallerySupported =
+    route.kind === 'hub' || route.kind === 'station' || route.kind === 'exhibit';
+  const galleryToggleable = route.kind === 'hub' || route.kind === 'station';
+
+  /* Only a surface that owns its own keys ends the walk: the plain list, and the 3D wing. */
+  useEffect(() => {
+    if (gallery && !gallerySupported) setGallery(false);
+  }, [gallery, gallerySupported]);
+
+  const { position: galleryPosition } = useGalleryWalk({
+    active: gallery && gallerySupported,
+    /* the language is part of the key: a stop renamed by the toggle must not keep its old name */
+    stopKey: `${pageKey}:${lang}`,
+    reducedMotion,
+    onExit: () => setGallery(false),
+  });
+
+  /*
+   * The chapter rail and the readout both answer "where am I"; only one shows at a time, and
+   * only where there is a readout to show. A page with no stops keeps its rail and its
+   * ordinary keys rather than going blank for no reason.
+   */
+  const galleryOn = gallery && gallerySupported && Boolean(galleryPosition);
+
+  useEffect(() => {
+    document.body.classList.toggle('is-gallery', galleryOn);
+    return () => document.body.classList.remove('is-gallery');
+  }, [galleryOn]);
+
   /* ---------------------------------------------------------------- keyboard */
 
   useEffect(() => {
@@ -117,6 +164,12 @@ export default function App() {
   /* ---------------------------------------------------------------- render */
 
   const help = helpOpen ? <HelpPanel onClose={() => setHelpOpen(false)} reducedMotion={reducedMotion} /> : null;
+  /* A dialog owns the screen and the keys, so the readout stands down with them. */
+  const reading = helpOpen || route.kind === 'exhibit';
+  const readout =
+    galleryOn && galleryPosition && !reading ? (
+      <GalleryHud position={galleryPosition} inRoom={route.kind === 'station'} onExit={() => setGallery(false)} />
+    ) : null;
   const entrance = entering ? (
     <Entrance key="entrance" reducedMotion={reducedMotion} onMidpoint={markEntered} onDone={() => setEntering(false)} />
   ) : null;
@@ -163,6 +216,7 @@ export default function App() {
         flat={route.kind === 'flat'}
         onToggleFlat={() => navigate(route.kind === 'flat' ? { kind: 'hub' } : { kind: 'flat' })}
         onHelp={() => setHelpOpen(true)}
+        gallery={galleryToggleable ? { active: gallery, onToggle: () => setGallery((on) => !on) } : null}
         crumb={
           station ? (
             <>
@@ -205,6 +259,7 @@ export default function App() {
           }
         />
       ) : null}
+      {readout}
       {help}
       {entrance}
       {/* remounts on every route change, so the light replays as the room changes */}

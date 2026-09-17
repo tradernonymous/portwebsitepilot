@@ -127,6 +127,8 @@ function Threshold({
     <section
       id="ch-threshold"
       data-chapter
+      data-stop
+      data-stop-label={t('chapterWelcome')}
       data-hero
       ref={surface}
       className="threshold"
@@ -301,6 +303,10 @@ function RoomPanel({
   return (
     <article
       className={`room-panel${index % 2 ? ' is-flipped' : ''}`}
+      data-stop
+      data-stop-label={room.label}
+      data-stop-group={t('chapterRooms')}
+      data-stop-href={href}
       style={{ ['--panel-accent' as string]: room.accent }}
     >
       <Motif kind={motif} />
@@ -357,7 +363,15 @@ function Figures({
   const titles = Array.from(new Set(stations.flatMap((s) => s.exhibits.map((e) => e.title))));
 
   return (
-    <section id="ch-figures" data-chapter className="figures" aria-label={t('collection')}>
+    <section
+      id="ch-figures"
+      data-chapter
+      data-stop
+      data-stop-label={t('statWorks')}
+      data-stop-group={t('chapterFigures')}
+      className="figures"
+      aria-label={t('collection')}
+    >
       <Motif kind="tubes" />
       <RadiantLight
         sources={4}
@@ -410,7 +424,15 @@ function Visit({ reducedMotion }: { reducedMotion: boolean }) {
 
   return (
     <>
-      <section id="ch-visit" data-chapter className="visit" aria-labelledby="visit-title">
+      <section
+        id="ch-visit"
+        data-chapter
+        data-stop
+        data-stop-label={t('visitTitle')}
+        data-stop-group={t('chapterVisit')}
+        className="visit"
+        aria-labelledby="visit-title"
+      >
         <Motif kind="aperture" />
         <RadiantLight sources={3} weight={1.05} speed={0.45} seed={77} reducedMotion={reducedMotion} />
         <LightPainting

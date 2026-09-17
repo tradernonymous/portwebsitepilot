@@ -41,7 +41,13 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
 
   return (
     <article className="room" style={{ ['--room-accent' as string]: station.accent }}>
-      <header className="room-hero" data-hero>
+      <header
+        className="room-hero"
+        data-hero
+        data-stop
+        data-stop-label={station.label}
+        data-stop-group={`${t('room')} ${pad(number)}`}
+      >
         {cover ? (
           <div
             className="room-hero-bg"
@@ -135,7 +141,13 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
             <div className="works-wall">
               {station.exhibits.map((work, i) => (
                 <Reveal key={work.id} delay={(i % 3) * 90}>
-                  <a className="work" href={hrefFor({ kind: 'exhibit', stationId: station.id, index: i })}>
+                  <a
+                    className="work"
+                    href={hrefFor({ kind: 'exhibit', stationId: station.id, index: i })}
+                    data-stop
+                    data-stop-label={work.title}
+                    data-stop-group={station.label}
+                  >
                     <span className="work-frame">
                       {work.images[0] ? (
                         <Artwork image={work.images[0]} alt={work.title} sizes="(max-width: 700px) 92vw, 420px" />

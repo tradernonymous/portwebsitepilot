@@ -25,6 +25,7 @@ export function HelpPanel({ onClose, reducedMotion }: Props) {
     ['helpCorridorTitle', 'helpCorridorBody'],
     ['helpRoomTitle', 'helpRoomBody'],
     ['help3dTitle', 'help3dBody'],
+    ['helpGalleryTitle', 'helpGalleryBody'],
     ['helpA11yTitle', 'helpA11yBody'],
   ] as const;
 
