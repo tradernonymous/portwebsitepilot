@@ -947,6 +947,10 @@
 
   .chapter-rail a {
     gap: 0;
+    padding: 12px 8px;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
   }
 
   .chapter-rail i {
