@@ -9,6 +9,7 @@ import { Artwork, LightPlate } from './Artwork';
 import { FilmBackdrop } from './FilmBackdrop';
 import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
+import { RadiantLight } from './fx/RadiantLight';
 import { PrismShards } from './fx/PrismShards';
 
 type Props = {
@@ -52,7 +53,8 @@ function HallHero({ station, reducedMotion }: { station: Station; reducedMotion:
         delay={150}
       />
       <div className="hall-hero-veil" aria-hidden="true" />
-      <LightPainting tone="dark" painters={3} interactive reducedMotion={reducedMotion} speed={0.7} />
+      <LightPainting tone="dark" painters={2} interactive reducedMotion={reducedMotion} speed={0.5} />
+      <RadiantLight sources={3} interactive reducedMotion={reducedMotion} weight={1.0} speed={0.6} seed={7} />
 
       <div className="hall-hero-hud" aria-hidden="true">
         <span className="hud-tag">
@@ -410,7 +412,8 @@ function HallStats({ stations, reducedMotion }: { stations: Station[]; reducedMo
 
   return (
     <section className="hall-stats" aria-label={t('collection')}>
-      <LightPainting tone="dark" painters={3} still seed={2011} weight={1.4} />
+      <LightPainting tone="dark" painters={2} still seed={2011} weight={1.0} />
+      <RadiantLight sources={4} reducedMotion weight={1.3} speed={0.4} seed={2011} />
       <div className="hall-stats-grid">
         {stats.map(([value, label]) => (
           <div key={label} className="stat">
