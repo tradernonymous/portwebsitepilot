@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Station } from '../content';
 import { useLang } from '../lib/lang';
 
@@ -25,6 +25,7 @@ type TopBarProps = {
 export function TopBar({ crumb, flat, onToggleFlat, onHelp, gallery, pageKey }: TopBarProps) {
   const { t, lang, toggle } = useLang();
   const [onDark, setOnDark] = useState(true);
+  const barRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     let raf = 0;
@@ -33,6 +34,11 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp, gallery, pageKey }: 
       const hero = document.querySelector('[data-hero]');
       const bottom = hero ? hero.getBoundingClientRect().bottom : 0;
       setOnDark(bottom > 60);
+      // the hall is one long wall — the hairline shows how deep into it the visitor is
+      const doc = document.documentElement;
+      const span = doc.scrollHeight - window.innerHeight;
+      const progress = span > 0 ? Math.min(1, Math.max(0, window.scrollY / span)) : 0;
+      barRef.current?.style.setProperty('--progress', progress.toFixed(4));
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(measure);
@@ -48,7 +54,8 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp, gallery, pageKey }: 
   }, [pageKey]);
 
   return (
-    <header className={`topbar${onDark ? ' is-on-dark' : ''}`}>
+    <header ref={barRef} className={`topbar${onDark ? ' is-on-dark' : ''}`}>
+      <i className="topbar-progress" aria-hidden="true" />
       <a className="topbar-brand" href="#/" aria-label={`PORT — ${t('home')}`}>
         <b>PORT</b>
         <span>unity thru arts</span>
@@ -63,6 +70,7 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp, gallery, pageKey }: 
             onClick={gallery.onToggle}
             title={t('galleryMode')}
             aria-label={t('galleryMode')}
+            data-cursor="walk"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -151,17 +159,22 @@ export function CorridorRail({ station, activeIndex, progress, onSelect, onWalk,
         ))}
       </div>
       <div className="rail-foot">
-        <button type="button" className="btn" onClick={() => onWalk(-6)}>
+        <button type="button" className="btn" onClick={() => onWalk(-6)} data-cursor="walk">
           {t('walkBack')}
         </button>
-        <button type="button" className="btn btn-primary" onClick={() => onOpen(activeIndex >= 0 ? activeIndex : 0)}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => onOpen(activeIndex >= 0 ? activeIndex : 0)}
+          data-cursor="open"
+        >
           {t('openWork')}
         </button>
-        <button type="button" className="btn" onClick={() => onWalk(6)}>
+        <button type="button" className="btn" onClick={() => onWalk(6)} data-cursor="walk">
           {t('walkFwd')}
         </button>
       </div>
-      <button type="button" className="rail-exit" onClick={onExit}>
+      <button type="button" className="rail-exit" onClick={onExit} data-cursor="close">
         {t('backToRoom')}
       </button>
     </aside>

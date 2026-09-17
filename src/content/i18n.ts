@@ -9,6 +9,19 @@
 export type Lang = 'ms' | 'en';
 
 const ms = {
+  // ---------------------------------------------------------------- cursor
+  cursorEnter: 'MASUK',
+  cursorOpen: 'BUKA',
+  cursorClose: 'TUTUP',
+  cursorPrev: '←',
+  cursorNext: '→',
+  cursorWalk: 'JALAN',
+  cursorRead: 'BACA',
+  cursorDrag: 'SERET',
+  cursorEsc: 'ESC',
+  cursorZoom: 'LIHAT',
+  cursorView: 'LIHAT',
+
   // ---------------------------------------------------------------- gate
   gateLabel: 'Masuk ke ruang PORT',
   est: 'Est. 2011 · Ipoh, Perak',
@@ -191,6 +204,18 @@ const en: Dict = {
   watchWithSound: 'watch with sound',
   switchLang: 'Tukar ke Bahasa Melayu',
   nowShowing: 'Now showing',
+
+  cursorEnter: 'ENTER',
+  cursorOpen: 'OPEN',
+  cursorClose: 'CLOSE',
+  cursorPrev: '←',
+  cursorNext: '→',
+  cursorWalk: 'WALK',
+  cursorRead: 'READ',
+  cursorDrag: 'DRAG',
+  cursorEsc: 'ESC',
+  cursorZoom: 'VIEW',
+  cursorView: 'VIEW',
 
   brandLine: 'People Of Remarkable Talents · Perak',
   home: 'Home',

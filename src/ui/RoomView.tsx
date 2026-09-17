@@ -99,7 +99,7 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
             </div>
           ) : null}
           {canWalk ? (
-            <a className="btn-glow is-compact" href={hrefFor({ kind: 'walk', stationId: station.id })}>
+            <a className="btn-glow is-compact" href={hrefFor({ kind: 'walk', stationId: station.id })} data-cursor="walk">
               <span className="btn-glow-fill" aria-hidden="true" />
               <span className="btn-glow-label spectrum-text" data-text={t('walk3d')}>
                 {t('walk3d')}
@@ -188,19 +188,19 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
 
       {/* The corridor carries on: the rooms either side, joined by the same line of light. */}
       <nav className="room-onward" aria-label={t('rooms')}>
-        <a className="onward is-prev" href={hrefFor({ kind: 'station', stationId: prev.id })}>
+        <a className="onward is-prev" href={hrefFor({ kind: 'station', stationId: prev.id })} data-cursor="prev">
           <span>{t('prevRoom')}</span>
           <b>{prev.label}</b>
         </a>
         <span className="onward-line" aria-hidden="true">
           <i />
         </span>
-        <a className="onward is-next" href={hrefFor({ kind: 'station', stationId: next.id })}>
+        <a className="onward is-next" href={hrefFor({ kind: 'station', stationId: next.id })} data-cursor="next">
           <span>{t('nextRoom')}</span>
           <b>{next.label}</b>
         </a>
       </nav>
-      <a className="room-back" href="#/">
+      <a className="room-back" href="#/" data-cursor="walk">
         {t('backToHall')}
       </a>
     </article>

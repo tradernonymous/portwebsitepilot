@@ -8,6 +8,7 @@ import { ExhibitReader } from './ui/ExhibitReader';
 import { FlatView } from './ui/FlatView';
 import { GalleryHud } from './ui/GalleryHud';
 import { AmbientVeil } from './ui/fx/AmbientVeil';
+import { Cursor } from './ui/fx/Cursor';
 import { Entrance } from './ui/fx/Entrance';
 import { Hall } from './ui/Hall';
 import { HelpPanel } from './ui/HelpPanel';
@@ -197,6 +198,7 @@ export default function App() {
           }}
         />
         {entrance}
+        <Cursor />
       </>
     );
   }
@@ -210,6 +212,7 @@ export default function App() {
           onExit={() => navigate({ kind: 'station', stationId: station.id })}
         />
         {help}
+        <Cursor />
       </>
     );
   }
@@ -275,6 +278,7 @@ export default function App() {
       {entrance}
       {/* remounts on every route change, so the light replays as the room changes */}
       {reducedMotion ? null : <AmbientVeil key={pageKey} dark={route.kind !== 'flat'} />}
+      <Cursor />
     </>
   );
 }

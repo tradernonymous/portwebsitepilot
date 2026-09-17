@@ -56,6 +56,7 @@ export function Exhibition({ reducedMotion, id }: Props) {
             key={work.id}
             className="onview-card"
             href={hrefFor({ kind: 'exhibit', stationId: station.id, index })}
+            data-cursor="open"
           >
             <span className={`onview-card-frame${i === 0 ? ' lit lit-run' : ''}`}>
               <Artwork image={work.images[0]} alt={work.title} sizes="(max-width: 900px) 92vw, 30vw" />

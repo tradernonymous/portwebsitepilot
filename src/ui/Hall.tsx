@@ -215,7 +215,7 @@ function Threshold({
         </ul>
 
         <div className="threshold-actions">
-          <a className="btn-glow" href={hrefFor({ kind: 'station', stationId: station.id })}>
+          <a className="btn-glow" href={hrefFor({ kind: 'station', stationId: station.id })} data-cursor="open">
             <span className="btn-glow-fill" aria-hidden="true" />
             <span className="btn-glow-label spectrum-text" data-text={t('openScreening')}>
               {t('openScreening')}
@@ -225,6 +225,7 @@ function Threshold({
           <a
             className="btn btn-dark"
             href="#ch-rooms"
+            data-cursor="walk"
             onClick={(event) => {
               const target = document.getElementById('ch-rooms');
               if (!target) return;
@@ -349,7 +350,7 @@ function RoomPanel({
           <h3 className="room-panel-title">{room.label}</h3>
           <p className="room-panel-lede serif-lede">{room.tagline}</p>
           <span className="room-panel-meta">{count}</span>
-          <a className="room-panel-enter lit" href={href} onClick={enter}>
+          <a className="room-panel-enter lit" href={href} onClick={enter} data-cursor="open">
             <span>{t('enterRoom')}</span>
             <i aria-hidden="true">→</i>
           </a>

@@ -64,6 +64,33 @@
   overflow: hidden;
   isolation: isolate;
   background: radial-gradient(circle at 50% 45%, #1a1a24, var(--void) 70%);
+  /* where the torch points on the wall, set from the component */
+  --mx: 50%;
+  --my: 45%;
+}
+
+/* the spotlit wall: a torch of soft light that follows the visitor's hand across the dark */
+.reader-media::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(520px circle at var(--mx) var(--my), rgba(252, 252, 250, 0.09), transparent 62%),
+    radial-gradient(200px circle at var(--mx) var(--my), rgba(61, 232, 255, 0.06), transparent 70%);
+}
+
+/* the spectrum the beam loses as it lands — a faint rim of colour at the room's far edge */
+.reader-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 55%, rgba(139, 92, 255, 0.07) 78%, rgba(255, 61, 203, 0.05) 100%),
+    radial-gradient(120% 90% at 50% 108%, rgba(0, 0, 0, 0.7), transparent 55%);
 }
 
 /* the atmosphere sits behind the piece, under everything else in the panel */
@@ -74,16 +101,79 @@
 
 .reader-stage {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: grid;
   place-items: center;
   min-height: 0;
   padding: clamp(1rem, 3vw, 2.5rem);
 }
 
+/* the piece and its plaque hang as one unit on the wall */
+.reader-piece {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  max-width: min(100%, 560px);
+  max-height: 100%;
+  margin: 0;
+}
+
+/* the floor where the piece throws its shadow, as it would under a real spotlight */
+.reader-piece::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0.2rem;
+  width: 74%;
+  height: 22px;
+  transform: translateX(-50%);
+  background: radial-gradient(50% 100% at 50% 50%, rgba(0, 0, 0, 0.65), transparent 70%);
+  filter: blur(7px);
+  z-index: -1;
+}
+
+/* light gathering on the frame's far edge — spectrum spill, pinned to where the torch points */
+.reader-piece .artwork.is-contain,
+.reader-piece .light-plate {
+  box-shadow:
+    0 30px 60px -20px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.07),
+    -14px 0 34px -18px rgba(61, 232, 255, 0.25),
+    14px 0 34px -18px rgba(255, 61, 203, 0.22);
+}
+
+/* the museum label: small, brushed, low — the reader-side is decorative, the text column
+   already says this aloud to screen readers */
+.reader-plaque {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(180deg, rgba(30, 30, 40, 0.92), rgba(12, 12, 18, 0.92));
+  box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--light-3);
+}
+
+.reader-plaque-mark {
+  color: var(--light);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+}
+
+.reader-plaque i {
+  font-style: normal;
+  color: var(--lp-cyan);
+}
+
 .reader-stage .artwork.is-contain {
   max-height: 100%;
-  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7);
   animation: fade-in 0.4s var(--ease) both;
 }
 

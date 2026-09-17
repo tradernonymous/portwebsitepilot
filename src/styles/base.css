@@ -306,6 +306,22 @@ a.btn-glow {
   color: var(--light-3);
 }
 
+/* a hairline of the spectrum under the bar: how deep into the hall the visitor is.
+   it fills over the static beam above, so the bar reads "light arriving" as the visitor goes
+   deeper, without anything moving but the line itself. */
+.topbar-progress {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  bottom: -1px;
+  height: 2px;
+  background: var(--spectrum);
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left;
+  opacity: 0.9;
+  transition: transform 0.12s linear;
+}
+
 /* on the white glass, controls carry their own white so a photo scrolling under stays behind them */
 .topbar:not(.is-on-dark) .icon-btn:not([aria-pressed='true']),
 .topbar:not(.is-on-dark) .chip {

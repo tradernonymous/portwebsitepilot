@@ -15,6 +15,7 @@ import './styles/video.css';
 import './styles/walk.css';
 import './styles/flat.css';
 import './styles/gallery.css';
+import './styles/cursor.css';
 
 const container = document.getElementById('root');
 if (!container) throw new Error('#root missing from index.html');

@@ -38,7 +38,7 @@ export function GalleryHud({
       <span className="gallery-hud-keys" aria-hidden="true">
         {position.href ? (inRoom ? t('galleryKeysRoom') : t('galleryKeys')) : t('galleryKeysPlain')}
       </span>
-      <button type="button" className="gallery-hud-exit" onClick={onExit}>
+      <button type="button" className="gallery-hud-exit" onClick={onExit} data-cursor="esc">
         {t('galleryExit')}
         <i aria-hidden="true">Esc</i>
       </button>

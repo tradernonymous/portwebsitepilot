@@ -106,14 +106,14 @@ export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
         <p className="gate-line">{t('line')}</p>
 
         <div className="gate-actions">
-          <button type="button" className="btn-glow" onClick={onEnter} ref={enterRef}>
+          <button type="button" className="btn-glow" onClick={onEnter} ref={enterRef} data-cursor="enter">
             <span className="btn-glow-fill" aria-hidden="true" />
             <span className="btn-glow-label spectrum-text" data-text={t('enter')}>
               {t('enter')}
             </span>
             <i className="btn-glow-node" aria-hidden="true" />
           </button>
-          <button type="button" className="btn btn-dark" onClick={onFlat}>
+          <button type="button" className="btn btn-dark" onClick={onFlat} data-cursor="read">
             {t('listView')}
           </button>
         </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Station } from '../content';
 import { bodyIsOriginal } from '../content/en';
 import { useDialogFocus } from '../lib/hooks';
@@ -24,6 +24,7 @@ type Props = {
 export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props) {
   const exhibit = station.exhibits[index];
   const scroller = useDialogFocus<HTMLDivElement>(exhibit?.id ?? '');
+  const mediaRef = useRef<HTMLDivElement>(null);
   const { t, lang } = useLang();
   const [shown, setShown] = useState(0);
 
@@ -34,6 +35,30 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = previous;
+    };
+  }, []);
+
+  /* the reader's side is a room: the pointer carries a soft torch that follows the visitor's
+     hand over the wall. Reduced motion leaves it resting on the centre. */
+  useEffect(() => {
+    const media = mediaRef.current;
+    if (!media) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reduce.matches) return;
+    let raf = 0;
+    const onMove = (event: PointerEvent) => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const rect = media.getBoundingClientRect();
+        media.style.setProperty('--mx', `${((event.clientX - rect.left) / rect.width) * 100}%`);
+        media.style.setProperty('--my', `${((event.clientY - rect.top) / rect.height) * 100}%`);
+      });
+    };
+    media.addEventListener('pointermove', onMove, { passive: true });
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      media.removeEventListener('pointermove', onMove);
     };
   }, []);
 
@@ -49,22 +74,32 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
     <div className="reader" role="dialog" aria-modal="true" aria-label={exhibit.title}>
       <div className="reader-scrim" onClick={onClose} role="presentation" />
       <section className="reader-sheet">
-        <div className="reader-media">
+        <div className="reader-media" ref={mediaRef}>
           {/* atmosphere behind the piece, so the work hangs in a room rather than on a panel */}
           <Motif kind="fog" />
           <div className="reader-stage">
-            {image ? (
-              <Artwork
-                key={image.small}
-                image={image}
-                alt={image.caption || exhibit.title}
-                fit="contain"
-                sizes="(max-width: 960px) 94vw, 60vw"
-                eager
-              />
-            ) : (
-              <LightPlate id={exhibit.id} title={exhibit.title} label={station.label} />
-            )}
+            <figure className="reader-piece">
+              {image ? (
+                <Artwork
+                  key={image.small}
+                  image={image}
+                  alt={image.caption || exhibit.title}
+                  fit="contain"
+                  sizes="(max-width: 960px) 94vw, 60vw"
+                  eager
+                />
+              ) : (
+                <LightPlate id={exhibit.id} title={exhibit.title} label={station.label} />
+              )}
+              {/* a museum label beside the piece, saying only what the wall text says aloud */}
+              <figcaption className="reader-plaque" aria-hidden="true">
+                <span className="reader-plaque-mark">PORT</span>
+                <span>{station.label}</span>
+                <i>
+                  {pad(index + 1)} / {pad(count)}
+                </i>
+              </figcaption>
+            </figure>
           </div>
           {images.length > 1 ? (
             <div className="reader-thumbs" role="tablist" aria-label={t('gallery')}>
@@ -77,6 +112,7 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
                   aria-label={`${t('imageOf')} ${i + 1}`}
                   className={`reader-thumb${i === shown ? ' is-active' : ''}`}
                   onClick={() => setShown(i)}
+                  data-cursor="view"
                 >
                   <img src={img.small} alt="" loading="lazy" />
                 </button>
@@ -90,7 +126,7 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
             <p className="kicker">
               {station.label} · {pad(index + 1)} / {pad(count)}
             </p>
-            <button type="button" className="icon-btn" onClick={onClose} aria-label={t('close')} title={t('close')}>
+            <button type="button" className="icon-btn" onClick={onClose} aria-label={t('close')} title={t('close')} data-cursor="close">
               <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                 <path
                   fill="currentColor"
@@ -148,11 +184,11 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext }: Props
           ) : null}
 
           <nav className="reader-pager" aria-label={t('collection')}>
-            <button type="button" className="pager-link" onClick={onPrev} disabled={!prevWork}>
+            <button type="button" className="pager-link" onClick={onPrev} disabled={!prevWork} data-cursor="prev">
               <span>{t('previous')}</span>
               <b>{prevWork?.title ?? '—'}</b>
             </button>
-            <button type="button" className="pager-link is-next" onClick={onNext} disabled={!nextWork}>
+            <button type="button" className="pager-link is-next" onClick={onNext} disabled={!nextWork} data-cursor="next">
               <span>{t('next')}</span>
               <b>{nextWork?.title ?? '—'}</b>
             </button>

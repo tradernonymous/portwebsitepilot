@@ -1,0 +1,145 @@
+/* ==========================================================================
+   The custom cursor.
+
+   A bright dot that rides the pointer and a ring that catches up behind it,
+   carrying the language of the gesture it points at — OPEN on a door, WALK on
+   the corridor, ← / → on the pager. The dot and ring never take the pointer:
+   this layer only ever *restates* what the element underneath already says.
+
+   It is present only under `html.has-cursor` — set by the component when a fine
+   pointer exists and reduced motion is not requested — so on touch the native
+   cursor rules and nothing here is painted at all.
+   ========================================================================== */
+
+html.has-cursor,
+html.has-cursor *,
+html.has-cursor *::before,
+html.has-cursor *::after {
+  cursor: none !important;
+}
+
+.cursor {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  contain: layout style;
+}
+
+/* the pointer itself: a bare point of light, kept ahead of the ring */
+.cursor-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #fff;
+  mix-blend-mode: difference;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  will-change: transform;
+}
+
+/* the ring: falls behind the dot, grows a little over anything clickable */
+.cursor-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(247, 247, 251, 0.85);
+  mix-blend-mode: difference;
+  will-change: transform;
+  transition: border-color 0.25s var(--ease);
+}
+
+/* the ring's own slow spectrum: light returning along the edge, like a beam's bloom */
+.cursor-ring::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from calc(var(--rot, 0deg)),
+    transparent 0turn 0.68turn,
+    var(--lp-cyan) 0.76turn,
+    var(--lp-violet) 0.82turn,
+    var(--lp-magenta) 0.9turn,
+    transparent 0.96turn 1turn
+  );
+  opacity: 0.5;
+}
+
+.cursor.is-hover .cursor-ring {
+  border-color: rgba(139, 92, 255, 0.9);
+}
+
+.cursor.is-named .cursor-ring,
+.cursor.is-magnetic .cursor-ring {
+  border-color: transparent;
+}
+
+.cursor.is-magnetic .cursor-ring::before {
+  opacity: 1;
+}
+
+/* the gesture readout, set against the page like a museum plate next to the piece */
+.cursor-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.32rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule-dark-strong);
+  background: rgba(5, 5, 7, 0.72);
+  color: var(--light);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.7);
+  animation: cursor-label-in 0.2s var(--ease-out) both;
+  will-change: transform;
+}
+
+@keyframes cursor-label-in {
+  from {
+    opacity: 0;
+    transform: translate3d(22px, -22px, 0) scale(0.85);
+  }
+}
+
+/* gallery mode: the ring turns into the walk — two chevrons each way */
+.cursor.is-gallery .cursor-ring::before {
+  background: none;
+}
+
+.cursor.is-gallery .cursor-ring {
+  border-color: transparent;
+}
+
+.cursor.is-gallery .cursor-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0 28%, var(--light) 31% 40%, transparent 43% 100%),
+    var(--spectrum);
+  -webkit-mask: radial-gradient(circle, transparent 34%, #000 36%);
+  mask: radial-gradient(circle, transparent 34%, #000 36%);
+  border-radius: 50%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor-dot,
+  .cursor-ring,
+  .cursor-label {
+    animation: none;
+    transition: none;
+  }
+}
