@@ -272,6 +272,15 @@ body.is-gallery .chapter-rail {
   transform: translateY(-2px);
 }
 
+.trail-resume {
+  border-color: var(--lp-violet);
+  background: linear-gradient(135deg, rgba(61, 232, 255, 0.08), var(--white));
+}
+
+.trail-resume small {
+  font-weight: 600;
+}
+
 .trail-card-top {
   display: flex;
   align-items: baseline;

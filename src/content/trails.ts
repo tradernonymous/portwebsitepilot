@@ -1,5 +1,40 @@
 import type { Route } from '../lib/hooks';
 
+const PROGRESS_KEY = 'port.trail-progress';
+
+export type TrailProgress = {
+  trailId: string;
+  index: number;
+};
+
+export function readTrailProgress(): TrailProgress | null {
+  try {
+    const raw = window.localStorage.getItem(PROGRESS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<TrailProgress>;
+    if (typeof parsed.trailId !== 'string' || typeof parsed.index !== 'number' || !Number.isInteger(parsed.index) || parsed.index < 0) return null;
+    return { trailId: parsed.trailId, index: parsed.index };
+  } catch {
+    return null;
+  }
+}
+
+export function writeTrailProgress(progress: TrailProgress) {
+  try {
+    window.localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+  } catch {
+    // A blocked store only loses resume; the current trail still works in this session.
+  }
+}
+
+export function clearTrailProgress() {
+  try {
+    window.localStorage.removeItem(PROGRESS_KEY);
+  } catch {
+    // Nothing else needs to change when storage is unavailable.
+  }
+}
+
 type TrailCopy = {
   title: string;
   lede: string;

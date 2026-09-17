@@ -6,8 +6,11 @@ export function TrailPanel({
   trails,
   activeTrail,
   activeIndex,
+  resumeTrail,
+  resumeIndex,
   open,
   onStart,
+  onResume,
   onNavigate,
   onExit,
   onClose,
@@ -16,8 +19,11 @@ export function TrailPanel({
   trails: CuratedTrail[];
   activeTrail: CuratedTrail | null;
   activeIndex: number;
+  resumeTrail: CuratedTrail | null;
+  resumeIndex: number;
   open: boolean;
   onStart: (trail: CuratedTrail) => void;
+  onResume: () => void;
   onNavigate: (index: number) => void;
   onExit: () => void;
   onClose: () => void;
@@ -50,6 +56,16 @@ export function TrailPanel({
             </button>
           </div>
           <div className="trail-list">
+            {resumeTrail && resumeTrail.stops[resumeIndex] ? (
+              <button type="button" className="trail-card trail-resume" onClick={onResume}>
+                <span className="trail-card-top">
+                  <b>{t('trailResume')}</b>
+                  <i>{resumeIndex + 1} / {resumeTrail.stops.length}</i>
+                </span>
+                <span>{resumeTrail.copy[lang].title} · {resumeTrail.stops[resumeIndex].label[lang]}</span>
+                <small>{t('trailResumeAction')} →</small>
+              </button>
+            ) : null}
             {trails.map((trail) => {
               const copy = trail.copy[lang];
               return (

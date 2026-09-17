@@ -1,6 +1,13 @@
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCollected } from './lib/collected';
-import { curatedTrails, type CuratedTrail } from './content/trails';
+import {
+  clearTrailProgress,
+  curatedTrails,
+  readTrailProgress,
+  writeTrailProgress,
+  type CuratedTrail,
+  type TrailProgress,
+} from './content/trails';
 import { useGalleryWalk } from './lib/gallery';
 import { detectWebGL, useHashRoute, useReducedMotion, type Route } from './lib/hooks';
 import { ErrorBoundary } from './lib/errors';
@@ -48,6 +55,13 @@ function sameRoute(a: Route, b: Route): boolean {
   return false;
 }
 
+function initialTrailId(route: Route, progress: TrailProgress | null): string | null {
+  if (!progress) return null;
+  const trail = curatedTrails.find((candidate) => candidate.id === progress.trailId);
+  const stop = trail?.stops[progress.index];
+  return stop && sameRoute(route, stop.route) ? trail.id : null;
+}
+
 function alreadyEntered(): boolean {
   try {
     return window.sessionStorage.getItem(ENTERED_KEY) === '1';
@@ -71,8 +85,12 @@ export default function App() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [notebookOpen, setNotebookOpen] = useState(false);
   const [trailOpen, setTrailOpen] = useState(false);
-  const [trailId, setTrailId] = useState<string | null>(null);
-  const [trailIndex, setTrailIndex] = useState(0);
+  const [savedTrail, setSavedTrail] = useState<TrailProgress | null>(() => readTrailProgress());
+  const [trailId, setTrailId] = useState<string | null>(() => initialTrailId(route, readTrailProgress()));
+  const [trailIndex, setTrailIndex] = useState(() => {
+    const progress = readTrailProgress();
+    return initialTrailId(route, progress) ? progress?.index ?? 0 : 0;
+  });
   const trailNavigation = useRef(false);
   const { works: collected } = useCollected();
   const activeTrail = useMemo<CuratedTrail | null>(
@@ -89,6 +107,8 @@ export default function App() {
       return;
     }
     if (trailNavigation.current) return;
+    clearTrailProgress();
+    setSavedTrail(null);
     setTrailId(null);
     setTrailIndex(0);
     setTrailOpen(false);
@@ -426,23 +446,52 @@ export default function App() {
         trails={curatedTrails}
         activeTrail={activeTrail}
         activeIndex={trailIndex}
+        resumeTrail={
+          savedTrail
+            ? curatedTrails.find((trail) => trail.id === savedTrail.trailId) ?? null
+            : null
+        }
+        resumeIndex={savedTrail?.index ?? 0}
         open={trailOpen || Boolean(activeTrail)}
         onStart={(trail) => {
+          const progress = { trailId: trail.id, index: 0 };
           trailNavigation.current = true;
+          writeTrailProgress(progress);
+          setSavedTrail(progress);
           setTrailId(trail.id);
           setTrailIndex(0);
           setTrailOpen(false);
           navigate(trail.stops[0].route);
         }}
+        onResume={() => {
+          if (!savedTrail) return;
+          const trail = curatedTrails.find((candidate) => candidate.id === savedTrail.trailId);
+          const stop = trail?.stops[savedTrail.index];
+          if (!trail || !stop) {
+            clearTrailProgress();
+            setSavedTrail(null);
+            return;
+          }
+          trailNavigation.current = true;
+          setTrailId(trail.id);
+          setTrailIndex(savedTrail.index);
+          setTrailOpen(false);
+          navigate(stop.route);
+        }}
         onNavigate={(index) => {
           if (!activeTrail) return;
           const next = Math.max(0, Math.min(activeTrail.stops.length - 1, index));
+          const progress = { trailId: activeTrail.id, index: next };
           trailNavigation.current = true;
+          writeTrailProgress(progress);
+          setSavedTrail(progress);
           setTrailIndex(next);
           navigate(activeTrail.stops[next].route);
         }}
         onExit={() => {
           trailNavigation.current = false;
+          clearTrailProgress();
+          setSavedTrail(null);
           setTrailId(null);
           setTrailIndex(0);
           setTrailOpen(false);

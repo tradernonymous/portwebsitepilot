@@ -123,6 +123,8 @@ const ms = {
   trailNext: 'Seterusnya',
   trailExit: 'Tamatkan laluan',
   trailDone: 'Anda telah sampai ke penghujung laluan. Ruang lain masih menunggu.',
+  trailResume: 'Sambung perjalanan',
+  trailResumeAction: 'Sambung dari sini',
 
   // --------------------------------------------------------------- the visitor's notebook
   notebook: 'Kunjungan saya',
@@ -343,6 +345,8 @@ const en: Dict = {
   trailNext: 'Next',
   trailExit: 'End trail',
   trailDone: 'You have reached the end of this trail. Other rooms are still waiting.',
+  trailResume: 'Continue your journey',
+  trailResumeAction: 'Resume from here',
 
   // --------------------------------------------------------------- the visitor's notebook
   notebook: 'My visit',
