@@ -1,4 +1,5 @@
 import { deckCovers, type Station } from '../content';
+import { motifFor } from '../content/motifs';
 import { hrefFor } from '../lib/hooks';
 import { useLang } from '../lib/lang';
 import { pad, roomNumber, tourOrder } from '../lib/order';
@@ -6,7 +7,7 @@ import { Artwork, LightPlate } from './Artwork';
 import { Reveal } from './Reveal';
 import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
-import { MOTIF_CYCLE, Motif } from './fx/Motif';
+import { Motif } from './fx/Motif';
 import { RadiantLight } from './fx/RadiantLight';
 import { ContactContent } from './StationPanel';
 import { VideoRoom } from './VideoRoom';
@@ -22,9 +23,10 @@ type Props = {
  * One room of the gallery, as a page: its light and its name at the door, then the works on
  * the wall, then the line of light running on to the rooms either side.
  *
- * Each room carries its own motif — the motif is picked from the room's number, so the same
- * room always wears the same one and no two neighbours match. It sits under the lightpainting,
- * so PORT's own thread is always the topmost layer of light in the room.
+ * Each room wears the motif its own content calls for — the room of stages gets venue lighting,
+ * the residency gets the painter's surface, the screening room gets a lit rectangle in a dark
+ * wall. It sits under the lightpainting, so PORT's own thread is always the topmost layer of
+ * light in the room.
  */
 export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
   const { t, stations } = useLang();
@@ -35,7 +37,7 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
   const next = tour[(index + 1) % tour.length];
   const cover = deckCovers.get(station.id);
   const canWalk = webgl && station.kind === 'corridor' && station.exhibits.length > 0;
-  const motif = MOTIF_CYCLE[(number - 1) % MOTIF_CYCLE.length];
+  const motif = motifFor(station);
 
   return (
     <article className="room" style={{ ['--room-accent' as string]: station.accent }}>

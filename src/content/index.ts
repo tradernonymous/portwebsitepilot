@@ -9,6 +9,7 @@
  * To refresh the underlying material, re-run `npm run sync:content`.
  */
 
+import type { MotifKind } from './motifs';
 import data from './site.json';
 import { featuredVideo, thumbUrl, videoPlaylists, type VideoPlaylist } from './videos';
 
@@ -217,6 +218,12 @@ export type Station = {
    * picks a distinct piece from the station's own material — set it to pin a specific work.
    */
   deckCover?: GalleryImage;
+  /**
+   * The contemporary-art language this room wears behind its lightpainting. Chosen for what
+   * the room actually holds, not by position — see `motifs.ts` for the vocabulary. Leave it
+   * off and a stable choice is derived from the room's id.
+   */
+  motif?: MotifKind;
   partners?: GalleryImage[];
   /**
    * A video station's shelf. Its works are films rather than photographs, so they are
@@ -237,6 +244,8 @@ const rawStations: Station[] = [
     short: 'Tentang',
     glyph: 'compass',
     accent: '#efe3cf',
+    // An introduction has no picture of its own — only the mood of the place it describes.
+    motif: 'fog',
     tagline: 'Siapa kami, dan mengapa kami ada.',
     kind: 'about',
     intro: [
@@ -295,6 +304,8 @@ const rawStations: Station[] = [
     short: 'Program',
     glyph: 'stage',
     accent: '#d9b978',
+    // The room of stages, festivals and symposia: venue lighting is what this room is made of.
+    motif: 'tubes',
     tagline: 'Tujuh program yang membentuk ekosistem seni Perak.',
     kind: 'corridor',
     intro: [
@@ -390,6 +401,8 @@ const rawStations: Station[] = [
     short: 'Residensi',
     glyph: 'brush',
     accent: '#9d7fb0',
+    // Three months in a studio, oil on canvas, work in progress: the painter's own surface.
+    motif: 'field',
     tagline: 'Ruang studio dan kamar rehat untuk pengkarya muda.',
     kind: 'corridor',
     intro: [
@@ -471,6 +484,8 @@ const rawStations: Station[] = [
     short: 'Pameran',
     glyph: 'frame',
     accent: '#d99a94',
+    // An exhibition is a room you stand inside, surrounded until the edges fall away.
+    motif: 'dots',
     tagline: 'Pameran yang telah berlangsung, dibukukan secara digital.',
     kind: 'corridor',
     intro: [
@@ -522,6 +537,8 @@ const rawStations: Station[] = [
     short: 'Arkib',
     glyph: 'wave',
     accent: '#7fae95',
+    // Arkib Muzik Perak: concentric grooves, the record the archive is built to preserve.
+    motif: 'waves',
     tagline: 'Bahan rujukan, liputan media dan buku digital.',
     kind: 'list',
     intro: [
@@ -585,6 +602,8 @@ const rawStations: Station[] = [
     short: 'Video',
     glyph: 'video',
     accent: '#e0b464',
+    // The screening room: a lit rectangle in a dark wall is exactly what a screen is.
+    motif: 'aperture',
     tagline: 'Temu bual, simposium dan persembahan — arkib video PORT.',
     kind: 'video',
     intro: [
@@ -609,6 +628,8 @@ const rawStations: Station[] = [
     short: 'Terkini',
     glyph: 'beacon',
     accent: '#c07f52',
+    // What is on now: a live signal, still arriving, rather than a screen you play back.
+    motif: 'scan',
     tagline: 'Apa yang sedang berjalan sekarang.',
     kind: 'list',
     intro: ['Pencalonan, jadual acara dan pengumuman terkini daripada PORT.'],
@@ -664,6 +685,8 @@ const rawStations: Station[] = [
     short: 'Hubungi',
     glyph: 'pin',
     accent: '#c3c9d4',
+    // The way in: a dark opening with the light on the other side of it.
+    motif: 'void',
     tagline: 'Datang ke Black House, atau hubungi kami terus.',
     kind: 'contact',
     intro: [

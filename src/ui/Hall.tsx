@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { contact, contentMeta, deckCovers, type Station } from '../content';
 import { localizeFeatured } from '../content/en';
+import { motifFor } from '../content/motifs';
 import { featuredVideo, thumbUrl, videoCount } from '../content/videos';
 import { hrefFor } from '../lib/hooks';
 import { useLang } from '../lib/lang';
@@ -19,7 +20,7 @@ import { FilmBackdrop } from './FilmBackdrop';
 import { Reveal } from './Reveal';
 import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
-import { MOTIF_CYCLE, Motif } from './fx/Motif';
+import { Motif } from './fx/Motif';
 import { RadiantLight } from './fx/RadiantLight';
 
 type Props = {
@@ -34,9 +35,10 @@ type Props = {
  * PORT — before the figures and the way out. A rail on the side is the map: where you are,
  * what is next, and one tap to any of it.
  *
- * Lightpainting is the thread that runs the whole way through. Each panel also carries one
- * of the motifs — the visual languages of contemporary art, rebuilt in CSS — so the walk
- * reads as a conversation between PORT's own light and the wider tradition it belongs to.
+ * Lightpainting is the thread that runs the whole way through. Each panel also wears the motif
+ * its room's content calls for — the visual languages of contemporary art, rebuilt in CSS — so
+ * the walk reads as a conversation between PORT's own light and the wider tradition it belongs
+ * to, and each room's borrowed language says something true about what is inside it.
  *
  * Scroll work touches one state value and one CSS variable: no React re-render per frame.
  */
@@ -279,7 +281,7 @@ function RoomPanel({
   const { t } = useLang();
   const cover = deckCovers.get(room.id);
   const href = hrefFor({ kind: 'station', stationId: room.id });
-  const motif = MOTIF_CYCLE[index % MOTIF_CYCLE.length];
+  const motif = motifFor(room);
   const number = index + 2;
   const count =
     room.exhibits.length > 0 ? `${pad(room.exhibits.length)} ${t('works')}` : t('profile');
