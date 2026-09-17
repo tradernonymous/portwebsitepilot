@@ -82,12 +82,7 @@ export function Hall({ reducedMotion }: Props) {
     <div className="hall">
       <ChapterRail chapters={chapters} />
       {hero ? (
-        <Threshold
-          station={hero}
-          total={tour.length}
-          reducedMotion={reducedMotion}
-          scrollProgress={scrollProgress}
-        />
+        <Threshold station={hero} total={tour.length} reducedMotion={reducedMotion} />
       ) : null}
       <Exhibition id="ch-onview" reducedMotion={reducedMotion} />
       <RoomWalk rooms={rooms} reducedMotion={reducedMotion} />
@@ -103,12 +98,10 @@ function Threshold({
   station,
   total,
   reducedMotion,
-  scrollProgress,
 }: {
   station: Station;
   total: number;
   reducedMotion: boolean;
-  scrollProgress: number;
 }) {
   const { t, lang } = useLang();
   const film = localizeFeatured(featuredVideo, lang);
@@ -147,23 +140,13 @@ function Threshold({
         delay={150}
       />
       <div className="threshold-veil" aria-hidden="true" />
-      <div className="aurora" aria-hidden="true" />
+      {/* one light over the film — the lightpainting alone, as on the gate */}
       <LightPainting
         tone="dark"
         painters={2}
         interactive
         reducedMotion={reducedMotion}
         speed={0.5}
-        className="depth-layer"
-      />
-      <RadiantLight
-        sources={3}
-        interactive
-        reducedMotion={reducedMotion}
-        weight={1.05}
-        speed={0.6}
-        seed={7}
-        scrollProgress={scrollProgress}
         className="depth-layer"
       />
       <span className="spot" aria-hidden="true" />

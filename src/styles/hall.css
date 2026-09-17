@@ -104,20 +104,9 @@
     linear-gradient(0deg, rgba(5, 5, 7, 0.96) 0%, rgba(5, 5, 7, 0) 48%);
 }
 
-.threshold .aurora {
-  z-index: 0;
-  opacity: 0.2;
-}
-
 .threshold .light-painting {
   z-index: 1;
   mix-blend-mode: screen;
-}
-
-.threshold .radiant-light {
-  z-index: 1;
-  mix-blend-mode: screen;
-  opacity: 0.85;
 }
 
 .threshold .spot {

@@ -1,21 +1,32 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useGalleryWalk } from './lib/gallery';
 import { detectWebGL, useHashRoute, useReducedMotion } from './lib/hooks';
 import { ErrorBoundary } from './lib/errors';
 import { useLang } from './lib/lang';
 import { startScrollEngine } from './lib/scroll';
 import { EntryGate } from './ui/EntryGate';
-import { ExhibitReader } from './ui/ExhibitReader';
-import { FlatView } from './ui/FlatView';
 import { GalleryHud } from './ui/GalleryHud';
+import { Opening } from './ui/Opening';
 import { AmbientVeil } from './ui/fx/AmbientVeil';
 import { Cursor } from './ui/fx/Cursor';
 import { Entrance } from './ui/fx/Entrance';
 import { Hall } from './ui/Hall';
 import { HelpPanel } from './ui/HelpPanel';
 import { TopBar } from './ui/Hud';
-import { ImmersiveWalk } from './ui/ImmersiveWalk';
 import { RoomView } from './ui/RoomView';
+
+/*
+ * The three surfaces a visitor only reaches by asking for them. Keeping them out of the
+ * opening bundle means the first paint is the gate and the hall, and nothing else.
+ *
+ *   FlatView      the whole plain document — a reader who chose it is reading, not waiting
+ *                 on the spatial site
+ *   ImmersiveWalk the 3D wing; its own three.js chunk only loads when the walk begins
+ *   ExhibitReader the work dialog, shared with the walk
+ */
+const FlatView = lazy(() => import('./ui/FlatView').then((m) => ({ default: m.FlatView })));
+const ImmersiveWalk = lazy(() => import('./ui/ImmersiveWalk').then((m) => ({ default: m.ImmersiveWalk })));
+const ExhibitReader = lazy(() => import('./ui/ExhibitReader').then((m) => ({ default: m.ExhibitReader })));
 
 const ENTERED_KEY = 'port.entered';
 
@@ -208,11 +219,13 @@ export default function App() {
     return (
       <>
         <ErrorBoundary name="walk" flat>
-          <ImmersiveWalk
-            station={station}
-            reducedMotion={reducedMotion}
-            onExit={() => navigate({ kind: 'station', stationId: station.id })}
-          />
+          <Suspense fallback={<Opening />}>
+            <ImmersiveWalk
+              station={station}
+              reducedMotion={reducedMotion}
+              onExit={() => navigate({ kind: 'station', stationId: station.id })}
+            />
+          </Suspense>
         </ErrorBoundary>
         {help}
         <Cursor />
@@ -250,34 +263,38 @@ export default function App() {
       />
       <main id="content">
         <ErrorBoundary name="page" flat>
-          {route.kind === 'flat' ? (
-            <FlatView />
-          ) : station ? (
-            <RoomView
-              station={station}
-              shelf={route.kind === 'station' ? route.shelf : undefined}
-              reducedMotion={reducedMotion}
-              webgl={webgl}
-            />
-          ) : (
-            <Hall reducedMotion={reducedMotion} />
-          )}
+          <Suspense fallback={<Opening />}>
+            {route.kind === 'flat' ? (
+              <FlatView />
+            ) : station ? (
+              <RoomView
+                station={station}
+                shelf={route.kind === 'station' ? route.shelf : undefined}
+                reducedMotion={reducedMotion}
+                webgl={webgl}
+              />
+            ) : (
+              <Hall reducedMotion={reducedMotion} />
+            )}
+          </Suspense>
         </ErrorBoundary>
       </main>
       {station && exhibitIndex >= 0 && crumbWork ? (
         <ErrorBoundary name="reader">
-          <ExhibitReader
-            station={station}
-            index={exhibitIndex}
-            onClose={() => navigate({ kind: 'station', stationId: station.id })}
-            onPrev={() => navigate({ kind: 'exhibit', stationId: station.id, index: Math.max(0, exhibitIndex - 1) }, true)}
-            onNext={() =>
-              navigate(
-                { kind: 'exhibit', stationId: station.id, index: Math.min(station.exhibits.length - 1, exhibitIndex + 1) },
-                true,
-              )
-            }
-          />
+          <Suspense fallback={<Opening />}>
+            <ExhibitReader
+              station={station}
+              index={exhibitIndex}
+              onClose={() => navigate({ kind: 'station', stationId: station.id })}
+              onPrev={() => navigate({ kind: 'exhibit', stationId: station.id, index: Math.max(0, exhibitIndex - 1) }, true)}
+              onNext={() =>
+                navigate(
+                  { kind: 'exhibit', stationId: station.id, index: Math.min(station.exhibits.length - 1, exhibitIndex + 1) },
+                  true,
+                )
+              }
+            />
+          </Suspense>
         </ErrorBoundary>
       ) : null}
       {readout}

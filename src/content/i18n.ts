@@ -29,7 +29,7 @@ const ms = {
   welcomeBefore: 'Sedia nak terokai dunia',
   welcomeArt: 'SENI',
   welcomeAfter: '?',
-  line: 'Jemput masuk — pintu kami sentiasa terbuka.',
+  line: 'Jemput masuk, pintu kami sentiasa terbuka...',
   enter: 'Masuk ke PORT',
   listView: 'Senarai biasa',
   watchWithSound: 'tonton dengan bunyi',
@@ -132,6 +132,7 @@ const ms = {
   hintWalkFine: 'Tatal atau ↑ ↓ untuk berjalan · Klik bingkai untuk membaca',
   worksIn: 'Karya dalam',
   loading3d: 'Menyediakan ruang 3D…',
+  opening: 'Membuka…',
   no3d: 'Peranti ini tidak menyokong grafik 3D.',
 
   // ---------------------------------------------------------------- contact
@@ -198,7 +199,7 @@ const en: Dict = {
   welcomeBefore: 'Ready to explore the world of',
   welcomeArt: 'ART',
   welcomeAfter: '?',
-  line: 'Come on in — our doors are always open.',
+  line: 'Come on in, our doors are always open...',
   enter: 'Enter PORT',
   listView: 'Text-only view',
   watchWithSound: 'watch with sound',
@@ -307,6 +308,7 @@ const en: Dict = {
   hintWalkFine: 'Scroll or ↑ ↓ to walk · Click a frame to read',
   worksIn: 'Works in',
   loading3d: 'Preparing the 3D space…',
+  opening: 'Opening…',
   no3d: 'This device does not support 3D graphics.',
 
   location: 'Location',

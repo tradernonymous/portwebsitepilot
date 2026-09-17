@@ -594,3 +594,33 @@ a.btn-glow {
 .crash-flat:hover {
   background: var(--void-2, #0d0d12);
 }
+
+/* The quiet note that a lazy surface's chunk is arriving. A corner note, not a panel:
+   whatever is already on screen is not displaced while the next room opens. */
+.opening {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1.4rem + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--rule-dark);
+  background: color-mix(in srgb, var(--void-2) 82%, transparent);
+  color: var(--light-2);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.opening-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--light-2);
+  animation: blink 1.1s ease-in-out infinite;
+}
