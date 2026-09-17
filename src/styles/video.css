@@ -211,7 +211,8 @@
   max-height: min(70svh, 620px);
   overflow-y: auto;
   padding-right: 0.3rem;
-  scrollbar-width: thin;
+  /* no grey slider: the rail's cropped cards are the affordance */
+  scrollbar-width: none;
 }
 
 .video-card {

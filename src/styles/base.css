@@ -624,3 +624,18 @@ a.btn-glow {
   background: var(--light-2);
   animation: blink 1.1s ease-in-out infinite;
 }
+
+/* ==========================================================================
+   No native scrollbar — the spectrum hairline in the top bar is the depth
+   readout; the grey platform slider has nothing to say in this house
+   ========================================================================== */
+
+html {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

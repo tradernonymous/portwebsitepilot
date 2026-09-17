@@ -192,7 +192,8 @@
   gap: 0.5rem;
   padding: 0.8rem 1rem 1rem;
   overflow-x: auto;
-  scrollbar-width: thin;
+  /* no grey slider: the strip's cropped thumbnails are the affordance */
+  scrollbar-width: none;
 }
 
 .reader-thumb {
