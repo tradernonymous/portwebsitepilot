@@ -48,7 +48,7 @@ export function StationContent({ station }: { station: Station }) {
             {station.exhibits.map((ex, i) => (
               <a
                 key={ex.id}
-                className="exhibit-card"
+                className="exhibit-card lit"
                 href={`#/s/${station.id}/${i}`}
                 style={{ textDecoration: 'none' }}
               >

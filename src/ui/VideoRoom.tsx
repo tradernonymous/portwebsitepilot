@@ -93,7 +93,7 @@ export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
   return (
     <section className="video-room" aria-label={station.label}>
       {showIntro ? (
-        <div className="video-intro">
+        <div className="video-intro serif-body">
           {station.intro.map((para) => (
             <p key={para}>{para}</p>
           ))}
@@ -109,7 +109,7 @@ export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
               key={current.id}
               src={embedUrl(current.id, { controls: true, api: true })}
               title={current.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
               onLoad={(event) => {
@@ -173,7 +173,7 @@ export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
                 <button
                   key={video.id}
                   type="button"
-                  className={`video-card${nowPlaying ? ' is-playing' : ''}`}
+                  className={`video-card lit${nowPlaying ? ' is-playing' : ''}`}
                   aria-current={nowPlaying ? 'true' : undefined}
                   onClick={() => setPlaying(video.id)}
                 >
