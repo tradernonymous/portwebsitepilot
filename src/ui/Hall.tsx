@@ -7,6 +7,7 @@ import { useLang } from '../lib/lang';
 import { HERO_ROOM, pad, tourOrder } from '../lib/order';
 import { Artwork, LightPlate } from './Artwork';
 import { DoorReveal } from './DoorReveal';
+import { Exhibition } from './Exhibition';
 import { FilmBackdrop } from './FilmBackdrop';
 import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
@@ -51,6 +52,7 @@ export function Hall({ reducedMotion }: Props) {
   return (
     <div className="hall">
       {hero ? <HallHero station={hero} reducedMotion={reducedMotion} scrollProgress={scrollProgress} /> : null}
+      <Exhibition reducedMotion={reducedMotion} />
       <Pipeline rooms={rooms} reducedMotion={reducedMotion} />
       <HallStats stations={stations} reducedMotion={reducedMotion} scrollProgress={scrollProgress} />
       <HallVisit />

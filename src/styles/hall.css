@@ -190,6 +190,172 @@
   }
 }
 
+/* ---------------------------------------------------------------- current exhibition */
+
+.exhibition {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(1000px 420px at 85% 0%, rgba(139, 92, 255, 0.055), transparent 70%),
+    radial-gradient(900px 380px at 8% 100%, rgba(61, 232, 255, 0.06), transparent 70%),
+    var(--white);
+  padding: clamp(3.5rem, 8vw, 6.5rem) max(1.25rem, 5vw);
+}
+
+.exhibition-head {
+  max-width: 64ch;
+  margin-bottom: clamp(2rem, 4vw, 3.2rem);
+}
+
+.exhibition-head h2 {
+  font-size: clamp(1.9rem, 4vw, 3.2rem);
+}
+
+.exhibition-lede {
+  margin: 0.7rem 0 0;
+  max-width: 58ch;
+  color: var(--ink-2);
+}
+
+.exhibition-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.2rem, 2.5vw, 2rem);
+}
+
+.exhibit-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 1rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.exhibit-card-frame {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--void);
+  box-shadow: 0 26px 50px -30px rgba(11, 11, 15, 0.4), 0 0 0 1px var(--rule);
+  transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease);
+}
+
+.exhibit-card:hover .exhibit-card-frame,
+.exhibit-card:focus-visible .exhibit-card-frame {
+  transform: translateY(-3px);
+  box-shadow: 0 40px 70px -34px rgba(90, 46, 224, 0.45), 0 0 0 1px var(--lp-violet);
+}
+
+.exhibit-card-frame .artwork {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.02);
+  transition: transform 0.8s var(--ease-out);
+}
+
+.exhibit-card:hover .exhibit-card-frame .artwork {
+  transform: scale(1.06);
+}
+
+/* the wall label, top-left, the way a gallery numbers a show */
+.exhibit-card-no {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  padding: 0.4rem 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--light);
+  background: rgba(5, 5, 7, 0.62);
+  border-bottom-right-radius: 4px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.exhibit-card-frame .hud-corner {
+  color: var(--light);
+  width: 18px;
+  height: 18px;
+  opacity: 0;
+  transition: opacity 0.35s var(--ease);
+}
+
+.exhibit-card:hover .exhibit-card-frame .hud-corner,
+.exhibit-card:focus-visible .exhibit-card-frame .hud-corner {
+  opacity: 0.9;
+}
+
+.exhibit-card-body {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.exhibit-card-room {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lp-violet-ink);
+}
+
+.exhibit-card-body b {
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 1.6vw, 1.4rem);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.exhibit-card-meta {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+.exhibit-card-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 0.2rem;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+}
+
+.exhibit-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transition: color 0.3s var(--ease);
+}
+
+.exhibit-card-cta i {
+  font-style: normal;
+  transition: transform 0.35s var(--ease-out);
+}
+
+.exhibit-card:hover .exhibit-card-cta {
+  color: var(--lp-violet-ink);
+}
+
+.exhibit-card:hover .exhibit-card-cta i {
+  transform: translateX(5px);
+}
+
 /* ---------------------------------------------------------------- pipeline */
 
 .pipeline {
@@ -725,6 +891,15 @@
 @media (max-width: 900px) {
   .hall-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .exhibition-grid {
+    grid-template-columns: 1fr;
+    gap: clamp(1.8rem, 6vw, 2.6rem);
+  }
+
+  .exhibit-card-frame {
+    aspect-ratio: 3 / 2;
   }
 
   .hall-visit {
