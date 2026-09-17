@@ -412,6 +412,84 @@
   pointer-events: none;
 }
 
+/* ---------------------------------------------------------------- ambient transition */
+
+/*
+ * A light wash between rooms. The blend mode is the point: `screen` only ever brightens,
+ * so on the dark pages — where transitions actually happen — it reads as light coming up on
+ * a new room, and on white it simply disappears instead of flashing a coloured block.
+ * The sweep line is drawn normally so the transition keeps a visible signature everywhere.
+ */
+.route-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.route-veil-bloom {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 150vmax;
+  height: 150vmax;
+  translate: -50% -50%;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(61, 232, 255, 0.26) 16%,
+    rgba(139, 92, 255, 0.15) 36%,
+    rgba(255, 61, 203, 0.07) 52%,
+    transparent 66%
+  );
+  animation: veil-bloom 820ms var(--ease-out) both;
+}
+
+.route-veil-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--spectrum);
+  box-shadow: 0 0 24px 3px rgba(139, 92, 255, 0.5), 0 0 60px 8px rgba(61, 232, 255, 0.25);
+  animation: veil-sweep 760ms var(--ease-out) both;
+}
+
+@keyframes veil-bloom {
+  0% {
+    opacity: 0;
+    scale: 0.6;
+  }
+  32% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.3;
+  }
+}
+
+@keyframes veil-sweep {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  78% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
 /* ---------------------------------------------------------------- motion preferences */
 
 @media (prefers-reduced-motion: reduce) {
@@ -420,7 +498,9 @@
   .btn-glow::before,
   .btn-glow::after,
   .prism-fan,
-  .hud-dot {
+  .hud-dot,
+  .route-veil-bloom,
+  .route-veil-line {
     animation: none !important;
   }
 }
