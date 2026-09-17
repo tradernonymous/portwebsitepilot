@@ -41,6 +41,7 @@ export function Exhibition({ reducedMotion, id }: Props) {
       data-stop
       data-stop-label={t('exhibitionTitle')}
       data-stop-group={t('chapterOnView')}
+      data-stop-note={t('curatorOnview')}
       className="exhibition"
       aria-labelledby="exhibition-title"
     >

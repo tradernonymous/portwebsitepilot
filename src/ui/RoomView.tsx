@@ -53,6 +53,7 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
         data-stop
         data-stop-label={station.label}
         data-stop-group={`${t('room')} ${pad(number)}`}
+        data-stop-note={station.tagline}
       >
         {cover ? (
           <div
@@ -161,6 +162,7 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
                     data-stop
                     data-stop-label={work.title}
                     data-stop-group={station.label}
+                    data-stop-note={work.tagline}
                   >
                     <span className="work-frame">
                       {work.images[0] ? (

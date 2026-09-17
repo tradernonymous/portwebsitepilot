@@ -209,3 +209,34 @@ body.is-gallery .chapter-rail {
     font-size: 0.55rem;
   }
 }
+
+/* ==========================================================================
+   Curator's Eye — the readout wearing the curator's voice
+   ========================================================================== */
+
+/* The eye sits on the same stage as the gallery readout; only the voice differs.
+   A slightly warmer frame: the tour is a person speaking, not a machine reporting. */
+.gallery-hud.curator {
+  border-color: rgba(255, 177, 61, 0.35);
+}
+
+/* While the tour is paused, the frame cools — the gallery is waiting, not speaking. */
+.gallery-hud.curator.is-paused {
+  border-color: var(--rule-dark);
+}
+
+.curator-note {
+  display: block;
+  margin-top: 0.3rem;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--light-2);
+  max-width: 34ch;
+}
+
+/* In the bar the eye's button keeps the walk's own shape; nothing new to learn. */
+.icon-btn.is-curator.is-veiled {
+  opacity: 0.45;
+}

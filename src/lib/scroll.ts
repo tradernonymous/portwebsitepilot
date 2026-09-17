@@ -196,8 +196,13 @@ export function startScrollEngine(reducedMotion: boolean): () => void {
       }
       target = top;
     },
-    /* Nothing is settling when there is no glide: the page is wherever the platform put it. */
-    settling: () => glides && Math.abs(target - current) > 0.5,
+    /*
+     * Nothing is settling when there is no glide — or when nothing is alive to carry one out.
+     * `current` only converges inside the frame loop, so with frames stalled the distance would
+     * never close and anything waiting on the settle would wait forever. A stalled engine is
+     * not settling; it has stepped aside, and the page is wherever the platform put it.
+     */
+    settling: () => glides && alive() && Math.abs(target - current) > 0.5,
   };
 
   engine = instance;

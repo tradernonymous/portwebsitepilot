@@ -13,6 +13,11 @@ type TopBarProps = {
    * means nothing here, rather than the mode having to ask what page it is on.
    */
   gallery: { active: boolean; onToggle: () => void } | null;
+  /**
+   * Curator's Eye — the guided tour. It rides on gallery mode (its toggle turns the walk on
+   * too), so it is offered exactly where the walk is.
+   */
+  curator: { active: boolean; onToggle: () => void } | null;
   /** Changes whenever the page underneath changes, so the bar re-reads what it sits on. */
   pageKey: string;
 };
@@ -22,7 +27,7 @@ type TopBarProps = {
  * light) and turns to white glass once the page has scrolled onto the gallery wall, so its
  * words are always legible against whatever is behind them.
  */
-export function TopBar({ crumb, flat, onToggleFlat, onHelp, gallery, pageKey }: TopBarProps) {
+export function TopBar({ crumb, flat, onToggleFlat, onHelp, gallery, curator, pageKey }: TopBarProps) {
   const { t, lang, toggle } = useLang();
   const [onDark, setOnDark] = useState(true);
   const barRef = useRef<HTMLElement>(null);
@@ -80,6 +85,28 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp, gallery, pageKey }: 
               <path
                 fill="currentColor"
                 d="M5 8h2v2H5V8Zm3 0h2v2H8V8Zm3 0h2v2h-2V8Zm3 0h2v2h-2V8Zm3 0h2v2h-2V8ZM5 11h2v2H5v-2Zm3 0h2v2H8v-2Zm3 0h2v2h-2v-2Zm3 0h2v2h-2v-2Zm3 0h2v2h-2v-2ZM5 14h2v2H5v-2Zm5 0h4v2h-4v-2Zm5 0h4v2h-4v-2Z"
+              />
+            </svg>
+          </button>
+        ) : null}
+        {curator && gallery ? (
+          <button
+            type="button"
+            className={`icon-btn is-curator${gallery.active ? '' : ' is-veiled'}`}
+            aria-pressed={curator.active}
+            onClick={() => {
+              /* the tour rides on the walk: turning the tour on turns the walk on */
+              if (!gallery.active) gallery.onToggle();
+              curator.onToggle();
+            }}
+            title={t('curatorMode')}
+            aria-label={t('curatorMode')}
+            data-cursor="walk"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M12 5c-4.5 0-8.2 2.9-9.5 7 1.3 4.1 5 7 9.5 7s8.2-2.9 9.5-7c-1.3-4.1-5-7-9.5-7Zm0 11.5A4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 0 1 0 9Zm0-2.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
               />
             </svg>
           </button>

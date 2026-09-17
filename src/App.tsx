@@ -8,6 +8,7 @@ import { EntryGate } from './ui/EntryGate';
 import { GalleryHud } from './ui/GalleryHud';
 import { Opening } from './ui/Opening';
 import { AmbientVeil } from './ui/fx/AmbientVeil';
+import { CuratorPanel } from './ui/CuratorPanel';
 import { Cursor } from './ui/fx/Cursor';
 import { Entrance } from './ui/fx/Entrance';
 import { Hall } from './ui/Hall';
@@ -142,7 +143,7 @@ export default function App() {
     if (gallery && !gallerySupported) setGallery(false);
   }, [gallery, gallerySupported]);
 
-  const { position: galleryPosition } = useGalleryWalk({
+  const { position: galleryPosition, step, settling } = useGalleryWalk({
     active: gallery && gallerySupported,
     /* the language is part of the key: a stop renamed by the toggle must not keep its old name */
     stopKey: `${pageKey}:${lang}`,
@@ -157,10 +158,57 @@ export default function App() {
    */
   const galleryOn = gallery && gallerySupported && Boolean(galleryPosition);
 
+  /*
+   * The Curator's Eye. It is the gallery walk plus a voice: a note at every stop, and the
+   * willingness to move on its own. The walk is borrowed, not rebuilt — the tour has no
+   * stops of its own and no keys of its own.
+   *
+   * The auto-advance waits for the glide to settle, then dwells, then steps. A visitor who
+   * pauses takes the walk back — the arrows work either way — and resumes with the button.
+   */
+  const [curator, setCurator] = useState(false);
+  const [curatorPaused, setCuratorPaused] = useState(false);
+  const curatorOn = curator && galleryOn;
+
+  /* Where the tour offers itself, gallery mode does too; turning the walk off ends the tour. */
   useEffect(() => {
-    document.body.classList.toggle('is-gallery', galleryOn);
-    return () => document.body.classList.remove('is-gallery');
-  }, [galleryOn]);
+    if (!gallery) setCurator(false);
+  }, [gallery]);
+
+  useEffect(() => {
+    document.body.classList.toggle('is-curator', curatorOn);
+    return () => document.body.classList.remove('is-curator');
+  }, [curatorOn]);
+
+  const curatorDwellMs = reducedMotion ? 5200 : 6400;
+  /*
+   * `step` and `settling` are read through refs: they are not stable identities, and an effect
+   * that depended on them would tear down and re-arm its own timer on every render — the dwell
+   * would never elapse and the tour would stand still forever. The stop index is the trigger;
+   * the functions are just how the step is taken.
+   */
+  const walkRef = useRef({ step, settling });
+  walkRef.current = { step, settling };
+  useEffect(() => {
+    if (!curatorOn || curatorPaused) return;
+    /* One shared timer: wait for the glide, dwell on the stop, then step on. */
+    let timer = 0;
+    let cancelled = false;
+    const tick = () => {
+      if (walkRef.current.settling()) {
+        timer = window.setTimeout(tick, 400);
+        return;
+      }
+      timer = window.setTimeout(() => {
+        if (cancelled || !walkRef.current.step(1)) setCuratorPaused(true);
+      }, curatorDwellMs);
+    };
+    tick();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [curatorOn, curatorPaused, galleryPosition?.index, pageKey, curatorDwellMs]);
 
   /* ---------------------------------------------------------------- keyboard */
 
@@ -192,7 +240,19 @@ export default function App() {
   const reading = helpOpen || route.kind === 'exhibit';
   const readout =
     galleryOn && galleryPosition && !reading ? (
-      <GalleryHud position={galleryPosition} inRoom={route.kind === 'station'} onExit={() => setGallery(false)} />
+      curatorOn ? (
+        <CuratorPanel
+          position={galleryPosition}
+          paused={curatorPaused}
+          onPause={() => setCuratorPaused((p) => !p)}
+          onExit={() => {
+            setCurator(false);
+            setGallery(false);
+          }}
+        />
+      ) : (
+        <GalleryHud position={galleryPosition} inRoom={route.kind === 'station'} onExit={() => setGallery(false)} />
+      )
     ) : null;
   const entrance = entering ? (
     <Entrance key="entrance" reducedMotion={reducedMotion} onMidpoint={markEntered} onDone={() => setEntering(false)} />
@@ -247,6 +307,7 @@ export default function App() {
         onToggleFlat={() => navigate(route.kind === 'flat' ? { kind: 'hub' } : { kind: 'flat' })}
         onHelp={() => setHelpOpen(true)}
         gallery={galleryToggleable ? { active: gallery, onToggle: () => setGallery((on) => !on) } : null}
+        curator={galleryToggleable ? { active: curator, onToggle: () => setCurator((on) => !on) } : null}
         crumb={
           station ? (
             <>

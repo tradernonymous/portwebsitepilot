@@ -99,6 +99,21 @@ const ms = {
   galleryStop: 'Hentian',
   galleryWork: 'Karya',
 
+  // --------------------------------------------------------------- curator's eye
+  curatorMode: 'Mata Kurator · tur berpandu',
+  curatorOn: 'Tur dimulakan — duduk dan biarkan galeri bergerak.',
+  curatorPause: 'Rehat',
+  curatorResume: 'Sambung',
+  curatorNote: 'Catatan kurator',
+  curatorWelcome: 'Selamat datang ke PORT. Koridor ini membentang dari muka masuk ke bilik tayangan — lapan bilik, satu lagu cahaya.',
+  curatorThreshold: 'Mula di sini: filem PORT sendiri di atas dinding, cahaya dicat secara langsung di udara. Ini adalah kepulangan mereka yang melihat.',
+  curatorOnview: 'Sedang dipamerkan — kerja yang dipilih dari seluruh amalan PORT, digantung satu demi satu.',
+  curatorRooms: 'Setiap bilik memakai bahasa seni yang menjadi miliknya. Melangkah ke dalam mana-mana satu.',
+  curatorFigures: 'Koleksi dalam nombor: karya, artis, residensi, arkib — sebuah rumah yang dikira dengan apa yang dijaganya.',
+  curatorVisit: 'Cara masuk. PORT berada di Kampung Karyawan Amanjaya, Ipoh — datanglah untuk tayangan, tinggal untuk bilik-bilik itu.',
+  curatorWorkNote: 'Dikurasi untuk dilihat dari dekat — dekati bila sedia.',
+  curatorDone: 'Tamat tur — koridor berterusan tanpa anda.',
+
   // ---------------------------------------------------------------- room
   room: 'Ruang',
   roomOf: 'daripada',
@@ -277,6 +292,21 @@ const en: Dict = {
   galleryExit: 'Exit',
   galleryStop: 'Stop',
   galleryWork: 'Work',
+
+  // --------------------------------------------------------------- curator's eye
+  curatorMode: "Curator's Eye · guided tour",
+  curatorOn: 'Tour begun — sit back and let the gallery move.',
+  curatorPause: 'Pause',
+  curatorResume: 'Resume',
+  curatorNote: "Curator's note",
+  curatorWelcome: 'Welcome to PORT. This corridor runs from the threshold to the screening room — eight rooms, one song of light.',
+  curatorThreshold: 'It begins here: PORT\u2019s own film on the wall, light painted live in the air. This is the room returning your gaze.',
+  curatorOnview: 'Now on view — works chosen from across PORT\u2019s practice, hung one by one.',
+  curatorRooms: 'Each room wears the language of the art it holds. Step into any one of them.',
+  curatorFigures: 'The collection in numbers: works, artists, residencies, archives — a house measured by what it keeps.',
+  curatorVisit: 'The way in. PORT lives at Kampung Karyawan Amanjaya, Ipoh — come for a screening, stay for the rooms.',
+  curatorWorkNote: 'Curated to be seen up close — approach when ready.',
+  curatorDone: 'The tour ends — the corridor carries on without you.',
 
   room: 'Room',
   roomOf: 'of',

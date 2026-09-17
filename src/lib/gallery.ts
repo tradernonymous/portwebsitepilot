@@ -10,6 +10,11 @@ export type GalleryPosition = {
   label: string;
   group: string;
   href: string;
+  /**
+   * The curator's one line for this stop, when the stop carries one. In Curator's Eye the
+   * note is the point: it is what the tour says about what you are standing in front of.
+   */
+  note?: string;
 };
 
 export type GalleryStop = {
@@ -20,6 +25,8 @@ export type GalleryStop = {
   group: string;
   /** Where Enter goes. Empty for a stop that is only somewhere to stand. */
   href: string;
+  /** The curator's one line, when the stop carries one. */
+  note?: string;
   el: HTMLElement;
 };
 
@@ -51,6 +58,7 @@ function readStops(): GalleryStop[] {
     label: el.dataset.stopLabel ?? el.id,
     group: el.dataset.stopGroup ?? '',
     href: destination(el),
+    note: el.dataset.stopNote || undefined,
     el,
   }));
 }
@@ -118,7 +126,7 @@ export function useGalleryWalk(options: {
     to?.el.classList.add('is-walked');
     cursorRef.current = index;
     setHere(
-      to ? { index, total: stops.length, label: to.label, group: to.group, href: to.href } : null,
+      to ? { index, total: stops.length, label: to.label, group: to.group, href: to.href, note: to.note } : null,
     );
   }, []);
 
@@ -227,5 +235,20 @@ export function useGalleryWalk(options: {
     position: here,
     /** Walking continues after a room is opened, so the new page's stops need reading. */
     reload: load,
+    /**
+     * Walk one stop in a direction, for the Curator's Eye auto-advance. It is `goTo` with
+     * the direction already chosen: clamped at the ends, through the same glide as the keys.
+     * Returns false when there is no further stop, so the tour knows to stop asking.
+     */
+    step: (direction: 1 | -1): boolean => {
+      const stops = stopsRef.current;
+      if (!stops.length) return false;
+      const next = cursorRef.current + direction;
+      if (next < 0 || next >= stops.length) return false;
+      goTo(next);
+      return true;
+    },
+    /** True while the engine is still carrying the page between stops. */
+    settling: scrollSettling,
   };
 }

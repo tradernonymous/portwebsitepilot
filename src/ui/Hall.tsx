@@ -126,6 +126,7 @@ function Threshold({
       data-chapter
       data-stop
       data-stop-label={t('chapterWelcome')}
+      data-stop-note={t('curatorThreshold')}
       data-hero
       ref={surface}
       className="threshold"
@@ -315,6 +316,7 @@ function RoomPanel({
       data-stop-label={room.label}
       data-stop-group={t('chapterRooms')}
       data-stop-href={href}
+      data-stop-note={room.tagline}
       style={{ ['--panel-accent' as string]: room.accent }}
     >
       <Motif kind={motif} className="depth-layer" />
@@ -386,6 +388,7 @@ function Figures({
       data-stop
       data-stop-label={t('statWorks')}
       data-stop-group={t('chapterFigures')}
+      data-stop-note={t('curatorFigures')}
       className="figures"
       aria-label={t('collection')}
       ref={section}
@@ -451,6 +454,7 @@ function Visit({ reducedMotion }: { reducedMotion: boolean }) {
         data-stop
         data-stop-label={t('visitTitle')}
         data-stop-group={t('chapterVisit')}
+        data-stop-note={t('curatorVisit')}
         className="visit"
         aria-labelledby="visit-title"
         ref={section}
