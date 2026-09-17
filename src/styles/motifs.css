@@ -1,0 +1,249 @@
+/* ==========================================================================
+   Motifs — the visual languages of contemporary art, rebuilt as CSS.
+
+   PORT's own thread is lightpainting: colour thrown off a photographed object.
+   These motifs are the other half of the conversation — the ways painters and
+   light artists since the 1950s have handled colour, edge and light. Each one
+   is a generated pattern, not a reproduction of anybody's work: the language,
+   not the picture.
+
+     field     soft-edged stacked colour      colour field painting
+     tubes     parallel bars of lit colour    fluorescent light art
+     aperture  a soft rectangle of light      light-and-space rooms
+     waves     drifting concentric rings      optical art
+     dots      a field of dots fading out     the infinity room
+     void      a black disc with a ring       the void
+     fog       veils of coloured haze         atmospheric installation
+
+   Every motif is absolutely placed, takes no pointer, and carries no meaning:
+   it is the air in the room, never the subject. Motifs sit under content, so
+   any text over one needs its own contrast treatment.
+   ========================================================================== */
+
+.motif {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* ---------------------------------------------------------------- colour field */
+
+/* soft-edged rectangles of deep colour, the way a colour field is built up in layers */
+.motif-field::before,
+.motif-field::after {
+  content: '';
+  position: absolute;
+  border-radius: 10px;
+}
+
+.motif-field::before {
+  inset: 15% 16%;
+  background: linear-gradient(180deg, rgba(198, 62, 44, 0.62), rgba(112, 26, 30, 0.5));
+  filter: blur(52px);
+}
+
+.motif-field::after {
+  inset: 31% 25% 27%;
+  background: linear-gradient(180deg, rgba(236, 152, 48, 0.46), rgba(140, 66, 22, 0.34));
+  filter: blur(42px);
+}
+
+/* ---------------------------------------------------------------- fluorescent bars */
+
+/* vertical tubes of lit colour, with a blurred copy of themselves as their bloom */
+.motif-tubes {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0 7%,
+    rgba(255, 61, 203, 0.85) 7% 8.1%,
+    transparent 8.1% 21%,
+    rgba(61, 232, 255, 0.85) 21% 22.1%,
+    transparent 22.1% 35%,
+    rgba(255, 177, 61, 0.8) 35% 36.1%,
+    transparent 36.1% 49%,
+    rgba(139, 92, 255, 0.85) 49% 50.1%,
+    transparent 50.1% 63%,
+    rgba(109, 255, 156, 0.72) 63% 64.1%,
+    transparent 64.1% 77%,
+    rgba(255, 90, 54, 0.8) 77% 78.1%,
+    transparent 78.1% 100%
+  );
+  opacity: 0.75;
+}
+
+.motif-tubes::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  filter: blur(26px);
+  opacity: 0.7;
+}
+
+/* ---------------------------------------------------------------- aperture */
+
+/* a rectangle of light cut into a dark wall, with the wall falling away around it */
+.motif-aperture {
+  background: var(--void);
+}
+
+.motif-aperture::before {
+  content: '';
+  position: absolute;
+  inset: 24% 27%;
+  background: radial-gradient(
+    120% 120% at 50% 42%,
+    rgba(255, 255, 255, 0.92),
+    rgba(255, 216, 176, 0.5) 52%,
+    rgba(126, 96, 168, 0.3) 82%,
+    transparent
+  );
+  filter: blur(7px);
+  box-shadow: 0 0 130px 44px rgba(255, 236, 214, 0.2);
+}
+
+.motif-aperture::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(62% 56% at 50% 46%, transparent 38%, rgba(5, 5, 7, 0.92) 100%);
+}
+
+/* ---------------------------------------------------------------- optical rings */
+
+.motif-waves {
+  background: repeating-radial-gradient(
+    circle at 50% 118%,
+    rgba(247, 247, 251, 0.8) 0 2px,
+    transparent 2px 17px
+  );
+  opacity: 0.3;
+  mask-image: linear-gradient(180deg, transparent, #000 28%, #000 72%, transparent);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 28%, #000 72%, transparent);
+  animation: motif-breathe 14s ease-in-out infinite alternate;
+}
+
+.motif-waves::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-radial-gradient(
+    circle at 52% 116%,
+    rgba(61, 232, 255, 0.55) 0 1px,
+    transparent 1px 15px
+  );
+  mix-blend-mode: screen;
+  animation: motif-drift 20s linear infinite;
+}
+
+@keyframes motif-breathe {
+  to {
+    opacity: 0.52;
+  }
+}
+
+@keyframes motif-drift {
+  to {
+    transform: translate3d(0, -15px, 0);
+  }
+}
+
+/* ---------------------------------------------------------------- the dot field */
+
+.motif-dots {
+  background-image: radial-gradient(rgba(247, 247, 251, 0.7) 2.4px, transparent 3px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(72% 72% at 50% 50%, #000 18%, transparent 76%);
+  -webkit-mask-image: radial-gradient(72% 72% at 50% 50%, #000 18%, transparent 76%);
+}
+
+.motif-dots::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 61, 203, 0.7) 1.5px, transparent 2.1px);
+  background-size: 34px 34px;
+  background-position: 17px 17px;
+  opacity: 0.65;
+  mask-image: radial-gradient(60% 60% at 46% 54%, #000 10%, transparent 70%);
+  -webkit-mask-image: radial-gradient(60% 60% at 46% 54%, #000 10%, transparent 70%);
+}
+
+/* ---------------------------------------------------------------- the void */
+
+.motif-void::before,
+.motif-void::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% -50%;
+}
+
+.motif-void::before {
+  width: min(44vmin, 300px);
+  background: radial-gradient(circle at 50% 44%, #000 0 60%, #05050a 74%, transparent 80%);
+  box-shadow: 0 0 90px 12px rgba(0, 0, 0, 0.9);
+}
+
+.motif-void::after {
+  width: min(50vmin, 348px);
+  background: conic-gradient(
+    from 0deg,
+    rgba(61, 232, 255, 0.5),
+    rgba(139, 92, 255, 0.45),
+    rgba(255, 61, 203, 0.5),
+    rgba(255, 177, 61, 0.4),
+    rgba(61, 232, 255, 0.5)
+  );
+  filter: blur(26px);
+  mix-blend-mode: screen;
+  opacity: 0.6;
+}
+
+/* ---------------------------------------------------------------- atmospheric haze */
+
+.motif-fog {
+  background:
+    radial-gradient(80% 58% at 50% 62%, rgba(247, 247, 251, 0.13), transparent 72%),
+    linear-gradient(180deg, rgba(247, 247, 251, 0.05), transparent 42%);
+}
+
+.motif-fog::after {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  background: conic-gradient(
+    from 200deg at 50% 60%,
+    rgba(61, 232, 255, 0.13),
+    rgba(255, 177, 61, 0.1),
+    rgba(255, 61, 203, 0.11),
+    rgba(139, 92, 255, 0.13),
+    rgba(61, 232, 255, 0.13)
+  );
+  filter: blur(46px);
+  mix-blend-mode: screen;
+  animation: fog-drift 32s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes fog-drift {
+  0% {
+    transform: translate3d(-3%, 2%, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(3%, -2%, 0) scale(1.14);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motif-waves,
+  .motif-waves::after,
+  .motif-fog::after {
+    animation: none;
+  }
+}

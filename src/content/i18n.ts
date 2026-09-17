@@ -48,6 +48,11 @@ const ms = {
   corridorKicker: 'Koridor Utama',
   corridorTitle: 'Lapan ruang, satu perjalanan',
   corridorLede: 'Setiap ruang menyimpan satu bahagian kisah PORT. Pilih pintu, dan melangkah masuk.',
+  chapterWelcome: 'Selamat datang',
+  chapterOnView: 'Pameran',
+  chapterRooms: 'Ruang',
+  chapterFigures: 'Koleksi',
+  chapterVisit: 'Kunjungi',
   exhibitionKicker: 'Pameran Semasa',
   exhibitionTitle: 'Yang sedang dipamerkan',
   exhibitionLede:
@@ -198,6 +203,11 @@ const en: Dict = {
   corridorKicker: 'The Main Corridor',
   corridorTitle: 'Eight rooms, one journey',
   corridorLede: "Each room holds one chapter of PORT's story. Choose a door and step inside.",
+  chapterWelcome: 'Welcome',
+  chapterOnView: 'On view',
+  chapterRooms: 'Rooms',
+  chapterFigures: 'The collection',
+  chapterVisit: 'Visit',
   exhibitionKicker: 'Current Exhibition',
   exhibitionTitle: 'Now on view',
   exhibitionLede:

@@ -1,47 +1,138 @@
 /* ==========================================================================
-   The hall: the screening-room hero, the corridor pipeline, figures, visit
+   The hall — a walk in five chapters
+
+     threshold   arrive, film running, one way in
+     exhibition  what is on view right now
+     rooms       every room in the building, one to a panel
+     figures     what the collection adds up to
+     visit       how to come in person
+
+   Dark rooms carry the light; the exhibition breaks the walk into daylight.
    ========================================================================== */
 
-/* ---------------------------------------------------------------- hero */
+.hall {
+  position: relative;
+}
 
-.hall-hero {
+/* ---------------------------------------------------------------- wayfinding rail */
+
+/*
+ * The map. Fixed to the side of the walk, one mark per chapter, filling as you arrive.
+ * It never carries content — only position — so it can shrink to bare dots on a phone.
+ */
+.chapter-rail {
+  position: fixed;
+  right: max(0.9rem, 2vw);
+  top: 50%;
+  z-index: 40;
+  translate: 0 -50%;
+  mix-blend-mode: difference;
+}
+
+.chapter-rail ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.chapter-rail a {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--light);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.chapter-rail i {
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.42;
+  transition: width var(--dur-2) var(--ease), opacity var(--dur-2) var(--ease);
+}
+
+.chapter-rail span {
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
+}
+
+.chapter-rail a:hover span,
+.chapter-rail a:focus-visible span {
+  opacity: 0.85;
+  transform: none;
+}
+
+.chapter-rail a.is-here i {
+  width: 34px;
+  opacity: 1;
+}
+
+.chapter-rail a.is-here span {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------------------------------------------------------------- chapter one: threshold */
+
+.threshold {
   position: relative;
   min-height: 100svh;
   display: grid;
   align-items: end;
   overflow: hidden;
   overflow: clip;
+  isolation: isolate;
   background: var(--void);
   color: var(--light);
-  isolation: isolate;
 }
 
-.hall-hero-veil {
+.threshold-veil {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background:
-    linear-gradient(90deg, rgba(5, 5, 7, 0.9) 0%, rgba(5, 5, 7, 0.6) 38%, rgba(5, 5, 7, 0.1) 75%),
-    linear-gradient(0deg, rgba(5, 5, 7, 0.95) 0%, rgba(5, 5, 7, 0) 45%);
+    linear-gradient(90deg, rgba(5, 5, 7, 0.9) 0%, rgba(5, 5, 7, 0.58) 40%, rgba(5, 5, 7, 0.08) 78%),
+    linear-gradient(0deg, rgba(5, 5, 7, 0.96) 0%, rgba(5, 5, 7, 0) 48%);
 }
 
-.hall-hero .light-painting {
+.threshold .aurora {
+  z-index: 0;
+  opacity: 0.2;
+}
+
+.threshold .light-painting {
+  z-index: 1;
   mix-blend-mode: screen;
 }
 
-.hall-hero .radiant-light {
+.threshold .radiant-light {
+  z-index: 1;
   mix-blend-mode: screen;
   opacity: 0.85;
 }
 
-.hall-hero-hud {
+.threshold .spot {
+  z-index: 2;
+}
+
+.threshold-hud {
   position: absolute;
   top: 5.2rem;
   left: max(1.25rem, 5vw);
   right: max(1.25rem, 5vw);
+  z-index: 3;
   display: flex;
   justify-content: space-between;
   color: var(--light-2);
-  z-index: 2;
 }
 
 .hud-dot.is-rec {
@@ -49,104 +140,106 @@
   box-shadow: 0 0 10px #ff3b4f, 0 0 2px #fff;
 }
 
-.hall-hero-inner {
+.threshold-inner {
   position: relative;
-  z-index: 2;
+  z-index: 3;
+  max-width: 64rem;
   padding: 8rem max(1.25rem, 5vw) clamp(5.5rem, 12vh, 8rem);
-  max-width: 980px;
 }
 
-.hall-hero-title {
-  font-size: clamp(2.6rem, 7.4vw, 6.4rem);
-  font-weight: 700;
-  line-height: 0.95;
-  letter-spacing: 0.01em;
+.threshold-title {
   margin: 0.2rem 0 1rem;
-}
-
-.hall-hero-title a {
-  text-decoration: none;
-  background: linear-gradient(180deg, #ffffff 0%, #d8d8e4 60%, #a9a9ba 100%);
+  font-size: clamp(2.7rem, 8vw, 7rem);
+  font-weight: 700;
+  line-height: 0.94;
+  letter-spacing: 0.01em;
+  background: linear-gradient(180deg, #ffffff 0%, #dcdce6 58%, #a5a5b6 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  transition: filter 0.3s var(--ease);
 }
 
-.hall-hero-title a:hover {
-  filter: drop-shadow(0 0 22px rgba(139, 92, 255, 0.6));
+.threshold-title .spectrum-text {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
-.hall-hero-lede {
+.threshold-lede {
   max-width: 46ch;
-  font-size: clamp(1rem, 1.6vw, 1.2rem);
   color: var(--light-2);
   margin-bottom: 1.6rem;
 }
 
-.hall-hero-film {
+.threshold-film {
   display: inline-grid;
   gap: 0.15rem;
-  padding: 0.65rem 1rem 0.65rem 1.1rem;
   margin-bottom: 1.4rem;
+  padding: 0.65rem 1rem 0.65rem 1.1rem;
   border-left: 2px solid var(--lp-magenta);
-  background: linear-gradient(90deg, rgba(255, 61, 203, 0.14), transparent);
+  background: linear-gradient(90deg, rgba(255, 61, 203, 0.16), transparent);
   text-decoration: none;
 }
 
-.hall-hero-film-label {
+.threshold-film-label {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 
-.hall-hero-film-meta {
+.threshold-film-meta {
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   color: var(--light-3);
 }
 
-.hall-hero-shelves {
+.threshold-shelves {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1.6rem;
-  padding: 0;
   margin: 0 0 2rem;
+  padding: 0;
 }
 
-.hall-hero-shelves a {
+.threshold-shelves a {
   display: inline-flex;
   align-items: baseline;
   gap: 0.45rem;
-  text-decoration: none;
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid var(--rule-dark-strong);
   font-family: var(--font-display);
   font-size: 0.95rem;
   letter-spacing: 0.06em;
   color: var(--light);
-  border-bottom: 1px solid var(--rule-dark-strong);
-  padding-bottom: 0.15rem;
-  transition: border-color 0.25s var(--ease), color 0.25s var(--ease);
+  text-decoration: none;
+  transition: border-color var(--dur-2) var(--ease), color var(--dur-2) var(--ease);
 }
 
-.hall-hero-shelves a:hover {
+.threshold-shelves a:hover {
   border-color: var(--lp-cyan);
   color: #fff;
 }
 
-.hall-hero-shelves i {
+.threshold-shelves i {
   font-style: normal;
   font-family: var(--font-mono);
   font-size: 0.68rem;
   color: var(--lp-cyan);
 }
 
-.hall-hero-cue {
+.threshold-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem 1.25rem;
+}
+
+.threshold-cue {
   position: absolute;
   right: max(1.25rem, 5vw);
   bottom: 2rem;
-  z-index: 2;
+  z-index: 3;
   display: grid;
   justify-items: center;
   gap: 0.6rem;
@@ -157,12 +250,12 @@
   color: var(--light-2);
 }
 
-.hall-hero-cue span {
+.threshold-cue span {
   writing-mode: vertical-rl;
 }
 
 /* a drop of light running down a thread */
-.hall-hero-cue i {
+.threshold-cue i {
   position: relative;
   width: 1px;
   height: 64px;
@@ -170,7 +263,7 @@
   overflow: hidden;
 }
 
-.hall-hero-cue i::after {
+.threshold-cue i::after {
   content: '';
   position: absolute;
   left: -1px;
@@ -190,11 +283,12 @@
   }
 }
 
-/* ---------------------------------------------------------------- current exhibition */
+/* ---------------------------------------------------------------- chapter two: on view */
 
 .exhibition {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   background:
     radial-gradient(1000px 420px at 85% 0%, rgba(139, 92, 255, 0.055), transparent 70%),
     radial-gradient(900px 380px at 8% 100%, rgba(61, 232, 255, 0.06), transparent 70%),
@@ -214,7 +308,6 @@
 .exhibition-lede {
   margin: 0.7rem 0 0;
   max-width: 58ch;
-  color: var(--ink-2);
 }
 
 .exhibition-grid {
@@ -238,14 +331,14 @@
   overflow: hidden;
   border-radius: 2px;
   background: var(--void);
-  box-shadow: 0 26px 50px -30px rgba(11, 11, 15, 0.4), 0 0 0 1px var(--rule);
-  transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease);
+  box-shadow: var(--shadow-2), 0 0 0 1px var(--rule);
+  transition: transform var(--dur-3) var(--ease-out), box-shadow var(--dur-3) var(--ease);
 }
 
 .onview-card:hover .onview-card-frame,
 .onview-card:focus-visible .onview-card-frame {
-  transform: translateY(-3px);
-  box-shadow: 0 40px 70px -34px rgba(90, 46, 224, 0.45), 0 0 0 1px var(--lp-violet);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-violet), 0 0 0 1px var(--lp-violet);
 }
 
 .onview-card-frame .artwork {
@@ -265,7 +358,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 1;
+  z-index: 2;
   padding: 0.4rem 0.7rem;
   font-family: var(--font-mono);
   font-size: 0.68rem;
@@ -279,11 +372,12 @@
 }
 
 .onview-card-frame .hud-corner {
+  z-index: 2;
   color: var(--light);
   width: 18px;
   height: 18px;
   opacity: 0;
-  transition: opacity 0.35s var(--ease);
+  transition: opacity var(--dur-2) var(--ease);
 }
 
 .onview-card:hover .onview-card-frame .hud-corner,
@@ -326,8 +420,10 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin-top: 0.2rem;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  line-height: 1.55;
   color: var(--ink-2);
-  font-size: 0.92rem;
 }
 
 .onview-card-cta {
@@ -340,12 +436,12 @@
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  transition: color 0.3s var(--ease);
+  transition: color var(--dur-2) var(--ease);
 }
 
 .onview-card-cta i {
   font-style: normal;
-  transition: transform 0.35s var(--ease-out);
+  transition: transform var(--dur-3) var(--ease-out);
 }
 
 .onview-card:hover .onview-card-cta {
@@ -356,422 +452,291 @@
   transform: translateX(5px);
 }
 
-/* ---------------------------------------------------------------- pipeline */
+/* ---------------------------------------------------------------- chapter three: the rooms */
 
-.pipeline {
+.rooms {
   position: relative;
+  background: var(--void);
+  color: var(--light);
+}
+
+.rooms-head {
+  position: relative;
+  z-index: 1;
+  max-width: 70rem;
   background:
-    radial-gradient(1200px 500px at 70% 0%, rgba(139, 92, 255, 0.06), transparent 70%),
-    radial-gradient(900px 400px at 10% 100%, rgba(61, 232, 255, 0.07), transparent 70%),
-    var(--white);
+    radial-gradient(900px 340px at 12% 0%, rgba(139, 92, 255, 0.1), transparent 70%),
+    transparent;
 }
 
-.pipeline-sticky {
-  padding: 5.5rem 0 4rem;
-}
-
-.pipeline.is-horizontal .pipeline-sticky {
-  position: sticky;
-  top: 0;
-  height: 100svh;
-  display: grid;
-  grid-template-rows: auto 1fr;
-  padding: 5.2rem 0 1.5rem;
-  overflow: hidden;
-}
-
-.pipeline-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 2rem;
-  padding: 0 max(1.25rem, 5vw);
-}
-
-.pipeline-head h2 {
+.rooms-head h2 {
   font-size: clamp(1.9rem, 4vw, 3.2rem);
-  letter-spacing: 0;
+  color: var(--light);
 }
 
-.pipeline-lede {
-  margin: 0.6rem 0 0;
-  max-width: 52ch;
-  color: var(--ink-2);
+.rooms-head .kicker {
+  color: var(--light-2);
 }
 
-.pipeline-meter {
-  display: grid;
-  justify-items: end;
-  gap: 0.6rem;
-  min-width: 180px;
+.rooms-head .serif-lede {
+  margin: 0.7rem 0 0;
+  color: var(--light-2);
 }
 
-.pipeline-count {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: var(--ink-3);
-}
-
-.pipeline-count b {
-  font-size: 2rem;
-  color: var(--ink);
-}
-
-.pipeline-bar {
-  width: 180px;
-  height: 3px;
-  background: var(--rule);
-  overflow: hidden;
-  border-radius: 2px;
-}
-
-.pipeline-bar span {
-  display: block;
-  height: 100%;
-  background: var(--spectrum);
-  transform-origin: left;
-  transform: scaleX(0.02);
-}
-
-.pipeline-viewport {
+/*
+ * One room to a panel, the full width of the screen — the walk from room to room. Text on
+ * one side, the work on the other, sides swapping each time so the eye has to travel.
+ */
+.room-panel {
   position: relative;
-  min-height: 0;
-  /* a grid item grows to its content by default — it must stay the width of the screen,
-     or the track has nothing to slide across */
-  min-width: 0;
-}
-
-.pipeline.is-horizontal .pipeline-sticky {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.pipeline.is-horizontal .pipeline-viewport {
+  display: grid;
+  align-items: center;
+  min-height: min(94svh, 60rem);
   overflow: hidden;
   overflow: clip;
-  overflow-clip-margin: 40px;
+  isolation: isolate;
+  padding: clamp(3.5rem, 9vw, 7rem) max(1.25rem, 5vw);
+  border-top: 1px solid var(--rule-dark);
 }
 
-.pipeline-track {
-  position: relative;
-  display: grid;
-  gap: 3.5rem;
-  padding: 3rem max(1.25rem, 5vw) 2rem calc(max(1.25rem, 5vw) + 44px);
+.room-panel .motif {
+  opacity: 0.85;
 }
 
-.pipeline.is-horizontal .pipeline-track {
-  display: flex;
-  align-items: center;
-  gap: clamp(4rem, 8vw, 9rem);
-  width: max-content;
-  height: 100%;
-  padding: 0 max(8rem, 22vw) 0 max(1.25rem, 5vw);
-  /* only the sliding corridor gets its own layer: a stacked one is thousands of pixels tall */
-  will-change: transform;
+.room-panel .light-painting {
+  z-index: 1;
+  mix-blend-mode: screen;
+  opacity: 0.5;
 }
 
-.pipeline-svg {
+/*
+ * The panel's own floor. Two jobs: darken the edges so the frame sits in a room rather than
+ * floating, and shade whichever side the copy is on — some motifs put a lit bar right where
+ * the words go, and words always win.
+ */
+.room-panel::after {
+  content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  overflow: visible;
+  inset: 0;
+  z-index: 1;
   pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(5, 5, 7, 0.86) 0%, rgba(5, 5, 7, 0.5) 40%, transparent 68%),
+    radial-gradient(
+      ellipse 80% 70% at 50% 50%,
+      rgba(5, 5, 7, 0.24) 0%,
+      rgba(5, 5, 7, 0.7) 58%,
+      rgba(5, 5, 7, 0.94) 100%
+    );
 }
 
-.pipe-base {
-  fill: none;
-  stroke: var(--rule-strong);
-  stroke-width: 1.2;
-  stroke-dasharray: 2 7;
+/* the copy swaps sides on alternate panels, so the shade follows it */
+.room-panel.is-flipped::after {
+  background:
+    linear-gradient(270deg, rgba(5, 5, 7, 0.86) 0%, rgba(5, 5, 7, 0.5) 40%, transparent 68%),
+    radial-gradient(
+      ellipse 80% 70% at 50% 50%,
+      rgba(5, 5, 7, 0.24) 0%,
+      rgba(5, 5, 7, 0.7) 58%,
+      rgba(5, 5, 7, 0.94) 100%
+    );
 }
 
-.pipe-lit,
-.pipe-glow {
-  fill: none;
-  stroke-linecap: round;
-}
-
-.pipe-lit {
-  stroke-width: 3;
-}
-
-.pipe-glow {
-  stroke-width: 16;
-  opacity: 0.18;
-}
-
-/* No animation lives inside this SVG: it is thousands of pixels wide, and anything that
-   pulses in it repaints all of it on every frame. It only changes when the visitor scrolls. */
-
-/* ---------------------------------------------------------------- doors */
-
-.door {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.1rem;
-  width: 100%;
-}
-
-.pipeline.is-horizontal .door {
-  width: clamp(260px, 26vw, 380px);
-  flex: none;
-  align-self: center;
-}
-
-.pipeline.is-horizontal .door.is-low {
-  translate: 0 3.5svh;
-}
-
-.pipeline.is-horizontal .door:not(.is-low) {
-  translate: 0 -2.5svh;
-}
-
-.pipeline.is-horizontal .door-label p {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.pipeline.is-horizontal .pipeline-head h2 {
-  font-size: clamp(1.7rem, 3.2vw, 2.6rem);
-}
-
-@media (max-height: 820px) {
-  .pipeline.is-horizontal .pipeline-lede {
-    display: none;
+@media (max-width: 900px) {
+  /* one column: shade the whole panel evenly instead of one side */
+  .room-panel::after,
+  .room-panel.is-flipped::after {
+    background: radial-gradient(
+      ellipse 90% 80% at 50% 45%,
+      rgba(5, 5, 7, 0.5) 0%,
+      rgba(5, 5, 7, 0.82) 60%,
+      rgba(5, 5, 7, 0.96) 100%
+    );
   }
 }
 
-.door-frame {
-  --rx: 0deg;
-  --ry: 0deg;
+.room-panel-inner {
   position: relative;
-  display: block;
-  aspect-ratio: 4 / 5;
-  color: var(--ink);
-  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
-  transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease), border-color 0.4s var(--ease);
-  box-shadow: 0 30px 60px -30px rgba(11, 11, 15, 0.35), 0 0 0 1px var(--rule);
-  border-radius: 2px;
-}
-
-.door-frame:hover {
-  box-shadow: 0 40px 80px -30px rgba(139, 92, 255, 0.4), 0 0 0 1px var(--lp-violet), 0 0 40px -10px rgba(139, 92, 255, 0.25);
-}
-
-.pipeline.is-horizontal .door-frame {
-  /* the frame's content is all absolutely placed, so it must be given a real width */
-  width: min(100%, calc(34svh * 0.8));
-  justify-self: center;
-  aspect-ratio: 4 / 5;
-}
-
-.door-frame .hud-corner {
-  width: 18px;
-  height: 18px;
-  margin: -8px;
-  opacity: 0;
-  transition: opacity 0.3s var(--ease), margin 0.3s var(--ease);
-}
-
-.door-frame:hover .hud-corner,
-.door.is-active .door-frame .hud-corner {
-  opacity: 1;
-  margin: -12px;
-}
-
-.door-art {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: var(--void);
-}
-
-.door-art .artwork {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: saturate(0.25) contrast(1.05);
-  transform: scale(1.02);
-  transition: filter 0.6s var(--ease), transform 0.8s var(--ease-out);
-}
-
-.door.is-lit .door-art .artwork,
-.door-frame:hover .door-art .artwork {
-  filter: none;
-}
-
-.door-frame:hover .door-art .artwork {
-  transform: scale(1.06);
-}
-
-/* light glances across the glass where the pointer is */
-.door-sheen {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(400px circle at var(--gx, 50%) var(--gy, 0%), rgba(255, 255, 255, 0.35), transparent 40%);
-  mix-blend-mode: soft-light;
-  opacity: 0;
-  transition: opacity 0.3s var(--ease);
-}
-
-.door-frame:hover .door-sheen {
-  opacity: 1;
-}
-
-.door-node {
-  position: absolute;
-  z-index: 1;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--white);
-  border: 2px solid var(--rule-strong);
-  transition: border-color 0.4s var(--ease), box-shadow 0.4s var(--ease), background 0.4s var(--ease);
-}
-
-/* vertical corridor: nodes run down the left edge */
-.door-node {
-  left: -44px;
-  top: 1.2rem;
-}
-
-.pipeline.is-horizontal .door-node {
-  position: relative;
-  left: auto;
-  top: auto;
-  justify-self: center;
-}
-
-.door.is-lit .door-node {
-  border-color: transparent;
-  background: #fff;
-  box-shadow: 0 0 0 3px var(--door-accent, var(--lp-violet)), 0 0 18px 4px rgba(139, 92, 255, 0.45);
-}
-
-.door.is-active .door-node {
-  box-shadow: 0 0 0 3px var(--lp-magenta), 0 0 24px 8px rgba(255, 61, 203, 0.4);
-}
-
-.door-label {
+  z-index: 2;
+  width: min(1220px, 100%);
+  margin-inline: auto;
   display: grid;
-  gap: 0.35rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  align-items: center;
+  gap: clamp(2rem, 6vw, 5rem);
 }
 
-.pipeline.is-horizontal .door-label {
-  text-align: center;
-  justify-items: center;
+.room-panel.is-flipped .room-panel-inner {
+  direction: rtl;
 }
 
-.door-index {
+.room-panel.is-flipped .room-panel-inner > * {
+  direction: ltr;
+}
+
+.room-panel-copy {
+  display: grid;
+  gap: 0.7rem;
+  justify-items: start;
+}
+
+.room-panel-no {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  color: var(--ink-3);
+  letter-spacing: 0.18em;
+  color: var(--panel-accent, var(--lp-cyan));
 }
 
-.door-index i {
-  font-style: normal;
-  margin-left: 0.5rem;
-  padding-left: 0.5rem;
-  border-left: 1px solid var(--rule);
-  font-weight: 400;
-}
-
-.door-label h3 {
-  font-size: clamp(1.15rem, 1.8vw, 1.5rem);
-  letter-spacing: 0.04em;
-}
-
-.door-label h3 a {
-  text-decoration: none;
-  background: linear-gradient(var(--ink), var(--ink)) 0 100% / 0 2px no-repeat;
-  transition: background-size 0.35s var(--ease);
-}
-
-.door-label h3 a:hover,
-.door-label h3 a:focus-visible {
-  background-image: var(--spectrum);
-  background-size: 100% 2px;
-}
-
-.door-label p {
-  margin: 0;
-  color: var(--ink-2);
-  font-size: 0.92rem;
-  max-width: 36ch;
-}
-
-.pipeline-end {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: clamp(260px, 30vw, 460px);
-  aspect-ratio: 1;
-  flex: none;
-  border-radius: 50%;
-  overflow: hidden;
-  background: var(--void);
+.room-panel-title {
+  font-size: clamp(1.9rem, 4.4vw, 3.6rem);
+  font-weight: 600;
+  line-height: 1.02;
   color: var(--light);
 }
 
-.pipeline:not(.is-horizontal) .pipeline-end {
-  width: min(100%, 420px);
-  justify-self: center;
+.room-panel-lede {
+  max-width: 42ch;
+  color: var(--light-2);
 }
 
-.pipeline-end-prism {
-  position: absolute !important;
-  inset: 0;
+.room-panel-meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--light-3);
 }
 
-.pipeline-end b {
+.room-panel-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule-dark-strong);
+  background: rgba(5, 5, 7, 0.5);
+  color: var(--light);
+  font-family: var(--font-display);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease),
+    transform var(--dur-2) var(--ease);
+}
+
+.room-panel-enter i {
+  font-style: normal;
+  transition: transform var(--dur-3) var(--ease-out);
+}
+
+.room-panel-enter:hover {
+  transform: translateY(-2px);
+  border-color: transparent;
+  background: rgba(5, 5, 7, 0.72);
+}
+
+.room-panel-enter:hover i {
+  transform: translateX(6px);
+}
+
+.room-panel-art {
+  display: grid;
+  justify-items: center;
+}
+
+/* the work itself, sized so a whole room fits the height of a screen */
+.room-panel-frame {
   position: relative;
-  font-family: 'Quicksand', var(--font-body);
-  font-weight: 500;
-  font-size: clamp(1.3rem, 2.4vw, 2rem);
-  text-shadow: 0 0 20px rgba(5, 5, 7, 0.9);
+  display: block;
+  width: min(100%, 46svh * 0.8);
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--void);
+  box-shadow: var(--shadow-3), 0 0 0 1px var(--rule-dark-strong);
+  transition: box-shadow var(--dur-3) var(--ease), transform var(--dur-3) var(--ease-out);
 }
 
-/* ---------------------------------------------------------------- figures */
+.room-panel-frame:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 50px 90px -40px rgba(0, 0, 0, 0.9), 0 0 0 1px var(--panel-accent, var(--lp-violet));
+}
 
-.hall-stats {
+.room-panel-frame .artwork {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.01);
+  transition: transform 0.9s var(--ease-out);
+}
+
+.room-panel-frame:hover .artwork {
+  transform: scale(1.05);
+}
+
+.room-panel-frame .hud-corner {
+  color: var(--light);
+  width: 20px;
+  height: 20px;
+  opacity: 0.5;
+}
+
+/* ---------------------------------------------------------------- chapter four: the figures */
+
+.figures {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   background: var(--void);
   color: var(--light);
   padding: clamp(4rem, 9vw, 7rem) 0 2.5rem;
-  isolation: isolate;
 }
 
-.hall-stats .light-painting {
-  opacity: 0.55;
-  z-index: -1;
+.figures .motif {
+  opacity: 0.5;
 }
 
-.hall-stats .radiant-light {
-  opacity: 0.7;
-  z-index: -1;
+.figures .radiant-light {
+  z-index: 1;
+  mix-blend-mode: screen;
+  opacity: 0.75;
 }
 
-.hall-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 2rem;
+.figures-inner {
+  position: relative;
+  z-index: 2;
   padding: 0 max(1.25rem, 5vw);
 }
 
-.stat {
+.figures-head {
+  margin-bottom: clamp(2rem, 5vw, 3.5rem);
+}
+
+.figures-head h2 {
+  margin-top: 0.4rem;
+  font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+  font-weight: 500;
+  color: var(--light-2);
+}
+
+.figures-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem;
+}
+
+.figure {
   display: grid;
   gap: 0.4rem;
   padding-top: 1rem;
   border-top: 1px solid var(--rule-dark-strong);
 }
 
-.stat b {
+.figure b {
   font-family: var(--font-display);
   font-size: clamp(2.6rem, 6vw, 4.8rem);
   font-weight: 600;
@@ -779,7 +744,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.stat span {
+.figure span {
   font-family: var(--font-mono);
   font-size: 0.74rem;
   letter-spacing: 0.12em;
@@ -788,6 +753,8 @@
 }
 
 .marquee {
+  position: relative;
+  z-index: 2;
   margin-top: clamp(3rem, 7vw, 5rem);
   overflow: hidden;
   mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
@@ -836,66 +803,69 @@
   }
 }
 
-/* ---------------------------------------------------------------- visit */
+/* ---------------------------------------------------------------- chapter five: the way out */
 
-/*
- * The last room of the gallery rather than a business card at the bottom of one: the same
- * painted wall as the hero, and the address on a pane of glass hanging in front of it.
- */
-.hall-visit {
+.visit {
   position: relative;
   overflow: hidden;
+  overflow: clip;
   isolation: isolate;
   background: var(--void);
   color: var(--light);
   padding: clamp(4rem, 9vw, 7rem) max(1.25rem, 5vw) clamp(4.5rem, 10vw, 7.5rem);
 }
 
-.hall-visit .light-painting {
-  opacity: 0.6;
-  z-index: -2;
+.visit .motif {
+  opacity: 0.9;
 }
 
-.hall-visit .radiant-light {
-  opacity: 0.8;
-  z-index: -2;
+.visit .light-painting {
+  z-index: 1;
+  opacity: 0.55;
+}
+
+.visit .radiant-light {
+  z-index: 1;
+  opacity: 0.7;
   mix-blend-mode: screen;
 }
 
-/* keeps the copy readable however bright the light behind it gets */
-.hall-visit-veil {
+/* keeps the address readable however bright the aperture behind it gets */
+.visit-veil {
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 2;
   background: radial-gradient(
-    ellipse 78% 70% at 30% 42%,
-    rgba(5, 5, 7, 0.2) 0%,
-    rgba(5, 5, 7, 0.66) 52%,
-    rgba(5, 5, 7, 0.92) 100%
+    ellipse 78% 70% at 34% 44%,
+    rgba(5, 5, 7, 0.34) 0%,
+    rgba(5, 5, 7, 0.74) 54%,
+    rgba(5, 5, 7, 0.94) 100%
   );
 }
 
-.hall-visit-inner {
+.visit-inner {
   position: relative;
+  z-index: 3;
+  width: min(1220px, 100%);
+  margin-inline: auto;
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: clamp(2rem, 6vw, 6rem);
   align-items: start;
 }
 
-.hall-visit h2 {
+.visit h2 {
   font-size: clamp(2rem, 4.6vw, 3.6rem);
   color: var(--light);
 }
 
-.hall-visit-lede {
+.visit-lede {
   margin-top: 1rem;
   max-width: 44ch;
   color: var(--light-2);
-  font-size: 1.05rem;
 }
 
-.hall-visit-note {
+.visit-note {
   margin: 1.5rem 0 0;
   max-width: 40ch;
   padding-left: 0.9rem;
@@ -908,20 +878,19 @@
   color: var(--light-3);
 }
 
-.hall-visit-card {
+.visit-card {
+  border-radius: var(--radius-lg);
+  padding: 1.9rem;
+  box-shadow: var(--shadow-3), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}
+
+.visit-card dl {
   margin: 0;
   display: grid;
   gap: 1.2rem;
-  padding: 1.9rem;
-  border: 1px solid var(--rule-dark-strong);
-  border-radius: var(--radius);
-  background: linear-gradient(160deg, rgba(247, 247, 251, 0.09), rgba(247, 247, 251, 0.03));
-  backdrop-filter: blur(16px) saturate(1.3);
-  -webkit-backdrop-filter: blur(16px) saturate(1.3);
-  box-shadow: 0 40px 80px -50px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.09);
 }
 
-.hall-visit-card dt {
+.visit-card dt {
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.14em;
@@ -929,28 +898,68 @@
   color: var(--light-3);
 }
 
-.hall-visit-card dd {
+.visit-card dd {
   margin: 0.15rem 0 0;
   font-size: 1.05rem;
   color: var(--light);
 }
 
-.hall-visit-card dd a {
+.visit-card dd a {
   color: var(--light);
 }
 
-.hall-visit-links {
+.visit-links {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-  padding-top: 0.4rem;
+  margin-top: 1.6rem;
+}
+
+/* ---------------------------------------------------------------- responsive */
+
+@media (max-width: 1024px) {
+  /* the map becomes a row of dots along the bottom, out of the way of the content */
+  .chapter-rail {
+    top: auto;
+    bottom: max(0.7rem, env(safe-area-inset-bottom));
+    right: auto;
+    left: 50%;
+    translate: -50% 0;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(5, 5, 7, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .chapter-rail ol {
+    grid-auto-flow: column;
+    gap: 0.7rem;
+  }
+
+  .chapter-rail span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .chapter-rail a {
+    gap: 0;
+  }
+
+  .chapter-rail i {
+    width: 16px;
+    height: 3px;
+  }
+
+  .chapter-rail a.is-here i {
+    width: 26px;
+  }
 }
 
 @media (max-width: 900px) {
-  .hall-stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .exhibition-grid {
     grid-template-columns: 1fr;
     gap: clamp(1.8rem, 6vw, 2.6rem);
@@ -960,110 +969,73 @@
     aspect-ratio: 3 / 2;
   }
 
-  .hall-visit-inner {
+  .figures-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .visit-inner {
     grid-template-columns: 1fr;
   }
 
-  .pipeline-head {
+  .room-panel {
+    min-height: 0;
+    padding-block: clamp(3rem, 10vw, 5rem);
+  }
+
+  .room-panel-inner,
+  .room-panel.is-flipped .room-panel-inner {
+    direction: ltr;
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
+  }
+
+  /* the text leads on a phone: read the room, then look at the work */
+  .room-panel-art {
+    order: 2;
+  }
+
+  .room-panel-frame {
+    width: min(100%, 34rem);
+    aspect-ratio: 3 / 2;
+  }
+}
+
+@media (max-width: 620px) {
+  .threshold-hud .hud-readout,
+  .threshold-cue {
+    display: none;
+  }
+
+  .threshold-actions {
+    align-items: stretch;
     flex-direction: column;
-    align-items: flex-start;
   }
 
-  .pipeline-meter {
-    justify-items: start;
-  }
-
-  .pipeline-svg {
-    display: none;
-  }
-
-  /* vertical corridor: a lit thread down the left edge, one segment per room */
-  .door::before {
-    content: '';
-    position: absolute;
-    left: -37px;
-    top: 1.2rem;
-    bottom: -3.5rem;
-    width: 2px;
-    background: var(--rule);
-  }
-
-  .door.is-lit::before {
-    background: linear-gradient(180deg, var(--lp-cyan), var(--lp-violet), var(--lp-magenta));
-    box-shadow: 0 0 10px rgba(139, 92, 255, 0.5);
-  }
-
-  .door-frame {
-    aspect-ratio: 4 / 3;
-  }
-
-  /* better mobile touch targets */
-  .btn-glow {
-    padding: 1.1rem 1.8rem;
-    font-size: 0.82rem;
-  }
-
-  .btn {
-    padding: 0.9rem 1.4rem;
-  }
-
-  /* smoother mobile transitions */
-  .door-frame {
-    transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease);
+  .threshold-actions .btn-glow,
+  .threshold-actions .btn {
+    justify-content: center;
+    width: 100%;
   }
 }
 
-/* ---------------------------------------------------------------- door reveal */
-
-.door-reveal {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.door-reveal-backdrop {
-  position: absolute;
-  inset: 0;
-  background: var(--void);
-}
-
-.door-reveal-img {
-  position: fixed;
-  z-index: 1;
-  object-fit: cover;
-  will-change: left, top, width, height;
-}
-
-.door-reveal-flash {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: #ffffff;
-  pointer-events: none;
-}
-
-.door-reveal-label {
-  position: absolute;
-  z-index: 3;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-display);
-  font-size: clamp(1.8rem, 4vw, 3.4rem);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--void);
-  text-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
-}
-
-@media (max-width: 560px) {
-  .hall-hero-hud .hud-readout {
-    display: none;
+@media (max-height: 640px) {
+  .threshold-inner {
+    padding-top: 4.5rem;
+    padding-bottom: 4rem;
   }
 
-  .hall-hero-cue {
-    display: none;
+  .threshold-title {
+    font-size: clamp(2.1rem, 6vw, 3.4rem);
+  }
+
+  .threshold-lede {
+    margin-bottom: 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .threshold-cue i::after,
+  .marquee-track {
+    animation: none;
   }
 }

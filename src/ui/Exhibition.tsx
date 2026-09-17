@@ -5,6 +5,8 @@ import { Artwork } from './Artwork';
 
 type Props = {
   reducedMotion: boolean;
+  /** The chapter anchor the rail watches. */
+  id?: string;
 };
 
 /**
@@ -18,7 +20,7 @@ type Props = {
  * It stays inside the existing content model: a work is whatever `station.exhibits` already
  * holds, and it links straight into the reader the corridor uses.
  */
-export function Exhibition({ reducedMotion }: Props) {
+export function Exhibition({ reducedMotion, id }: Props) {
   const { t, stations } = useLang();
   void reducedMotion;
 
@@ -33,7 +35,7 @@ export function Exhibition({ reducedMotion }: Props) {
   if (!featured.length) return null;
 
   return (
-    <section className="exhibition" aria-labelledby="exhibition-title">
+    <section id={id} data-chapter className="exhibition" aria-labelledby="exhibition-title">
       <header className="exhibition-head">
         <p className="kicker">{t('exhibitionKicker')}</p>
         <h2 id="exhibition-title">{t('exhibitionTitle')}</h2>
