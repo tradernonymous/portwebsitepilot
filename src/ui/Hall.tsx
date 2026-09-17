@@ -6,6 +6,7 @@ import { hrefFor } from '../lib/hooks';
 import { useLang } from '../lib/lang';
 import { HERO_ROOM, pad, tourOrder } from '../lib/order';
 import { Artwork, LightPlate } from './Artwork';
+import { DoorReveal } from './DoorReveal';
 import { FilmBackdrop } from './FilmBackdrop';
 import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
@@ -144,8 +145,16 @@ type Sample = { len: number; x: number; y: number };
  * The scroll work touches only transforms, one dash offset and two SVG attributes, inside
  * one animation frame per scroll burst; React does not re-render while walking.
  */
+type RevealState = {
+  src: string;
+  from: DOMRect;
+  label: string;
+  href: string;
+};
+
 function Pipeline({ rooms, reducedMotion }: { rooms: Station[]; reducedMotion: boolean }) {
   const { t, stations } = useLang();
+  const [reveal, setReveal] = useState<RevealState | null>(null);
   const uid = useId().replace(/:/g, '');
   const sectionRef = useRef<HTMLElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -379,6 +388,15 @@ function Pipeline({ rooms, reducedMotion }: { rooms: Station[]; reducedMotion: b
                     aria-hidden="true"
                     onPointerMove={tilt}
                     onPointerLeave={untilt}
+                    onClick={(e) => {
+                      if (reducedMotion || !cover) return;
+                      e.preventDefault();
+                      const img = (e.currentTarget as HTMLElement).querySelector('.artwork') as HTMLImageElement | null;
+                      const rect = img
+                        ? img.getBoundingClientRect()
+                        : (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      setReveal({ src: cover.small, from: rect, label: room.label, href });
+                    }}
                   >
                     <span className="door-art">
                       {cover ? (
@@ -406,6 +424,17 @@ function Pipeline({ rooms, reducedMotion }: { rooms: Station[]; reducedMotion: b
                 </article>
               );
             })}
+            {reveal ? (
+              <DoorReveal
+                src={reveal.src}
+                from={reveal.from}
+                label={reveal.label}
+                onDone={() => {
+                  window.location.hash = reveal.href;
+                  setReveal(null);
+                }}
+              />
+            ) : null}
             <div className="pipeline-end" aria-hidden="true">
               <PrismShards className="pipeline-end-prism" seed={31} reflection={false} />
               <b>Unity Thru Arts</b>
