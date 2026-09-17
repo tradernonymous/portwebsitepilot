@@ -5,6 +5,7 @@ import { pad, roomNumber, tourOrder } from '../lib/order';
 import { Artwork, LightPlate } from './Artwork';
 import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
+import { RadiantLight } from './fx/RadiantLight';
 import { ContactContent } from './StationPanel';
 import { VideoRoom } from './VideoRoom';
 
@@ -36,7 +37,8 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
           <div className="room-hero-bg" style={{ backgroundImage: `url("${cover.small}")` }} aria-hidden="true" />
         ) : null}
         <div className="room-hero-veil" aria-hidden="true" />
-        <LightPainting tone="dark" still painters={4} seed={number * 977} weight={1.2} />
+        <LightPainting tone="dark" still painters={3} seed={number * 977} weight={0.9} />
+        <RadiantLight sources={3} reducedMotion={reducedMotion} weight={1.0} speed={0.5} seed={number * 113} />
 
         <div className="room-hero-inner">
           <p className="kicker kicker-dark">
