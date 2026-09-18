@@ -1,4 +1,5 @@
-import { useRef, useFrame, useThree } from '@react-three/fiber';
+import { useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 type CorridorExitProps = {
@@ -60,6 +61,7 @@ function textTexture(text: string, opts: { colour?: string; size?: number; spaci
  * The corridor's end: a glowing doorway back to the deck, with a sign above it.
  */
 export function CorridorExit({ length, stationLabel, onExit }: CorridorExitProps) {
+  void stationLabel;
   const { raycaster } = useThree();
   const doorGlowRef = useRef<THREE.Mesh>(null);
   const doorRef = useRef<THREE.Mesh>(null);

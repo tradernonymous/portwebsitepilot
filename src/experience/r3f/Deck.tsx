@@ -1,8 +1,8 @@
-import { useRef, useEffect, useFrame } from '@react-three/fiber';
+import { useRef, useEffect } from 'react';
 import { useGalleryStore } from './galleryStore';
-import { Monolith } from './Monolith';
 import { DeckFloor } from './DeckFloor';
 import { DeckCenter } from './DeckCenter';
+import { Monolith } from './Monolith';
 import * as THREE from 'three';
 import type { Station } from '../../content';
 
@@ -20,6 +20,7 @@ type DeckProps = {
  * walks into it.
  */
 export function Deck({ stations, reducedMotion, onStationSelect }: DeckProps) {
+  void reducedMotion;
   const { phase, focusedStationId, setFocusedStationId } = useGalleryStore();
   const groupRef = useRef<THREE.Group>(null);
 

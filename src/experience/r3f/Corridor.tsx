@@ -1,4 +1,5 @@
-import { useRef, useFrame, useThree } from '@react-three/fiber';
+import { useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useGalleryStore } from './galleryStore';
 import { CorridorExhibit } from './CorridorExhibit';
 import { CorridorExit } from './CorridorExit';
@@ -20,11 +21,10 @@ const SPACING = 7.4;
  * hung along them. The camera walks the length; the nearest frame lights up.
  */
 export function Corridor({ station, reducedMotion, onExhibitSelect, onExhibitFocus, onExit }: CorridorProps) {
-  const { phase, walkProgress } = useGalleryStore();
+  void reducedMotion;
+  const { phase } = useGalleryStore();
   const { camera, raycaster } = useThree();
   const groupRef = useRef<THREE.Group>(null);
-  const floorRef = useRef<THREE.Mesh>(null);
-  const ceilingRef = useRef<THREE.Mesh>(null);
   const exhibits = station.exhibits;
   const length = Math.max(24, exhibits.length * SPACING + 12);
 
@@ -38,7 +38,6 @@ export function Corridor({ station, reducedMotion, onExhibitSelect, onExhibitFoc
     let bestDist = Infinity;
 
     for (let i = 0; i < exhibits.length; i++) {
-      const side = i % 2 === 0 ? -1 : 1;
       const z = -5 - i * SPACING;
       const d = Math.abs(z - (camZ - 6));
       if (d < bestDist) {
@@ -52,7 +51,7 @@ export function Corridor({ station, reducedMotion, onExhibitSelect, onExhibitFoc
     }
   });
 
-  const onClick = (event: React.MouseEvent) => {
+  const onClick = () => {
     const targets: THREE.Object3D[] = [];
     groupRef.current?.traverse(obj => {
       if (obj.userData.exhibitIndex !== undefined) targets.push(obj);
@@ -77,12 +76,12 @@ export function Corridor({ station, reducedMotion, onExhibitSelect, onExhibitFoc
       visible={phase === 'corridor'}
       onClick={onClick}
     >
-      <mesh ref={floorRef} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[9, length + 20]} />
         <meshStandardMaterial color={0xe8e8e4} roughness={0.42} metalness={0.18} />
       </mesh>
 
-      <mesh ref={ceilingRef} position={[0, 4.4, -length / 2 + 6]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh position={[0, 4.4, -length / 2 + 6]} rotation={[Math.PI / 2, 0, 0]}>
         <planeGeometry args={[9, length + 20]} />
         <meshStandardMaterial color={0xffffff} roughness={0.78} metalness={0.08} />
       </mesh>

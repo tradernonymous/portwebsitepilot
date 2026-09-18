@@ -1,13 +1,12 @@
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 const PIGMENTS = [0x3de8ff, 0x8b5cff, 0xff3dcb, 0xffb13d, 0x6dff9c];
 
 type Shard = {
-  mesh: THREE.Mesh;
+  mesh: THREE.Group;
   material: THREE.MeshBasicMaterial;
-  core: THREE.Mesh;
   coreMaterial: THREE.MeshBasicMaterial;
   flow: THREE.Texture;
   origin: THREE.Vector3;
@@ -93,7 +92,7 @@ export function LightPaintings({
   const groupRef = useRef(new THREE.Group());
   const shardsRef = useRef<Shard[]>([]);
   const texturesRef = useRef<THREE.Texture[]>([]);
-  const glowTexRef = useRef<THREE.Texture>();
+  const glowTexRef = useRef<THREE.Texture | null>(null);
   const paintingGroupRef = useRef(new THREE.Group());
   const cursorWorldRef = useRef(new THREE.Vector3());
   const cursorLocalRef = useRef(new THREE.Vector3());
@@ -186,7 +185,6 @@ export function LightPaintings({
         shardsRef.current.push({
           mesh: shard,
           material,
-          core: heart,
           coreMaterial,
           flow,
           origin,
@@ -272,7 +270,7 @@ export function LightPaintings({
     const lean = THREE.MathUtils.clamp(delta * 1.6, 0, 1);
 
     for (const shard of shards) {
-      const { mesh, material, core, coreMaterial, flow, origin, drift, rate, phase, baseOpacity, scroll, lean: leanVec } = shard;
+      const { mesh, material, coreMaterial, flow, origin, drift, rate, phase, baseOpacity, scroll, lean: leanVec } = shard;
       const sway = Math.sin(t * rate + phase);
       const lift = Math.cos(t * rate * 0.7 + phase);
 

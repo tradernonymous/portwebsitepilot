@@ -9,7 +9,6 @@ type ArtworkProps = {
   position?: [number, number, number];
   scale?: number;
   rotation?: [number, number, number];
-  plane?: boolean;
 };
 
 /**
@@ -22,10 +21,10 @@ export function Artwork({
   position = [0, 0, 0],
   scale = 1,
   rotation = [0, 0, 0],
-  plane = true,
 }: ArtworkProps) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const texture = useLoader(TextureLoader, image.large);
+  const raw = useLoader(TextureLoader, image.large);
+  const texture = Array.isArray(raw) ? raw[0] : raw;
   if (texture) {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = 4;
@@ -46,7 +45,6 @@ export function Artwork({
   }, [position, rotation, scale]);
 
   const targetW = fit === 'cover' ? 3.05 : 4.08;
-  const targetH = fit === 'cover' ? 2.05 : 2.76;
   const w = targetW;
   const h = targetW * aspect;
 

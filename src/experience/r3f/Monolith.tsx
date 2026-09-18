@@ -1,5 +1,5 @@
-import { useRef, useFrame, useThree } from '@react-three/fiber';
-import { useLoader } from '@react-three/fiber';
+import { useRef } from 'react';
+import { useFrame, useLoader } from '@react-three/fiber';
 import { TextureLoader } from 'three';
 import { Artwork } from './Artwork';
 import * as THREE from 'three';
@@ -8,6 +8,10 @@ import type { Station } from '../../content';
 const ACCENT_DIM = 0x141210;
 const GOLD = 0x1a1a1a;
 const GOLD_LEAF = 0x0f0f0f;
+
+/** A 1×1 transparent PNG — keeps `useLoader`'s input a string even when no cover exists. */
+const PLACEHOLDER =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
 
 type MonolithProps = {
   station: Station;
@@ -30,15 +34,19 @@ export function Monolith({
   isFocused,
   onClick,
 }: MonolithProps) {
+  void isFocused;
   const groupRef = useRef<THREE.Group>(null);
   const ringRef = useRef<THREE.Mesh>(null);
-  const { camera, clock } = useThree();
 
   const cover = station.deckCover;
-  const texture = useLoader(TextureLoader, cover?.small || station.heroImage?.small);
-  if (texture) {
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 4;
+  const coverUrl = cover?.small || station.heroImage?.small;
+  const hasCover = Boolean(coverUrl);
+
+  const texture = useLoader(TextureLoader, coverUrl ?? PLACEHOLDER);
+  const tex = Array.isArray(texture) ? texture[0] : texture;
+  if (tex) {
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
   }
 
   const hoverRef = useRef(false);
@@ -105,11 +113,11 @@ export function Monolith({
       </mesh>
 
       <group name="mount" rotation={[0, Math.PI, 0]}>
-        {texture ? (
+        {hasCover && tex ? (
           <Artwork
             image={{
-              small: cover?.small || station.heroImage?.small,
-              large: cover?.large || station.heroImage?.large,
+              small: cover?.small || station.heroImage?.small!,
+              large: cover?.large || station.heroImage?.large!,
               caption: station.label,
             }}
             fit="cover"

@@ -1,4 +1,5 @@
-import { useRef, useFrame } from '@react-three/fiber';
+import { useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 function labelTexture(text: string, opts: { colour?: string; size?: number; spacing?: number } = {}): THREE.CanvasTexture {
@@ -35,6 +36,15 @@ function labelTexture(text: string, opts: { colour?: string; size?: number; spac
   return tex;
 }
 
+function ringGeometry(radius: number): THREE.BufferGeometry {
+  const points: THREE.Vector3[] = [];
+  for (let j = 0; j <= 128; j++) {
+    const angle = (j / 128) * Math.PI * 2;
+    points.push(new THREE.Vector3(Math.cos(angle) * radius, 0.02, Math.sin(angle) * radius));
+  }
+  return new THREE.BufferGeometry().setFromPoints(points);
+}
+
 export function DeckCenter() {
   const logoRef = useRef<THREE.Mesh>(null);
 
@@ -58,22 +68,13 @@ export function DeckCenter() {
         />
       </mesh>
 
-      <Medallion radius={3.1} colour={0xd9b978} opacity={0.4} />
-      <Medallion radius={3.35} colour={0xd9b978} opacity={0.18} />
-    </group>
-  );
-}
+      <lineSegments geometry={ringGeometry(3.1)}>
+        <lineBasicMaterial color={0xd9b978} transparent opacity={0.4} />
+      </lineSegments>
 
-function Medallion({ radius, colour, opacity }: { radius: number; colour: number; opacity: number }) {
-  const points: THREE.Vector3[] = [];
-  for (let j = 0; j <= 128; j++) {
-    const angle = (j / 128) * Math.PI * 2;
-    points.push(new THREE.Vector3(Math.cos(angle) * radius, 0.02, Math.sin(angle) * radius));
-  }
-  const geo = new THREE.BufferGeometry().setFromPoints(points);
-  return (
-    <line geometry={geo} material={
-      new THREE.LineBasicMaterial({ color: colour, transparent: true, opacity })
-    } />
+      <lineSegments geometry={ringGeometry(3.35)}>
+        <lineBasicMaterial color={0xd9b978} transparent opacity={0.18} />
+      </lineSegments>
+    </group>
   );
 }

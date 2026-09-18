@@ -1,5 +1,5 @@
-import { useRef, useFrame, useThree } from '@react-three/fiber';
-import { useLoader } from '@react-three/fiber';
+import { useRef } from 'react';
+import { useFrame, useThree, useLoader } from '@react-three/fiber';
 import { TextureLoader } from 'three';
 import * as THREE from 'three';
 import type { Exhibit } from '../../content';
@@ -18,12 +18,15 @@ type CorridorExhibitProps = {
  * walks past.
  */
 export function CorridorExhibit({ exhibit, index, side, z, spacing }: CorridorExhibitProps) {
+  void index;
+  void spacing;
   const frameRef = useRef<THREE.Group>(null);
   const spotlightRef = useRef<THREE.Mesh>(null);
   const { camera, clock } = useThree();
 
   const image = exhibit.images[0];
-  const texture = useLoader(TextureLoader, image?.small);
+  const raw = useLoader(TextureLoader, image?.small);
+  const texture = Array.isArray(raw) ? raw[0] : raw;
   if (texture) {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = 4;

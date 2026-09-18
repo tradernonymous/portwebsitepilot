@@ -4,11 +4,10 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 const HUB_CAMERA_POS = new THREE.Vector3(0, 1.72, 0);
-const HUB_RADIUS = 8.1;
 
 export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
-  const { camera, scene, raycaster, pointer } = useThree();
-  const { phase, focusedStationId, walkProgress } = useGalleryStore();
+  const { camera, scene, raycaster, gl } = useThree();
+  const { phase } = useGalleryStore();
   const rigRef = useRef(new THREE.Object3D());
   const yawRef = useRef(new THREE.Object3D());
   const pitchRef = useRef(new THREE.Object3D());
@@ -48,16 +47,17 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
 
   const onPointerDown = (event: PointerEvent) => {
     if (phase === 'entry' && !entryArmedRef.current) return;
-    camera.domElement.setPointerCapture?.(event.pointerId);
+    const canvas = gl.domElement;
+    canvas.setPointerCapture?.(event.pointerId);
     draggingRef.current = true;
     movedRef.current = 0;
-    const rect = camera.domElement.getBoundingClientRect();
+    const rect = canvas.getBoundingClientRect();
     pointerRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     pointerRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   };
 
   const onPointerMove = (event: PointerEvent) => {
-    const rect = camera.domElement.getBoundingClientRect();
+    const rect = gl.domElement.getBoundingClientRect();
     pointerRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     pointerRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
@@ -75,7 +75,7 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
   const onPointerUp = (event: PointerEvent) => {
     const wasDragging = draggingRef.current;
     draggingRef.current = false;
-    camera.domElement.releasePointerCapture?.(event.pointerId);
+    gl.domElement.releasePointerCapture?.(event.pointerId);
     if (!wasDragging || movedRef.current > 12) return;
     pick();
   };
@@ -90,7 +90,7 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
   };
 
   useEffect(() => {
-    const canvas = camera.domElement;
+    const canvas = gl.domElement;
     canvas.addEventListener('pointerdown', onPointerDown);
     canvas.addEventListener('pointermove', onPointerMove);
     canvas.addEventListener('pointerup', onPointerUp);
@@ -105,10 +105,10 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
       canvas.removeEventListener('pointerleave', onPointerLeave);
       canvas.removeEventListener('wheel', onWheel);
     };
-  }, [phase, camera]);
+  }, [phase, gl]);
 
   const pick = () => {
-    raycaster.setFromCamera(pointerRef.current, camera);
+    raycaster.setFromCamera(new THREE.Vector2(pointerRef.current.x, pointerRef.current.y), camera);
     // Picking is delegated to Deck/Corridor components via their own click handlers.
   };
 
@@ -125,7 +125,7 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
     );
   };
 
-  useFrame(({ clock, delta }) => {
+  useFrame(({ clock }) => {
     const d = Math.min(clock.getDelta(), 0.12);
     const t = clock.elapsedTime;
     const rig = rigRef.current;

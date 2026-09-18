@@ -1,6 +1,13 @@
-import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { EffectComposer, RenderPass, UnrealBloomPass, FilmPass, ChromaticAberrationPass } from '@react-three/postprocessing';
-import { Suspense, useRef, useState, useEffect, useMemo } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { Suspense, useState, useEffect, useMemo } from 'react';
+import {
+  EffectComposer,
+  Bloom,
+  Scanline,
+  Noise,
+  ChromaticAberration,
+} from '@react-three/postprocessing';
+import { BlendFunction, RenderPass } from 'postprocessing';
 import * as THREE from 'three';
 import { Deck } from './Deck';
 import { Corridor } from './Corridor';
@@ -16,25 +23,25 @@ type GalleryCanvasProps = {
   stations: Station[];
   reducedMotion: boolean;
   onPhaseChange?: (phase: Phase) => void;
-  onEntryProgress?: (progress: number) => void;
   onStationSelect?: (stationId: string) => void;
   onExhibitSelect?: (index: number) => void;
   onExhibitFocus?: (index: number) => void;
   onReady?: () => void;
+  onExit?: () => void;
   corridorOnly?: boolean;
 };
 
-const initialCameraPosition = { x: 0, y: 1.72, z: 66 };
+const initialCameraPosition: [number, number, number] = [0, 1.72, 66];
 
 export function GalleryCanvas({
   stations,
   reducedMotion,
   onPhaseChange,
-  onEntryProgress,
   onStationSelect,
   onExhibitSelect,
   onExhibitFocus,
   onReady,
+  onExit,
   corridorOnly,
 }: GalleryCanvasProps) {
   const { setPhase, setCurrentStation, phase, currentStation } = useGalleryStore();
@@ -65,8 +72,8 @@ export function GalleryCanvas({
       camera={{ position: initialCameraPosition, fov: 62, near: 0.1, far: 400 }}
       shadows={false}
       dpr={[1, 1.75]}
-      onCreated={() => setIsReady(true)}
-      onCreated2={({ gl }) => {
+      onCreated={({ gl }) => {
+        setIsReady(true);
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.05;
         gl.setClearColor(0xf7f7f4, 1);
@@ -106,6 +113,7 @@ export function GalleryCanvas({
             onExit={() => {
               setCurrentStation(null);
               setPhase('hub');
+              onExit?.();
             }}
           />
         )}
@@ -139,22 +147,23 @@ function PostProcessing({ reducedMotion }: { reducedMotion: boolean }) {
   if (reducedMotion) return null;
 
   return (
-    <EffectComposer multisampling={8} disableNormalPass>
-      <RenderPass />
-      <UnrealBloomPass
-        strength={0.35}
+    <EffectComposer
+      multisampling={8}
+      enableNormalPass={false}
+      renderPass={(scene: THREE.Scene, camera: THREE.Camera) => new RenderPass(scene, camera)}
+    >
+      <Bloom
+        blendFunction={BlendFunction.ADD}
+        luminanceThreshold={0.85}
+        luminanceSmoothing={0.4}
         radius={0.6}
-        threshold={0.85}
-        resolutionScale={1}
+        mipmapBlur
       />
-      <FilmPass
-        noiseIntensity={0.08}
-        scanlineIntensity={0.02}
-        grayscale={false}
-      />
-      <ChromaticAberrationPass
-        offset={[0.0008, 0.0004]}
-        radialModification={0}
+      <Scanline blendFunction={BlendFunction.SCREEN} density={0.4} />
+      <Noise blendFunction={BlendFunction.SCREEN} opacity={0.08} />
+      <ChromaticAberration
+        offset={new THREE.Vector2(0.0008, 0.0004)}
+        radialModulation={false}
         modulationOffset={0}
       />
     </EffectComposer>
