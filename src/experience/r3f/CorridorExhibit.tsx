@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { useFrame, useThree, useLoader } from '@react-three/fiber';
+import { ArtCanvas } from './ArtCanvas';
 import { TextureLoader } from 'three';
 import * as THREE from 'three';
 import type { Exhibit } from '../../content';
@@ -15,6 +16,9 @@ type CorridorExhibitProps = {
   side: number;
   z: number;
   spacing: number;
+  /** The room's colour — a painted canvas carries it into its palette. */
+  accent: string;
+  reducedMotion: boolean;
 };
 
 /**
@@ -22,8 +26,7 @@ type CorridorExhibitProps = {
  * caption and meta plaques, and a spotlight that brightens as the visitor
  * walks past.
  */
-export function CorridorExhibit({ exhibit, index, side, z, spacing }: CorridorExhibitProps) {
-  void index;
+export function CorridorExhibit({ exhibit, index, side, z, spacing, accent, reducedMotion }: CorridorExhibitProps) {
   void spacing;
   const frameRef = useRef<THREE.Group>(null);
   const spotlightRef = useRef<THREE.Mesh>(null);
@@ -67,6 +70,7 @@ export function CorridorExhibit({ exhibit, index, side, z, spacing }: CorridorEx
       ref={frameRef}
       position={[side * 4.5, 2.1, z]}
       rotation={[0, side * (Math.PI / 2), 0]}
+      userData={{ exhibitIndex: index }}
     >
       <mesh name="plate" castShadow receiveShadow>
         <boxGeometry args={[3.5, 2.5, 0.14]} />
@@ -86,14 +90,19 @@ export function CorridorExhibit({ exhibit, index, side, z, spacing }: CorridorEx
         <lineBasicMaterial color={0x111111} transparent opacity={0.72} />
       </lineSegments>
 
-      <mesh position={[0, 0, 0.1]}>
-        <planeGeometry args={[3.05, 2.05]} />
-        <meshBasicMaterial
-          color={image ? 0xffffff : 0x14202f}
-          map={texture || undefined}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
+      {image ? (
+        <mesh position={[0, 0, 0.1]}>
+          <planeGeometry args={[3.05, 2.05]} />
+          <meshBasicMaterial
+            color={0xffffff}
+            map={texture || undefined}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ) : (
+        /* No photograph of this work exists — it still gets art, not a bare plate. */
+        <ArtCanvas seed={exhibit.id} accent={accent} width={3.05} height={2.05} reducedMotion={reducedMotion} position={[0, 0, 0.1]} />
+      )}
 
       <mesh name="caption" position={[0, -1.62, 0.12]}>
         <planeGeometry args={[3.3, 0.44]} />

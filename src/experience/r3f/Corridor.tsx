@@ -138,6 +138,8 @@ export function Corridor({ station, reducedMotion, onExhibitSelect, onExhibitFoc
             side={side}
             z={z}
             spacing={SPACING}
+            accent={station.accent}
+            reducedMotion={reducedMotion}
           />
         );
       })}

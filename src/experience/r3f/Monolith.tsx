@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { TextureLoader } from 'three';
 import { Artwork } from './Artwork';
+import { ArtCanvas } from './ArtCanvas';
 import * as THREE from 'three';
 import type { Station } from '../../content';
 
@@ -124,15 +125,8 @@ export function Monolith({
             position={[0, 2.05, 0.23]}
           />
         ) : (
-          <mesh position={[0, 2.05, 0.23]}>
-            <planeGeometry args={[1, 1]} />
-            <meshBasicMaterial
-              color={accent}
-              transparent
-              opacity={0.3}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
+          /* No cover photograph — the monolith still carries art, not a tinted plane. */
+          <ArtCanvas seed={`deck:${station.id}`} accent={accent} width={3.4} height={2.3} position={[0, 2.05, 0.23]} />
         )}
 
         <mesh name="halo" position={[0, 2.05, 0.16]} scale={[5.7, 4.5, 1]}>

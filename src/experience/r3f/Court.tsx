@@ -4,6 +4,7 @@ import { useGalleryStore } from './galleryStore';
 import { CorridorExit } from './CorridorExit';
 import { SCULPTURE_FORMS, Sculpture, isSculptureForm, type SculptureForm } from './Sculpture';
 import { CourtLight } from './CourtLight';
+import { ArtCanvas } from './ArtCanvas';
 import * as THREE from 'three';
 import type { Station } from '../../content';
 
@@ -200,6 +201,28 @@ export function Court({ station, reducedMotion, onExhibitSelect, onExhibitFocus,
         <planeGeometry args={[length + 24, ceiling]} />
         <meshStandardMaterial color={0xf2f1ec} roughness={0.9} metalness={0.05} side={THREE.DoubleSide} />
       </mesh>
+
+      {/*
+       * Paintings hung on the court's walls, between the plinths. A sculpture court is not an
+       * empty hall — the flat work gives the eye somewhere to rest between objects, and the
+       * room stops reading as bare plaster. Each painting takes the accent of the plinth
+       * opposite it, so wall and floor carry one colour at a time.
+       */}
+      {exhibits.map((ex, i) => {
+        const side = i % 2 === 0 ? 1 : -1;
+        const z = -ENTRY_Z - i * SPACING - SPACING / 2;
+        return (
+          <group key={`wall-${ex.id}`} position={[side * (HALF_WIDTH - 0.12), 2.6, z]} rotation={[0, side * -Math.PI / 2, 0]}>
+            <ArtCanvas
+              seed={`court:${ex.id}`}
+              accent={accents[i] ?? station.accent}
+              width={2.6}
+              height={1.9}
+              reducedMotion={reducedMotion}
+            />
+          </group>
+        );
+      })}
 
       {plinths.map((plinth, i) => {
         const { id, x, z, accent } = plinth;
