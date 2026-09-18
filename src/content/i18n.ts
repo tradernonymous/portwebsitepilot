@@ -97,7 +97,7 @@ const ms = {
     'Klik ruang itu untuk masuk dan berjalan di dalamnya, atau tekan Peta Bangunan di bar atas untuk melihat seluruh rumah ini sekali gus — dengan kedudukan anda ditanda.',
   firstRunC: 'Berjalan dengan papan kekunci',
   firstRunCBody:
-    'Hidupkan Mod Galeri di bar atas untuk berjalan dengan anak panah, atau pilih Mata Kurator untuk tur berpandu yang membawa anda sendiri.',
+    'Hidupkan Mod Galeri di bar atas untuk berjalan dengan anak panah, atau pilih Mata Kurator untuk lawatan berpandu yang membawa anda sendiri.',
   firstRunNext: 'Seterusnya',
   firstRunGo: 'Mula meneroka',
   firstRunSkip: 'Langkau',
@@ -144,8 +144,8 @@ const ms = {
   galleryWork: 'Karya',
 
   // --------------------------------------------------------------- curator's eye
-  curatorMode: 'Mata Kurator · tur berpandu',
-  curatorOn: 'Tur dimulakan — duduk dan biarkan galeri bergerak.',
+  curatorMode: 'Mata Kurator · lawatan berpandu',
+  curatorOn: 'Lawatan bermula — duduk dan biarkan galeri membawa anda.',
   curatorPause: 'Rehat',
   curatorResume: 'Sambung',
   curatorNote: 'Catatan kurator',
@@ -156,7 +156,7 @@ const ms = {
   curatorFigures: 'Koleksi dalam nombor: karya, artis, residensi, arkib — sebuah rumah yang dikira dengan apa yang dijaganya.',
   curatorVisit: 'Cara masuk. PORT berada di Kampung Karyawan Amanjaya, Ipoh — datanglah untuk tayangan, tinggal untuk bilik-bilik itu.',
   curatorWorkNote: 'Dikurasi untuk dilihat dari dekat — dekati bila sedia.',
-  curatorDone: 'Tamat tur — koridor berterusan tanpa anda.',
+  curatorDone: 'Lawatan tamat — koridor masih menunggu untuk anda terokai.',
 
   trailMode: 'Laluan kurasi',
   trailKicker: 'Laluan PORT',
@@ -215,7 +215,7 @@ const ms = {
   hintWalkCoarse: 'Leret atas / bawah untuk berjalan · Ketuk bingkai untuk membaca',
   hintWalkFine: 'Tatal atau ↑ ↓ untuk berjalan · Klik bingkai untuk membaca',
   freeWalkOn: 'Berjalan sendiri',
-  freeWalkOff: 'Kembali ke talian',
+  freeWalkOff: 'Kembali ke galeri',
   freeWalkError: 'Tetingkap ini tidak membenarkan kawalan penunjuk — leret untuk tengok.',
   gyroLook: 'Tengok dengan giroskop',
   gyroDenied: 'Giroskop tidak dibenarkan — leret untuk tengok.',
@@ -258,7 +258,7 @@ const ms = {
 
   // ---------------------------------------------------------------- flat list
   flatIntro:
-    'Kampung Karyawan Amanjaya — agensi kebudayaan yang didanai sepenuhnya oleh Kerajaan Negeri Perak. Diasaskan pada tahun 2011 untuk mendekatkan seni kepada masyarakat.',
+    'Kampung Karyawan Amanjaya — agensi kebudayaan yang dibiayai sepenuhnya oleh Kerajaan Negeri Perak. Diasaskan pada tahun 2011 untuk mendekatkan seni kepada masyarakat.',
   stationsNav: 'Ruang',
   flatFooterPages: 'halaman dan',
   flatFooterImages: 'imej diselaraskan daripada',
@@ -280,7 +280,7 @@ const ms = {
     'Hidupkan mod galeri pada bar atas, kemudian gunakan anak panah untuk berjalan dari ruang ke ruang dan dari karya ke karya. Bacaan kedudukan menunjukkan di mana anda berada.',
   helpCuratorTitle: 'Mata Kurator',
   helpCuratorBody:
-    'Ikon mata pada bar atas memulakan tur berpandu: galeri bergerak sendiri dari hentian ke hentian, dengan catatan kurator di setiap satu. Tekan Rehat untuk mengambil alih.',
+    'Ikon mata pada bar atas memulakan lawatan berpandu: galeri bergerak sendiri dari hentian ke hentian, dengan catatan kurator di setiap satu. Tekan Rehat untuk mengambil alih.',
   helpA11yTitle: 'Kebolehcapaian',
   helpA11yBody:
     'Ikon senarai di kanan atas memaparkan seluruh laman sebagai dokumen biasa. Semua ruang boleh dicapai dengan papan kekunci.',

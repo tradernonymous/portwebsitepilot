@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useCollected } from './lib/collected';
+import { resolveCollected, useCollected } from './lib/collected';
 import {
   clearTrailProgress,
   curatedTrails,
@@ -108,6 +108,7 @@ export default function App() {
   });
   const trailNavigation = useRef(false);
   const { works: collected } = useCollected();
+  const collectedEntries = useMemo(() => resolveCollected(collected, stations), [collected, stations]);
   const activeTrail = useMemo<CuratedTrail | null>(
     () => curatedTrails.find((trail) => trail.id === trailId) ?? null,
     [trailId],
@@ -163,9 +164,12 @@ export default function App() {
     route.kind === 'hub' ? 'hall' : route.kind === 'flat' ? 'flat' : route.kind === 'walk' ? `walk:${route.stationId}` : `room:${route.stationId}`;
   const lastPage = useRef(pageKey);
 
-  /* Any change of page closes the plan — including one the plan itself asked for. */
+  /* Any change of page closes transient panels — the new room owns the screen. */
   useEffect(() => {
     setMenuOpen(false);
+    setHelpOpen(false);
+    setNotebookOpen(false);
+    setTrailOpen(false);
   }, [pageKey]);
 
   useEffect(() => {
@@ -350,11 +354,32 @@ export default function App() {
     onTour: () => setTourSeen(false),
     flat: route.kind === 'flat',
     onToggleFlat: () => navigate(route.kind === 'flat' ? { kind: 'hub' } : { kind: 'flat' }),
-    onHelp: () => setHelpOpen(true),
-    notebook: { count: collected.length, onToggle: () => setNotebookOpen((open) => !open) },
+    onHelp: () => {
+      setMenuOpen(false);
+      setNotebookOpen(false);
+      setTrailOpen(false);
+      setHelpOpen(true);
+    },
+    notebook: {
+      count: collectedEntries.length,
+      onToggle: () => {
+        setHelpOpen(false);
+        setMenuOpen(false);
+        setTrailOpen(false);
+        setNotebookOpen((open) => !open);
+      },
+    },
     trail:
       route.kind === 'hub' || route.kind === 'station' || route.kind === 'exhibit'
-        ? { active: Boolean(activeTrail), onToggle: () => setTrailOpen((open) => !open) }
+        ? {
+            active: Boolean(activeTrail),
+            onToggle: () => {
+              setHelpOpen(false);
+              setMenuOpen(false);
+              setNotebookOpen(false);
+              setTrailOpen((open) => !open);
+            },
+          }
         : null,
     gallery: galleryToggleable ? { active: gallery, onToggle: () => setGallery((on) => !on) } : null,
     curator: galleryToggleable ? { active: curator, onToggle: toggleCurator } : null,
@@ -454,7 +479,12 @@ export default function App() {
       <TopBar
         {...chrome}
         pageKey={pageKey}
-        onMenu={() => setMenuOpen(true)}
+        onMenu={() => {
+          setHelpOpen(false);
+          setNotebookOpen(false);
+          setTrailOpen(false);
+          setMenuOpen(true);
+        }}
         crumb={
           station ? (
             <>

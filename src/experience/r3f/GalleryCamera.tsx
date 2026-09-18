@@ -37,14 +37,13 @@ type Bounds = NonNullable<ReturnType<typeof useGalleryStore.getState>['bounds']>
 type Body = { pos: THREE.Vector3; active: boolean };
 
 export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
-  const { camera, scene, raycaster, gl } = useThree();
+  const { camera, scene, gl } = useThree();
   const { phase } = useGalleryStore();
   const gyroLook = useGalleryStore((s) => s.gyroLook);
   const rigRef = useRef(new THREE.Object3D());
   const yawRef = useRef(new THREE.Object3D());
   const pitchRef = useRef(new THREE.Object3D());
   const lookRef = useRef({ yaw: 0, pitch: 0, targetYaw: 0, targetPitch: 0 });
-  const pointerRef = useRef({ x: 0, y: 0 });
   const draggingRef = useRef(false);
   const movedRef = useRef(0);
   const entryArmedRef = useRef(false);
@@ -95,24 +94,18 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
   }, [camera, scene, reducedMotion]);
 
   const onPointerDown = (event: PointerEvent) => {
-    if (phase === 'entry' && !entryArmedRef.current) return;
+    const currentPhase = useGalleryStore.getState().phase;
+    if (currentPhase === 'entry' && !entryArmedRef.current) return;
     const canvas = gl.domElement;
     canvas.setPointerCapture?.(event.pointerId);
     draggingRef.current = true;
     movedRef.current = 0;
-    const rect = canvas.getBoundingClientRect();
-    pointerRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    pointerRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   };
 
   const onPointerMove = (event: PointerEvent) => {
-    const rect = gl.domElement.getBoundingClientRect();
-    pointerRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    pointerRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
     if (draggingRef.current) {
       movedRef.current += Math.abs(event.movementX) + Math.abs(event.movementY);
-      const speed = phase === 'entry' ? 0.0008 : 0.0032;
+      const speed = useGalleryStore.getState().phase === 'entry' ? 0.0008 : 0.0032;
       lookRef.current.targetYaw -= event.movementX * speed;
       lookRef.current.targetPitch = THREE.MathUtils.clamp(
         lookRef.current.targetPitch - event.movementY * speed,
@@ -126,7 +119,6 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
     draggingRef.current = false;
     gl.domElement.releasePointerCapture?.(event.pointerId);
     if (!wasDragging || movedRef.current > 12) return;
-    pick();
   };
 
   const onPointerLeave = () => {
@@ -254,11 +246,6 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
       lastBeta = null;
     };
   }, [gyroLook]);
-
-  const pick = () => {
-    raycaster.setFromCamera(new THREE.Vector2(pointerRef.current.x, pointerRef.current.y), camera);
-    // Picking is delegated to Deck/Corridor components via their own click handlers.
-  };
 
   /**
    * A step of the walk, in world units, expressed as progress. Progress is the store's, so the
