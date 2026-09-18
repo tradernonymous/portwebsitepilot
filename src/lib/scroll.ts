@@ -97,8 +97,10 @@ export function startScrollEngine(reducedMotion: boolean): () => void {
 
   let target = window.scrollY;
   let current = target;
-  /** The last value we wrote, so our own scroll events can be told from everyone else's. */
-  let written = Number.NaN;
+  /** The last value we wrote, so our own scroll events can be told from everyone else's.
+   *  It must always hold a real position: NaN would make every comparison against it
+   *  false, and the engine would never write a scroll again. */
+  let written = window.scrollY;
   /**
    * When the frame loop last ran.
    *
@@ -121,7 +123,7 @@ export function startScrollEngine(reducedMotion: boolean): () => void {
   const adopt = (y: number) => {
     target = y;
     current = y;
-    written = Number.NaN;
+    written = y;
   };
 
   const onScroll = () => {
@@ -190,7 +192,7 @@ export function startScrollEngine(reducedMotion: boolean): () => void {
          */
         target = top;
         current = top;
-        written = Number.NaN;
+        written = top;
         window.scrollTo({ top, behavior: 'auto' });
         return;
       }

@@ -4,6 +4,11 @@ import { TextureLoader } from 'three';
 import * as THREE from 'three';
 import type { Exhibit } from '../../content';
 
+/** A 1×1 transparent PNG — keeps `useLoader`'s input a string even when the exhibit
+ *  carries no photograph; `undefined` there would crash the whole walk. */
+const PLACEHOLDER =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+
 type CorridorExhibitProps = {
   exhibit: Exhibit;
   index: number;
@@ -25,7 +30,7 @@ export function CorridorExhibit({ exhibit, index, side, z, spacing }: CorridorEx
   const { camera, clock } = useThree();
 
   const image = exhibit.images[0];
-  const raw = useLoader(TextureLoader, image?.small);
+  const raw = useLoader(TextureLoader, image?.small ?? PLACEHOLDER);
   const texture = Array.isArray(raw) ? raw[0] : raw;
   if (texture) {
     texture.colorSpace = THREE.SRGBColorSpace;

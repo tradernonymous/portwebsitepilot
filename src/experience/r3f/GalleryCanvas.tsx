@@ -79,7 +79,9 @@ export function GalleryCanvas({
         gl.setClearColor(0xf7f7f4, 1);
       }}
     >
-      <Suspense fallback={<LoadingFallback />}>
+      {/* A DOM fallback cannot render inside the canvas — the reconciler only accepts
+          THREE objects. Async children simply pop in; the clear color covers the gap. */}
+      <Suspense fallback={null}>
         <color attach="background" args={[0xf7f7f4]} />
         <fog attach="fog" args={[0xf7f7f4, 0.0045, 200]} />
 
@@ -127,19 +129,6 @@ export function GalleryCanvas({
 
       <PostProcessing reducedMotion={reducedMotion} />
     </Canvas>
-  );
-}
-
-function LoadingFallback() {
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, display: 'grid', placeItems: 'center',
-      background: '#050507', color: '#f7f7fb', zIndex: 100,
-      fontFamily: 'JetBrains Mono, monospace', fontSize: '0.8rem',
-      letterSpacing: '0.14em', textTransform: 'uppercase'
-    }}>
-      Preparing 3D space...
-    </div>
   );
 }
 
