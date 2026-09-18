@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { useThree, useFrame } from '@react-three/fiber';
+import { useThree, useFrame, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 
 const PIGMENTS = [0x3de8ff, 0x8b5cff, 0xff3dcb, 0xffb13d, 0x6dff9c];
@@ -307,13 +307,15 @@ export function LightPaintings({
     paintingGroup.rotation.y = t * 0.008;
   }, -1);
 
-  const onPointerMove = (event: React.PointerEvent) => {
-    const canvas = event.currentTarget as HTMLCanvasElement;
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
-    ndcRef.current.set((x / rect.width) * 2 - 1, -(y / rect.height) * 2 + 1);
+  /*
+   * The handler is on a `<group>` — a THREE object, not a DOM node — so `currentTarget` is an
+   * `Object3D`, and asking it for a bounding rect threw on every pointer move over the light.
+   * react-three-fiber already reports where the pointer is in normalized device coordinates,
+   * which is exactly what the raycaster wants, so the rect arithmetic (and its layout read on
+   * every move) simply goes away.
+   */
+  const onPointerMove = (event: ThreeEvent<PointerEvent>) => {
+    ndcRef.current.set(event.pointer.x, event.pointer.y);
     hasPointerRef.current = true;
   };
 

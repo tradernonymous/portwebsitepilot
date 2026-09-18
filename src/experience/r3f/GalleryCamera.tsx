@@ -5,6 +5,21 @@ import * as THREE from 'three';
 
 const HUB_CAMERA_POS = new THREE.Vector3(0, 1.72, 0);
 
+/** Where the walk starts: standing off the first frame, looking down the wing. */
+const CORRIDOR_START_Z = 4.6;
+
+/**
+ * How far the camera travels walking a wing end to end.
+ *
+ * The wing runs into negative z — its frames are hung from -5 downward and its exit door sits
+ * just past the far end — so the walk moves the camera *towards* the door, and this span is
+ * what a progress of 1 covers. The two units the walk used to be written in (a raw z offset
+ * and a 0–1 progress) are reconciled here, once, instead of at each caller.
+ */
+function corridorSpan(length: number): number {
+  return Math.max(12, length + 2.2);
+}
+
 export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
   const { camera, scene, raycaster, gl } = useThree();
   const { phase } = useGalleryStore();
@@ -18,8 +33,6 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
   const entryArmedRef = useRef(false);
   const entryTRef = useRef(0);
   const corridorWalkRef = useRef(0);
-  const corridorTargetRef = useRef(0);
-  const corridorLengthRef = useRef(0);
 
   useEffect(() => {
     const rig = rigRef.current;
@@ -84,9 +97,15 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
     draggingRef.current = false;
   };
 
+  /*
+   * The phase is read at the moment of the wheel, not from the render that registered this
+   * listener. Closing over it meant the handler kept the phase the component first rendered
+   * with — every notch scrolled before that caught up was thrown away, which reads as a wheel
+   * that works only sometimes.
+   */
   const onWheel = (event: WheelEvent) => {
-    if (phase === 'hub') return;
-    walk(event.deltaY * 0.012);
+    if (useGalleryStore.getState().phase !== 'corridor') return;
+    walk(event.deltaY * 0.05);
   };
 
   useEffect(() => {
@@ -105,24 +124,24 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
       canvas.removeEventListener('pointerleave', onPointerLeave);
       canvas.removeEventListener('wheel', onWheel);
     };
-  }, [phase, gl]);
+    /* Nothing but the canvas is captured now, so the listener is attached once per canvas. */
+  }, [gl]);
 
   const pick = () => {
     raycaster.setFromCamera(new THREE.Vector2(pointerRef.current.x, pointerRef.current.y), camera);
     // Picking is delegated to Deck/Corridor components via their own click handlers.
   };
 
+  /**
+   * A step of the walk, in world units, expressed as progress. Progress is the store's, so the
+   * wheel, the rail, the arrow keys and the camera all move the same number rather than four
+   * private targets that can disagree.
+   */
   const walk = (delta: number) => {
-    if (phase !== 'corridor') return;
-    corridorTargetRef.current = THREE.MathUtils.clamp(
-      corridorTargetRef.current + delta,
-      0,
-      Math.max(0, corridorLengthRef.current - 8)
-    );
-    useGalleryStore.getState().setWalkProgress(
-      corridorLengthRef.current <= 0 ? 0 :
-      THREE.MathUtils.clamp(corridorTargetRef.current / (corridorLengthRef.current - 8), 0, 1)
-    );
+    const store = useGalleryStore.getState();
+    if (store.phase !== 'corridor') return;
+    const span = corridorSpan(store.corridorLength);
+    store.setWalkProgress(THREE.MathUtils.clamp(store.walkProgress + delta / span, 0, 1));
   };
 
   useFrame(({ clock }) => {
@@ -155,10 +174,11 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
     } else if (phase === 'warp') {
       look.targetYaw += d * 1.4;
     } else if (phase === 'corridor') {
+      const { walkProgress, corridorLength } = useGalleryStore.getState();
       corridorWalkRef.current = reducedMotion
-        ? corridorTargetRef.current
-        : THREE.MathUtils.damp(corridorWalkRef.current, corridorTargetRef.current, 3.2, d);
-      rig.position.z = 4.6 + corridorWalkRef.current;
+        ? walkProgress
+        : THREE.MathUtils.damp(corridorWalkRef.current, walkProgress, 3.2, d);
+      rig.position.z = CORRIDOR_START_Z - corridorWalkRef.current * corridorSpan(corridorLength);
     }
 
     if (phase === 'hub' || phase === 'warp') {
@@ -174,7 +194,13 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
       look.targetYaw = look.yaw;
       look.targetPitch = look.pitch;
     }
-  }, 1);
+    /*
+     * Priority 0 on purpose. A positive priority tells react-three-fiber to stop rendering on
+     * its own and leaves it to whoever owns that priority — which is the post-processing
+     * composer, and nothing at all when the visitor has asked for reduced motion. That made the
+     * canvas come up blank for exactly the people who asked for the calmer version.
+     */
+  }, 0);
 
   return null;
 }

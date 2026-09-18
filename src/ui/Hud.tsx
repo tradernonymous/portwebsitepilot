@@ -218,7 +218,8 @@ type RailProps = {
   activeIndex: number;
   progress: number;
   onSelect: (index: number) => void;
-  onWalk: (delta: number) => void;
+  /** A signed count of works to walk past — one step is one frame of the wing. */
+  onWalk: (steps: number) => void;
   onExit: () => void;
   onOpen: (index: number) => void;
 };
@@ -254,7 +255,7 @@ export function CorridorRail({ station, activeIndex, progress, onSelect, onWalk,
         ))}
       </div>
       <div className="rail-foot">
-        <button type="button" className="btn" onClick={() => onWalk(-6)} data-cursor="walk">
+        <button type="button" className="btn" onClick={() => onWalk(-1)} data-cursor="walk">
           {t('walkBack')}
         </button>
         <button
@@ -265,7 +266,7 @@ export function CorridorRail({ station, activeIndex, progress, onSelect, onWalk,
         >
           {t('openWork')}
         </button>
-        <button type="button" className="btn" onClick={() => onWalk(6)} data-cursor="walk">
+        <button type="button" className="btn" onClick={() => onWalk(1)} data-cursor="walk">
           {t('walkFwd')}
         </button>
       </div>

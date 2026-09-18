@@ -10,6 +10,12 @@ interface GalleryState {
   focusedStationId: string | null;
   entryProgress: number;
   walkProgress: number;
+  /**
+   * How long the open wing is, in world units. Only `Corridor` knows this, and only the camera
+   * and the wheel need it — so the wing publishes it here instead of each of them keeping a
+   * private guess. It was a ref that nothing ever assigned, which is what froze the walk.
+   */
+  corridorLength: number;
   reducedMotion: boolean;
 
   setPhase: (phase: Phase) => void;
@@ -17,6 +23,7 @@ interface GalleryState {
   setFocusedStationId: (id: string | null) => void;
   setEntryProgress: (progress: number) => void;
   setWalkProgress: (progress: number) => void;
+  setCorridorLength: (length: number) => void;
   setReducedMotion: (reduced: boolean) => void;
 
   openCorridor: (station: Station) => void;
@@ -31,6 +38,7 @@ export const useGalleryStore = create<GalleryState>()(
     focusedStationId: null,
     entryProgress: 0,
     walkProgress: 0,
+    corridorLength: 0,
     reducedMotion: false,
 
     setPhase: (phase) => set({ phase }),
@@ -38,6 +46,7 @@ export const useGalleryStore = create<GalleryState>()(
     setFocusedStationId: (id) => set({ focusedStationId: id }),
     setEntryProgress: (progress) => set({ entryProgress: progress }),
     setWalkProgress: (progress) => set({ walkProgress: progress }),
+    setCorridorLength: (length) => set({ corridorLength: length }),
     setReducedMotion: (reduced) => set({ reducedMotion: reduced }),
 
     openCorridor: (station) => set({

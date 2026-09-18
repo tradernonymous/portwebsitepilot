@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Station } from '../content';
 import { useMediaQuery } from '../lib/hooks';
 import { useLang } from '../lib/lang';
@@ -64,6 +64,21 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
     };
   }, []);
 
+  /*
+   * One step of the walk is one frame of the wing. The arrow keys and the rail buttons both
+   * take a step in works rather than a raw progress fraction, so a press lands you at a work
+   * and not somewhere between two — the button was written for a world-space distance and was
+   * being added to a 0–1 progress, which sent it straight to the far end of the wing.
+   */
+  const step = 1 / Math.max(1, station.exhibits.length);
+  const walkBy = useCallback(
+    (steps: number) => {
+      const store = useGalleryStore.getState();
+      store.setWalkProgress(Math.max(0, Math.min(1, store.walkProgress + steps * step)));
+    },
+    [step],
+  );
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (reading !== null) {
@@ -74,12 +89,11 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
         onExit();
         return;
       }
-      const store = useGalleryStore.getState();
       if (event.key === 'ArrowDown' || event.key === 's') {
-        store.setWalkProgress(Math.min(1, store.walkProgress + 0.06));
+        walkBy(1);
         event.preventDefault();
       } else if (event.key === 'ArrowUp' || event.key === 'w') {
-        store.setWalkProgress(Math.max(0, store.walkProgress - 0.06));
+        walkBy(-1);
         event.preventDefault();
       } else if (event.key === 'ArrowRight' || event.key === 'd') {
         const next = Math.min(station.exhibits.length - 1, active + 1);
@@ -95,7 +109,7 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [active, reading, onExit, station.exhibits.length]);
+  }, [active, reading, onExit, station.exhibits.length, walkBy]);
 
   return (
     <div className="walk">
@@ -116,10 +130,7 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
         onSelect={(index) => {
           setActive(index);
         }}
-        onWalk={(delta) => {
-          const store = useGalleryStore.getState();
-          store.setWalkProgress(Math.max(0, Math.min(1, store.walkProgress + delta)));
-        }}
+        onWalk={walkBy}
         onOpen={(index) => setReading(index)}
         onExit={onExit}
       />

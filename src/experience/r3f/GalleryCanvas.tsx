@@ -3,7 +3,6 @@ import { Suspense, useState, useEffect, useMemo } from 'react';
 import {
   EffectComposer,
   Bloom,
-  Scanline,
   Noise,
   ChromaticAberration,
 } from '@react-three/postprocessing';
@@ -46,6 +45,7 @@ export function GalleryCanvas({
 }: GalleryCanvasProps) {
   const { setPhase, setCurrentStation, phase, currentStation } = useGalleryStore();
   const [isReady, setIsReady] = useState(false);
+
 
   useEffect(() => {
     if (isReady) {
@@ -132,6 +132,16 @@ export function GalleryCanvas({
   );
 }
 
+/**
+ * The gallery's glass.
+ *
+ * This is a bright room — white walls lit to the top of their range — and the stack has to be
+ * built for that. A scanline pass was SCREEN-blending a fine stripe pattern over the whole
+ * frame and a chromatic pass was then shifting it by a pixel, which fringed every stripe
+ * magenta on one edge and green on the other: a dead CRT laid over a lit gallery, and the
+ * brightest thing on screen. The room stays clean now; what remains is the glow the light
+ * paintings earn and a breath of grain.
+ */
 function PostProcessing({ reducedMotion }: { reducedMotion: boolean }) {
   if (reducedMotion) return null;
 
@@ -141,17 +151,19 @@ function PostProcessing({ reducedMotion }: { reducedMotion: boolean }) {
       enableNormalPass={false}
       renderPass={(scene: THREE.Scene, camera: THREE.Camera) => new RenderPass(scene, camera)}
     >
+      {/* Only genuinely hot pixels bloom — the cores of the light, not the walls. */}
       <Bloom
         blendFunction={BlendFunction.ADD}
-        luminanceThreshold={0.85}
-        luminanceSmoothing={0.4}
-        radius={0.6}
+        luminanceThreshold={0.95}
+        luminanceSmoothing={0.3}
+        intensity={0.85}
+        radius={0.55}
         mipmapBlur
       />
-      <Scanline blendFunction={BlendFunction.SCREEN} density={0.4} />
-      <Noise blendFunction={BlendFunction.SCREEN} opacity={0.08} />
+      <Noise blendFunction={BlendFunction.SCREEN} opacity={0.025} />
+      {/* Enough to feel like glass, not enough to see a colour split. */}
       <ChromaticAberration
-        offset={new THREE.Vector2(0.0008, 0.0004)}
+        offset={new THREE.Vector2(0.0002, 0.0001)}
         radialModulation={false}
         modulationOffset={0}
       />

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useGalleryStore } from './galleryStore';
 import { CorridorExhibit } from './CorridorExhibit';
@@ -22,18 +22,31 @@ const SPACING = 7.4;
  */
 export function Corridor({ station, reducedMotion, onExhibitSelect, onExhibitFocus, onExit }: CorridorProps) {
   void reducedMotion;
-  const { phase } = useGalleryStore();
+  const { phase, setCorridorLength } = useGalleryStore();
   const { camera, raycaster } = useThree();
   const groupRef = useRef<THREE.Group>(null);
+  const camPos = useRef(new THREE.Vector3());
   const exhibits = station.exhibits;
   const length = Math.max(24, exhibits.length * SPACING + 12);
+
+  /* The camera and the wheel need the length to know how far a walk goes. */
+  useEffect(() => {
+    setCorridorLength(length);
+    return () => setCorridorLength(0);
+  }, [length, setCorridorLength]);
 
   useFrame(() => {
     if (phase !== 'corridor') return;
     const group = groupRef.current;
     if (!group) return;
 
-    const camZ = camera.position.z;
+    /*
+     * The camera rides in the rig, so its own position is always the origin — reading it here
+     * asked "which frame is nearest the entrance" on every frame, which is why the readout
+     * never left the first work. Where the visitor actually is lives in the world matrix.
+     */
+    camera.getWorldPosition(camPos.current);
+    const camZ = camPos.current.z;
     let nearest = -1;
     let bestDist = Infinity;
 
