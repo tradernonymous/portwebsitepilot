@@ -277,7 +277,15 @@ function RoomPanel({
 }) {
   const { t } = useLang();
   const cover = deckCovers.get(room.id);
-  const href = hrefFor({ kind: 'station', stationId: room.id });
+  /*
+   * A room that can be walked opens as a space, not a page. The written room is one step
+   * further in — the wing's own door leads to it — so the order is walk the room, then read
+   * it, which is the order the building itself asks for. Where there is no WebGL the walk
+   * route redirects to the room page, so this needs no second decision here.
+   */
+  const href = hrefFor(
+    room.kind === 'corridor' ? { kind: 'walk', stationId: room.id } : { kind: 'station', stationId: room.id },
+  );
   const motif = motifFor(room);
   const number = index + 2;
   /* A room's air moves a little slower than the room, which is what reads as depth. */
