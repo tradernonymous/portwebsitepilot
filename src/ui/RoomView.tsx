@@ -166,6 +166,7 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
                   <a
                     className={`work${keptIds.has(work.id) ? ' is-kept' : ''}`}
                     href={hrefFor({ kind: 'exhibit', stationId: station.id, index: i })}
+                    data-cursor="read"
                     data-stop
                     data-stop-label={work.title}
                     data-stop-group={station.label}

@@ -21,6 +21,7 @@ const ms = {
   cursorEsc: 'ESC',
   cursorZoom: 'LIHAT',
   cursorView: 'LIHAT',
+  cursorPlay: 'TONTON',
 
   // ---------------------------------------------------------------- gate
   gateLabel: 'Masuk ke ruang PORT',
@@ -59,6 +60,16 @@ const ms = {
   beginTour: 'Mulakan lawatan',
   scrollHint: 'Tatal untuk berjalan',
   doorKicker: 'Melangkah masuk',
+
+  // ---------------------------------------------------------------- menu
+  menuOpen: 'Peta bangunan',
+  menuKicker: 'Peta Bangunan',
+  menuTitle: 'Semua ruang PORT',
+  menuLede:
+    'Ini susunan rumah ini. Pilih mana-mana ruang untuk terus ke pintunya, atau gunakan perkakas di bawah.',
+  menuRooms: 'Ruang',
+  menuTools: 'Perkakas',
+  youAreHere: 'Anda di sini',
   corridorKicker: 'Koridor Utama',
   corridorTitle: 'Lapan ruang, satu perjalanan',
   corridorLede: 'Setiap ruang menyimpan satu bahagian kisah PORT. Pilih pintu, dan melangkah masuk.',
@@ -261,6 +272,7 @@ const en: Dict = {
   cursorEsc: 'ESC',
   cursorZoom: 'VIEW',
   cursorView: 'VIEW',
+  cursorPlay: 'PLAY',
 
   brandLine: 'People Of Remarkable Talents · Perak',
   home: 'Home',
@@ -283,6 +295,16 @@ const en: Dict = {
   beginTour: 'Begin the tour',
   scrollHint: 'Scroll to walk',
   doorKicker: 'Stepping through',
+
+  // ---------------------------------------------------------------- menu
+  menuOpen: 'Building map',
+  menuKicker: 'The Building',
+  menuTitle: 'Every room in PORT',
+  menuLede:
+    'This is the plan of the house. Choose any room to go straight to its door, or use the tools below.',
+  menuRooms: 'Rooms',
+  menuTools: 'Tools',
+  youAreHere: 'You are here',
   corridorKicker: 'The Main Corridor',
   corridorTitle: 'Eight rooms, one journey',
   corridorLede: "Each room holds one chapter of PORT's story. Choose a door and step inside.",

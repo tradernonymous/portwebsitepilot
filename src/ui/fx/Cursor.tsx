@@ -34,6 +34,7 @@ type CursorMode =
   | 'next'
   | 'walk'
   | 'read'
+  | 'play'
   | 'drag'
   | 'esc'
   | 'view';
@@ -46,6 +47,7 @@ const KEY: Record<CursorMode, I18nKey> = {
   next: 'cursorNext',
   walk: 'cursorWalk',
   read: 'cursorRead',
+  play: 'cursorPlay',
   drag: 'cursorDrag',
   esc: 'cursorEsc',
   view: 'cursorView',
@@ -57,7 +59,8 @@ const MODES = Object.keys(KEY) as CursorMode[];
 const INTERACTIVE =
   'a, button, [role="button"], summary, input, select, textarea, [tabindex]:not([tabindex="-1"]), .work, .rail-item';
 /** A short list of high-value controls that pull the cursor into them. */
-const MAGNETIC = '.btn-glow, .room-panel-enter, .onview-card, .pager-link, .threshold-film';
+const MAGNETIC =
+  '.btn-glow, .room-panel-enter, .onview-card, .pager-link, .threshold-film, .video-card, .menu-room';
 
 function fitsFinePointer(): boolean {
   return typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;

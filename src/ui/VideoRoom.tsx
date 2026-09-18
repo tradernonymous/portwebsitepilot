@@ -175,6 +175,7 @@ export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
                   type="button"
                   className={`video-card lit${nowPlaying ? ' is-playing' : ''}`}
                   aria-current={nowPlaying ? 'true' : undefined}
+                  data-cursor="play"
                   onClick={() => setPlaying(video.id)}
                 >
                   <span className="video-thumb">

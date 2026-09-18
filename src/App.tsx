@@ -23,7 +23,8 @@ import { Cursor } from './ui/fx/Cursor';
 import { Entrance } from './ui/fx/Entrance';
 import { Hall } from './ui/Hall';
 import { HelpPanel } from './ui/HelpPanel';
-import { TopBar } from './ui/Hud';
+import { TopBar, type ChromeActions } from './ui/Hud';
+import { MenuPanel } from './ui/MenuPanel';
 import { RoomView } from './ui/RoomView';
 import { TrailPanel } from './ui/TrailPanel';
 
@@ -84,6 +85,7 @@ export default function App() {
   const [entered, setEntered] = useState(() => route.kind !== 'hub' || alreadyEntered());
   const [entering, setEntering] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [notebookOpen, setNotebookOpen] = useState(false);
   const [trailOpen, setTrailOpen] = useState(false);
   const [savedTrail, setSavedTrail] = useState<TrailProgress | null>(() => readTrailProgress());
@@ -148,6 +150,11 @@ export default function App() {
   const pageKey =
     route.kind === 'hub' ? 'hall' : route.kind === 'flat' ? 'flat' : route.kind === 'walk' ? `walk:${route.stationId}` : `room:${route.stationId}`;
   const lastPage = useRef(pageKey);
+
+  /* Any change of page closes the plan — including one the plan itself asked for. */
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pageKey]);
 
   useEffect(() => {
     if (route.kind !== 'hub') return;
@@ -288,6 +295,7 @@ export default function App() {
          * visitor out of what they were reading just for having peeked at their notebook.
          */
         if (helpOpen) setHelpOpen(false);
+        else if (menuOpen) setMenuOpen(false);
         else if (notebookOpen) setNotebookOpen(false);
         else if (trailOpen) setTrailOpen(false);
         else if (route.kind === 'exhibit') navigate({ kind: 'station', stationId: route.stationId });
@@ -304,13 +312,37 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [route, station, navigate, helpOpen, notebookOpen, trailOpen]);
+  }, [route, station, navigate, helpOpen, menuOpen, notebookOpen, trailOpen]);
+
+  /* ---------------------------------------------------------------- chrome */
+
+  /**
+   * The tour rides on the walk: turning the tour on turns the walk on too. It lives here
+   * rather than in the button so the bar and the building map offer exactly the same move.
+   */
+  const toggleCurator = useCallback(() => {
+    if (!gallery) setGallery(true);
+    setCurator((on) => !on);
+  }, [gallery]);
+
+  const chrome: ChromeActions = {
+    flat: route.kind === 'flat',
+    onToggleFlat: () => navigate(route.kind === 'flat' ? { kind: 'hub' } : { kind: 'flat' }),
+    onHelp: () => setHelpOpen(true),
+    notebook: { count: collected.length, onToggle: () => setNotebookOpen((open) => !open) },
+    trail:
+      route.kind === 'hub' || route.kind === 'station' || route.kind === 'exhibit'
+        ? { active: Boolean(activeTrail), onToggle: () => setTrailOpen((open) => !open) }
+        : null,
+    gallery: galleryToggleable ? { active: gallery, onToggle: () => setGallery((on) => !on) } : null,
+    curator: galleryToggleable ? { active: curator, onToggle: toggleCurator } : null,
+  };
 
   /* ---------------------------------------------------------------- render */
 
   const help = helpOpen ? <HelpPanel onClose={() => setHelpOpen(false)} reducedMotion={reducedMotion} /> : null;
   /* A dialog owns the screen and the keys, so the readout stands down with them. */
-  const reading = helpOpen || notebookOpen || trailOpen || route.kind === 'exhibit';
+  const reading = helpOpen || menuOpen || notebookOpen || trailOpen || route.kind === 'exhibit';
   const notebook = notebookOpen ? (
     <Suspense fallback={null}>
       <NotebookPanel onClose={() => setNotebookOpen(false)} />
@@ -380,18 +412,9 @@ export default function App() {
         {t('skipToContent')}
       </a>
       <TopBar
+        {...chrome}
         pageKey={pageKey}
-        flat={route.kind === 'flat'}
-        onToggleFlat={() => navigate(route.kind === 'flat' ? { kind: 'hub' } : { kind: 'flat' })}
-        onHelp={() => setHelpOpen(true)}
-        notebook={{ count: collected.length, onToggle: () => setNotebookOpen((open) => !open) }}
-        trail={
-          route.kind === 'hub' || route.kind === 'station' || route.kind === 'exhibit'
-            ? { active: Boolean(activeTrail), onToggle: () => setTrailOpen((open) => !open) }
-            : null
-        }
-        gallery={galleryToggleable ? { active: gallery, onToggle: () => setGallery((on) => !on) } : null}
-        curator={galleryToggleable ? { active: curator, onToggle: () => setCurator((on) => !on) } : null}
+        onMenu={() => setMenuOpen(true)}
         crumb={
           station ? (
             <>
@@ -444,6 +467,13 @@ export default function App() {
         </ErrorBoundary>
       ) : null}
       {readout}
+      <MenuPanel
+        {...chrome}
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        here={route.kind === 'hub' ? null : (station?.id ?? null)}
+        reducedMotion={reducedMotion}
+      />
       {help}
       {notebook}
       <TrailPanel

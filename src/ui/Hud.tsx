@@ -2,25 +2,34 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Station } from '../content';
 import { useLang } from '../lib/lang';
 
-type TopBarProps = {
-  /** The trail after "PORT" — room and work names, titles only. */
-  crumb?: ReactNode;
+type Toggle = { active: boolean; onToggle: () => void };
+
+/**
+ * Everything the gallery's chrome can do, in one shape.
+ *
+ * The bar and the building map are two views of the same controls — one compact, one with room
+ * to explain itself — so they take the same contract rather than each carrying its own copy of
+ * six callbacks. `null` is meaningful: it is how a control says the mode has nothing to do on
+ * this page, instead of the control having to ask which page it is on.
+ */
+export type ChromeActions = {
   flat: boolean;
   onToggleFlat: () => void;
   onHelp: () => void;
   /** The visitor's notebook — the count is the invitation; zero is still worth showing. */
   notebook: { count: number; onToggle: () => void };
-  trail: { active: boolean; onToggle: () => void } | null;
-  /**
-   * Present only where the page has stops to walk. Its absence is how the bar knows the mode
-   * means nothing here, rather than the mode having to ask what page it is on.
-   */
-  gallery: { active: boolean; onToggle: () => void } | null;
-  /**
-   * Curator's Eye — the guided tour. It rides on gallery mode (its toggle turns the walk on
-   * too), so it is offered exactly where the walk is.
-   */
-  curator: { active: boolean; onToggle: () => void } | null;
+  trail: Toggle | null;
+  /** Present only where the page has stops to walk. */
+  gallery: Toggle | null;
+  /** Curator's Eye rides on gallery mode: its toggle turns the walk on too. */
+  curator: Toggle | null;
+};
+
+type TopBarProps = ChromeActions & {
+  /** The trail after "PORT" — room and work names, titles only. */
+  crumb?: ReactNode;
+  /** Opens the building map. */
+  onMenu: () => void;
   /** Changes whenever the page underneath changes, so the bar re-reads what it sits on. */
   pageKey: string;
 };
@@ -30,7 +39,18 @@ type TopBarProps = {
  * light) and turns to white glass once the page has scrolled onto the gallery wall, so its
  * words are always legible against whatever is behind them.
  */
-export function TopBar({ crumb, flat, onToggleFlat, onHelp, notebook, trail, gallery, curator, pageKey }: TopBarProps) {
+export function TopBar({
+  crumb,
+  flat,
+  onToggleFlat,
+  onHelp,
+  notebook,
+  trail,
+  gallery,
+  curator,
+  onMenu,
+  pageKey,
+}: TopBarProps) {
   const { t, lang, toggle } = useLang();
   const [onDark, setOnDark] = useState(true);
   const barRef = useRef<HTMLElement>(null);
@@ -70,6 +90,19 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp, notebook, trail, gal
       </a>
       {crumb ? <nav className="topbar-crumb">{crumb}</nav> : <span className="topbar-spacer" />}
       <div className="topbar-tools">
+        <button
+          type="button"
+          className="icon-btn is-menu"
+          onClick={onMenu}
+          title={t('menuOpen')}
+          aria-label={t('menuOpen')}
+          data-cursor="open"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M3 4h18v2H3Zm0 7h18v2H3Zm0 7h18v2H3Z" />
+            <circle cx="20.5" cy="5" r="2.2" fill="currentColor" />
+          </svg>
+        </button>
         {trail ? (
           <button
             type="button"
@@ -112,11 +145,7 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp, notebook, trail, gal
             type="button"
             className="icon-btn is-curator"
             aria-pressed={curator.active}
-            onClick={() => {
-              /* the tour rides on the walk: turning the tour on turns the walk on */
-              if (!gallery.active) gallery.onToggle();
-              curator.onToggle();
-            }}
+            onClick={curator.onToggle}
             title={t('curatorMode')}
             aria-label={t('curatorMode')}
             data-cursor="walk"
@@ -152,7 +181,7 @@ export function TopBar({ crumb, flat, onToggleFlat, onHelp, notebook, trail, gal
         </button>
         <button
           type="button"
-          className="icon-btn"
+          className="icon-btn is-flat"
           aria-pressed={flat}
           onClick={onToggleFlat}
           title={flat ? t('toGallery') : t('toList')}
