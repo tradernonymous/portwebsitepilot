@@ -206,6 +206,16 @@ button {
   transform: translateY(-1px);
 }
 
+/*
+ * A press acknowledges itself. The walk is the real answer to a step, but it arrives a frame or
+ * two later (and not at all where the render loop is stalled), and a control that says nothing
+ * back reads as broken. Sits before :disabled so a control that cannot act still looks it.
+ */
+.btn:active {
+  transform: translateY(1px) scale(0.985);
+  transition-duration: 0.06s;
+}
+
 .btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
