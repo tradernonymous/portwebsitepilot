@@ -167,7 +167,7 @@ src/ui/fx/                light painting, prism shards, entrance walk, decipher 
 src/ui/Hall.tsx           screening-room hero, corridor pipeline, figures, visit
 src/ui/RoomView.tsx       a room page
 src/ui/ExhibitReader.tsx  a work, up close
-src/ui/ImmersiveWalk.tsx  the optional 3D corridor (src/experience/PortWorld.ts)
+src/ui/ImmersiveWalk.tsx  the 3D wing (src/experience/r3f/)
 src/styles/               tokens, base, gate, hall, room, reader, video, walk, flat
 src/assets/               the building photographs for the walk in
 public/media/             synced photographs (webp)
