@@ -56,7 +56,7 @@ function formFor(exhibit: { id: string; form?: string }): SculptureForm {
  * the room is lit from a slot in the roof instead of from the walls.
  */
 export function Court({ station, reducedMotion, onExhibitSelect, onExhibitFocus, onExit }: CourtProps) {
-  const { phase, setCorridorLength } = useGalleryStore();
+  const { phase, setCorridorLength, setCorridorBounds } = useGalleryStore();
   const { camera, raycaster } = useThree();
   const groupRef = useRef<THREE.Group>(null);
   const camPos = useRef(new THREE.Vector3());
@@ -111,6 +111,27 @@ export function Court({ station, reducedMotion, onExhibitSelect, onExhibitFocus,
       })),
     [plinths],
   );
+
+  /*
+   * The room's shape, for the camera, the wheel and a free-walking body. The court is the room
+   * the body was built for: the viewing spots stand beside each piece rather than in front of
+   * it, and the plinths are published so a body cannot walk through the art.
+   */
+  useEffect(() => {
+    setCorridorBounds({
+      zNear: 4.4,
+      zFar: -length + 2.6,
+      halfX: HALF_WIDTH - 0.7,
+      plinths: plinths.map((p) => ({ x: p.x, z: p.z, radius: PLINTH_HALF + 0.35 })),
+      works: plinths.map((p, i) => ({
+        /* Standing off the piece, on its aisle side, looking back at it. */
+        x: p.x + Math.sign(p.x) * 1.9,
+        z: p.z + 1.4,
+        progress: i / Math.max(1, exhibits.length - 1),
+      })),
+    });
+    return () => setCorridorBounds(null);
+  }, [length, plinths, exhibits.length, setCorridorBounds]);
 
   useFrame(() => {
     if (phase !== 'corridor') return;

@@ -22,18 +22,36 @@ const SPACING = 7.4;
  */
 export function Corridor({ station, reducedMotion, onExhibitSelect, onExhibitFocus, onExit }: CorridorProps) {
   void reducedMotion;
-  const { phase, setCorridorLength } = useGalleryStore();
+  const { phase, setCorridorLength, setCorridorBounds } = useGalleryStore();
   const { camera, raycaster } = useThree();
   const groupRef = useRef<THREE.Group>(null);
   const camPos = useRef(new THREE.Vector3());
   const exhibits = station.exhibits;
   const length = Math.max(24, exhibits.length * SPACING + 12);
 
-  /* The camera and the wheel need the length to know how far a walk goes. */
+  /*
+   * The camera, the wheel and a free-walking body all need the wing's shape. The viewing
+   * spots stand back from the frames so a work fills a comfortable part of the view, and the
+   * body's stops sit in the walkable aisle rather than inside a wall.
+   */
   useEffect(() => {
     setCorridorLength(length);
-    return () => setCorridorLength(0);
-  }, [length, setCorridorLength]);
+    setCorridorBounds({
+      zNear: 3.4,
+      zFar: -length + 2.4,
+      halfX: 3.35,
+      plinths: [],
+      works: exhibits.map((_, i) => ({
+        x: 0,
+        z: -2.4 - i * SPACING,
+        progress: i / Math.max(1, exhibits.length - 1),
+      })),
+    });
+    return () => {
+      setCorridorLength(0);
+      setCorridorBounds(null);
+    };
+  }, [length, exhibits, setCorridorLength, setCorridorBounds]);
 
   useFrame(() => {
     if (phase !== 'corridor') return;

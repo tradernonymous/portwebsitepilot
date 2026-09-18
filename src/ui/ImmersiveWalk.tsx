@@ -7,6 +7,8 @@ import { CorridorRail, Hint } from './Hud';
 import { ErrorBoundary } from '../lib/errors';
 import { GalleryCanvas } from '../experience/r3f/GalleryCanvas';
 import { useGalleryStore } from '../experience/r3f/galleryStore';
+import { FreeWalkControls, FreeWalkToggle } from './FreeWalkControls';
+import { freeWalkBus } from '../experience/r3f/input';
 
 type Props = {
   station: Station;
@@ -74,6 +76,16 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
   const walkBy = useCallback(
     (steps: number) => {
       const store = useGalleryStore.getState();
+      /*
+       * With a body, the rail buttons are the body's transport: a press carries it to the
+       * neighbouring work's viewing spot instead of sliding the line out from under it. The
+       * camera owns the body, so the command goes through the bus; it no-ops when no wing is
+       * open, and the rail's own bounds checking still applies through the store.
+       */
+      if (store.freeWalk && freeWalkBus.carryBy) {
+        freeWalkBus.carryBy(steps);
+        return;
+      }
       store.setWalkProgress(Math.max(0, Math.min(1, store.walkProgress + steps * step)));
     },
     [step],
@@ -99,6 +111,11 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
         onExit();
         return;
       }
+      /*
+       * The free-walking body owns the movement keys while it exists — the camera reads the
+       * held set every frame. The walk mode's own Escape (leave the wing) still answers.
+       */
+      if (useGalleryStore.getState().freeWalk) return;
       if (event.key === 'ArrowDown' || event.key === 's') {
         walkBy(1);
         event.preventDefault();
@@ -147,6 +164,8 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
         onExit={onExit}
       />
       <Hint retiring={taught}>{t(coarse ? 'hintWalkCoarse' : 'hintWalkFine')}</Hint>
+      <FreeWalkToggle coarse={coarse} />
+      <FreeWalkControls coarse={coarse} />
       {reading !== null ? (
         <ExhibitReader
           station={station}
