@@ -48,11 +48,88 @@
   font-size: 1.05rem;
 }
 
+/*
+ * The archive's own way of moving around: the same divisions the building makes — the halls
+ * you walk, the lists you read, the films you watch, the pages that are information — so the
+ * filter is a way through the house rather than a taxonomy invented for a menu.
+ */
+.flat-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 2rem 0 0;
+}
+
+.flat-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.95rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition:
+    border-color var(--dur-1) var(--ease),
+    color var(--dur-1) var(--ease),
+    background var(--dur-1) var(--ease);
+}
+
+.flat-filter-btn i {
+  font-style: normal;
+  color: var(--ink-3);
+}
+
+.flat-filter-btn:hover:not(:disabled) {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.flat-filter-btn[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--white);
+}
+
+.flat-filter-btn[aria-pressed='true'] i {
+  color: var(--paper-2);
+}
+
+.flat-filter-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.flat-list {
+  scroll-margin-top: 5rem;
+}
+
+/* A section arriving because of a filter is an arrival: it comes in rather than appearing. */
+.flat-station {
+  animation: flat-arrive var(--dur-2) var(--ease-out) both;
+}
+
+@keyframes flat-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.flat-empty {
+  margin: 3rem 0;
+  color: var(--ink-3);
+}
+
 .flat-nav {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 2rem 0 3rem;
+  margin: 1.25rem 0 3rem;
   padding: 1rem 0;
   border-block: 1px solid var(--rule);
 }

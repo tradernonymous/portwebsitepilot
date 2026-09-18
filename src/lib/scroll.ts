@@ -296,6 +296,65 @@ function relayout() {
  * Layers move *less* than the page around them, which is what reads as distance. Pair it
  * with `.depth-layer` in the stylesheet, which gives the layer the room to drift into.
  */
+/**
+ * Passage: how far a panel has been walked past.
+ *
+ * Depth alone was not enough for the corridor. The rooms were laid one to a screen so the
+ * visitor sees a whole room at a time, but they still went by flat — a stack of posters sliding
+ * under a fixed window rather than a row of doors being walked past.
+ *
+ * This publishes two numbers while a panel is near the screen and nothing while it is not:
+ *
+ *   --pass       -1 behind the visitor, 0 at the reading line, 1 still ahead
+ *   --pass-abs   the same, unsigned, because CSS has no `abs()` to reach for
+ *
+ * The stylesheet spends them on the panel's own place in the corridor — turning away, settling
+ * back and fading as it goes by. At rest there is no per-frame work at all: the loop only
+ * writes while the panel is close, and stops writing entirely once it is out of the room.
+ * The class goes on and off with it so the stylesheet, and the compositor, are only asked to
+ * do 3D work on the two or three panels that are actually in the corridor.
+ */
+export function usePassage(ref: RefObject<HTMLElement | null>, reducedMotion: boolean): void {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || reducedMotion) return;
+
+    let centre = 0;
+    let span = 1;
+    const measure = () => {
+      const rect = el.getBoundingClientRect();
+      centre = rect.top + window.scrollY + rect.height / 2;
+      span = Math.max(1, rect.height / 2);
+    };
+    measure();
+    const unwatch = onLayoutChange(measure);
+
+    let near = false;
+    const stop = onFrame(() => {
+      const viewport = window.innerHeight || 1;
+      const offset = (getScrollState().y + viewport / 2 - centre) / (viewport + span);
+      const pass = clamp(offset, -1, 1);
+      const away = Math.abs(pass);
+      const close = away < 0.8;
+      if (close !== near) {
+        near = close;
+        el.classList.toggle('is-passing', close);
+      }
+      if (!close) return;
+      el.style.setProperty('--pass', pass.toFixed(3));
+      el.style.setProperty('--pass-abs', away.toFixed(3));
+    });
+
+    return () => {
+      stop();
+      unwatch();
+      el.classList.remove('is-passing');
+      el.style.removeProperty('--pass');
+      el.style.removeProperty('--pass-abs');
+    };
+  }, [ref, reducedMotion]);
+}
+
 export function useDepth(
   ref: RefObject<HTMLElement | null>,
   speed: number,

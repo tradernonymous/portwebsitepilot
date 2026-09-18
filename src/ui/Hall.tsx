@@ -7,7 +7,7 @@ import { hrefFor } from '../lib/hooks';
 import { useLang } from '../lib/lang';
 import { usePointerLight } from '../lib/light';
 import { HERO_ROOM, pad, tourOrder } from '../lib/order';
-import { scrollToY, useDepth } from '../lib/scroll';
+import { scrollToY, useDepth, usePassage } from '../lib/scroll';
 import { Artwork, LightPlate } from './Artwork';
 import { ChapterRail, type Chapter } from './ChapterRail';
 import { DoorReveal } from './DoorReveal';
@@ -281,6 +281,8 @@ function RoomPanel({
   /* A room's air moves a little slower than the room, which is what reads as depth. */
   const panel = useRef<HTMLElement>(null);
   useDepth(panel, 0.08, reducedMotion);
+  /* and the panel itself goes by, rather than sliding under a fixed window */
+  usePassage(panel, reducedMotion);
   const count =
     room.exhibits.length > 0 ? `${pad(room.exhibits.length)} ${t('works')}` : t('profile');
 

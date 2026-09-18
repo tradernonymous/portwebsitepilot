@@ -449,6 +449,40 @@
   color: var(--light);
 }
 
+/*
+ * Walking past a room.
+ *
+ * `usePassage` puts two numbers on the panel while it is near the screen: how far it has been
+ * walked past (`--pass`) and the same value unsigned (`--pass-abs`). The room answers by
+ * standing further back the further it is from the reading line, turning a little away from the
+ * visitor as it goes, and letting go of its light at the edges of the room.
+ *
+ * The perspective goes on the panel rather than on the corridor because a vanishing point is
+ * measured from its own element's box. The corridor is a dozen screens tall, so a perspective
+ * on it would put the viewer somewhere near the middle of the whole wall and leave the panel
+ * actually in front of the visitor looking almost flat. One panel is one screen tall, so its
+ * perspective lands where the visitor's eye is.
+ *
+ * It is gated three ways, because eight panels each holding two live canvases is not something
+ * to transform casually: the class only applies while the panel is in the corridor, the whole
+ * effect is off below 900px and for anyone who asked for no motion, and the magnitudes are
+ * small enough that nothing ever clips. What it buys is the one thing a flat list cannot give
+ * — the sense of physically passing the work.
+ */
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .room-panel.is-passing {
+    perspective: 1400px;
+  }
+
+  .room-panel.is-passing .room-panel-inner {
+    transform:
+      translate3d(0, calc(var(--pass, 0) * 34px), calc(var(--pass-abs, 0) * -95px))
+      rotateY(calc(var(--pass, 0) * -4.5deg));
+    opacity: calc(1 - var(--pass-abs, 0) * 0.42);
+    will-change: transform, opacity;
+  }
+}
+
 .rooms-head {
   position: relative;
   z-index: 1;

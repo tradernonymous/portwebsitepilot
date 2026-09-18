@@ -70,6 +70,15 @@ const ms = {
   menuRooms: 'Ruang',
   menuTools: 'Perkakas',
   youAreHere: 'Anda di sini',
+
+  // ---------------------------------------------------------------- plain list
+  filterLabel: 'Tapis mengikut bahagian',
+  filterAll: 'Semua',
+  filterRooms: 'Ruang pameran',
+  filterArchive: 'Arkib & senarai',
+  filterFilms: 'Filem',
+  filterInfo: 'Maklumat',
+  filterEmpty: 'Tiada bahagian dalam tapisan ini.',
   corridorKicker: 'Koridor Utama',
   corridorTitle: 'Lapan ruang, satu perjalanan',
   corridorLede: 'Setiap ruang menyimpan satu bahagian kisah PORT. Pilih pintu, dan melangkah masuk.',
@@ -305,6 +314,15 @@ const en: Dict = {
   menuRooms: 'Rooms',
   menuTools: 'Tools',
   youAreHere: 'You are here',
+
+  // ---------------------------------------------------------------- plain list
+  filterLabel: 'Filter by part of the building',
+  filterAll: 'Everything',
+  filterRooms: 'Exhibition rooms',
+  filterArchive: 'Archive & lists',
+  filterFilms: 'Films',
+  filterInfo: 'Information',
+  filterEmpty: 'Nothing in this part of the building.',
   corridorKicker: 'The Main Corridor',
   corridorTitle: 'Eight rooms, one journey',
   corridorLede: "Each room holds one chapter of PORT's story. Choose a door and step inside.",
