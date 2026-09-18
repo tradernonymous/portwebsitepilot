@@ -45,6 +45,30 @@
   inherits: false;
 }
 
+/*
+ * The colour of the room the visitor is standing in, written by `useRoomMood`
+ * (`src/lib/mood.ts`). Three channels rather than one colour so the stylesheet can put them
+ * wherever it likes — a wash, a rule, a glow — and so the value transitions smoothly as it
+ * changes instead of jumping between two finished colours.
+ */
+@property --mood-r {
+  syntax: '<number>';
+  initial-value: 139;
+  inherits: true;
+}
+
+@property --mood-g {
+  syntax: '<number>';
+  initial-value: 92;
+  inherits: true;
+}
+
+@property --mood-b {
+  syntax: '<number>';
+  initial-value: 255;
+  inherits: true;
+}
+
 :root {
   /* the wall */
   --white: #fcfcfa;

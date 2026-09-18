@@ -116,6 +116,7 @@ function Threshold({
       data-stop-label={t('chapterWelcome')}
       data-stop-note={t('curatorThreshold')}
       data-hero
+      data-mood={station.accent}
       ref={surface}
       className="threshold"
       aria-labelledby="threshold-title"
@@ -299,6 +300,7 @@ function RoomPanel({
     <article
       ref={panel}
       className={`room-panel${index % 2 ? ' is-flipped' : ''}`}
+      data-mood={room.accent}
       data-stop
       data-stop-label={room.label}
       data-stop-group={t('chapterRooms')}

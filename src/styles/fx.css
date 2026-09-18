@@ -53,6 +53,32 @@
   will-change: opacity;
 }
 
+/*
+ * The colour of the room you are standing in.
+ *
+ * Every room carries an accent, and indoors that colour is not confined to a sign on the wall;
+ * it is in the air of the space. This puts it back: a wash over the whole viewport, tinted by
+ * whichever `[data-mood]` section the reading line is inside.
+ *
+ * It is a flat colour under a fixed mask, not two gradients recomputed every frame. A mask is
+ * rasterised once and a background colour is one of the cheapest things a compositor can
+ * change, so following the visitor costs nothing like re-rasterising a radial gradient across
+ * a 4K viewport sixty times a second. `screen` is what keeps it honest: it can only add light,
+ * so on the gallery's black it reads as the room's ambience, and on the white wall it does
+ * nothing at all.
+ */
+.mood {
+  position: fixed;
+  inset: 0;
+  z-index: 84;
+  pointer-events: none;
+  background: rgb(var(--mood-r) var(--mood-g) var(--mood-b));
+  opacity: 0.11;
+  mix-blend-mode: screen;
+  mask-image: radial-gradient(125% 95% at 50% 45%, #000 24%, transparent 100%);
+  -webkit-mask-image: radial-gradient(125% 95% at 50% 45%, #000 24%, transparent 100%);
+}
+
 /* ---------------------------------------------------------------- depth */
 
 /*
@@ -523,6 +549,156 @@
   background: radial-gradient(circle at 50% 50%, #ffffff 0%, var(--white) 70%);
   clip-path: circle(0% at 50% 50%);
   box-shadow: inset 0 0 120px rgba(139, 92, 255, 0.35);
+}
+
+/* ---------------------------------------------------------------- doorway */
+
+/*
+ * The doorway between rooms. `src/ui/fx/Doorway.tsx` owns the gesture; this owns the look.
+ *
+ * Two dark leaves close over the page, the address changes while they are shut, and they open
+ * onto the room that was asked for. The inner edges carry the gallery's own spectrum, which is
+ * what makes the seam read as light passing rather than as a curtain.
+ *
+ * It sits above the top bar on purpose: a door you can see the chrome through is a wipe, not
+ * a door.
+ */
+.doorway {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.doorway-leaf {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 51%;
+  background: radial-gradient(140% 100% at 50% 45%, var(--void-2), var(--void) 74%);
+  will-change: transform;
+}
+
+.doorway-leaf.is-left {
+  left: 0;
+  transform: translateX(-101%);
+}
+
+.doorway-leaf.is-right {
+  right: 0;
+  transform: translateX(101%);
+}
+
+/* the light caught on the edge of each leaf as it comes across */
+.doorway-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    var(--lp-cyan),
+    var(--lp-violet),
+    var(--lp-magenta),
+    var(--lp-amber),
+    var(--lp-cyan)
+  );
+  box-shadow:
+    0 0 30px 4px rgba(139, 92, 255, 0.5),
+    0 0 80px 10px rgba(61, 232, 255, 0.22);
+}
+
+.doorway-leaf.is-left .doorway-edge {
+  right: 0;
+}
+
+.doorway-leaf.is-right .doorway-edge {
+  left: 0;
+}
+
+.doorway[data-phase='closing'] .doorway-leaf {
+  animation: door-shut-l var(--dur-2) var(--ease-out) both;
+}
+
+.doorway[data-phase='closing'] .doorway-leaf.is-right {
+  animation-name: door-shut-r;
+}
+
+.doorway[data-phase='opening'] .doorway-leaf {
+  animation: door-open-l var(--dur-2) var(--ease-out) both;
+}
+
+.doorway[data-phase='opening'] .doorway-leaf.is-right {
+  animation-name: door-open-r;
+}
+
+@keyframes door-shut-l {
+  from {
+    transform: translateX(-101%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes door-shut-r {
+  from {
+    transform: translateX(101%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes door-open-l {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-101%);
+  }
+}
+
+@keyframes door-open-r {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(101%);
+  }
+}
+
+/* where you are going, spoken while the doors are shut */
+.doorway-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: clamp(0.72rem, 1.5vw, 0.95rem);
+  font-weight: 500;
+  letter-spacing: 0.44em;
+  text-indent: 0.44em;
+  text-transform: uppercase;
+  color: var(--light-2);
+  opacity: 0;
+}
+
+.doorway[data-phase='closing'] .doorway-label {
+  animation: door-label var(--dur-2) var(--ease-out) both;
+}
+
+@keyframes door-label {
+  from {
+    opacity: 0;
+  }
+  55% {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ---------------------------------------------------------------- radiant light (Stephen Knapp style) */

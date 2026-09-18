@@ -51,7 +51,7 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
   usePointerLight(hero);
 
   return (
-    <article className="room" style={{ ['--room-accent' as string]: station.accent }}>
+    <article className="room" data-mood={station.accent} style={{ ['--room-accent' as string]: station.accent }}>
       <header
         ref={hero}
         className="room-hero"

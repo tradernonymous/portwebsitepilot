@@ -9,6 +9,7 @@ import {
   type TrailProgress,
 } from './content/trails';
 import { useGalleryWalk } from './lib/gallery';
+import { useRoomMood } from './lib/mood';
 import { detectWebGL, useHashRoute, useReducedMotion, type Route } from './lib/hooks';
 import { ErrorBoundary } from './lib/errors';
 import { useLang } from './lib/lang';
@@ -178,6 +179,9 @@ export default function App() {
    * page glides at all.
    */
   useEffect(() => startScrollEngine(reducedMotion), [reducedMotion]);
+
+  /* The air of the room the visitor is standing in, published for the ambient layer. */
+  useRoomMood();
 
   /* ---------------------------------------------------------------- gallery mode */
 
