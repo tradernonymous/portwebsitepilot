@@ -79,6 +79,10 @@ const ms = {
   filterFilms: 'Filem',
   filterInfo: 'Maklumat',
   filterEmpty: 'Tiada bahagian dalam tapisan ini.',
+
+  // ---------------------------------------------------------------- screening room
+  cinemaEnter: 'Panggung penuh',
+  cinemaExit: 'Keluar',
   corridorKicker: 'Koridor Utama',
   corridorTitle: 'Lapan ruang, satu perjalanan',
   corridorLede: 'Setiap ruang menyimpan satu bahagian kisah PORT. Pilih pintu, dan melangkah masuk.',
@@ -323,6 +327,10 @@ const en: Dict = {
   filterFilms: 'Films',
   filterInfo: 'Information',
   filterEmpty: 'Nothing in this part of the building.',
+
+  // ---------------------------------------------------------------- screening room
+  cinemaEnter: 'Full screen',
+  cinemaExit: 'Leave',
   corridorKicker: 'The Main Corridor',
   corridorTitle: 'Eight rooms, one journey',
   corridorLede: "Each room holds one chapter of PORT's story. Choose a door and step inside.",

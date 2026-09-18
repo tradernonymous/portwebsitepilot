@@ -616,3 +616,49 @@
     display: none;
   }
 }
+
+/*
+ * The plan on a phone.
+ *
+ * The row was four columns — number, glyph, name, count — with the visitor's own marker
+ * fighting the count for the last one. On a phone it becomes two: the number runs down the
+ * side like a floor plan, the name and the count stack beside it, and the marker comes out of
+ * the flow entirely and sits in the row's corner where it costs nothing.
+ */
+@media (max-width: 600px) {
+  .menu-room {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      'no body'
+      'no meta';
+    row-gap: 0.3rem;
+    padding-right: 0.9rem;
+  }
+
+  .menu-room-no {
+    grid-area: no;
+    align-self: start;
+    padding-top: 0.15rem;
+  }
+
+  .menu-room-body {
+    grid-area: body;
+  }
+
+  .menu-room-meta {
+    grid-area: meta;
+  }
+
+  .menu-here {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.62rem;
+  }
+
+  .menu-top > div:first-child {
+    min-width: 0;
+    flex: 1;
+  }
+}

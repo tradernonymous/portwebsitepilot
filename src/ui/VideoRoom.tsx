@@ -28,6 +28,30 @@ export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
   const [openShelf, setOpenShelf] = useState(startShelf?.id ?? '');
   const [playing, setPlaying] = useState(startShelf?.videos[0]?.id ?? '');
   const [playerState, setPlayerState] = useState<'loading' | 'ready' | 'fallback'>('loading');
+  /**
+   * The screening room's own full screen. Not the browser's: the point is to take the shelf,
+   * the labels and the rest of the page away and leave one lit rectangle in a dark house, and
+   * the browser's own fullscreen would only take the chrome.
+   */
+  const [cinema, setCinema] = useState(false);
+
+  useEffect(() => {
+    if (!cinema) return;
+    document.body.classList.add('is-cinema');
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setCinema(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.classList.remove('is-cinema');
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [cinema]);
+
+  /* Leaving the room leaves the screening. */
+  useEffect(() => {
+    setCinema(false);
+  }, [station.id]);
 
   // A link to a different shelf (from the hall) while the room is already open.
   useEffect(() => {
@@ -102,7 +126,7 @@ export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
 
       <div className="video-body">
         <div className="video-player">
-          <div className={`video-stage is-${playerState}`}>
+          <div className={`video-stage is-${playerState}${cinema ? ' is-cinema' : ''}`}>
             {/* Keyed on the id so switching films mounts a fresh player rather than leaving
                 the previous one's audio running underneath. */}
             <iframe
@@ -130,6 +154,17 @@ export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
                 </div>
               </div>
             ) : null}
+            {cinema ? (
+              <button
+                type="button"
+                className="video-cinema-exit"
+                onClick={() => setCinema(false)}
+                data-cursor="close"
+              >
+                {t('cinemaExit')}
+                <i aria-hidden="true">Esc</i>
+              </button>
+            ) : null}
             <span className="hud-corner is-tl" aria-hidden="true" />
             <span className="hud-corner is-tr" aria-hidden="true" />
             <span className="hud-corner is-bl" aria-hidden="true" />
@@ -141,13 +176,24 @@ export function VideoRoom({ station, initialShelf, showIntro = false }: Props) {
               <h3>{current.title}</h3>
               <p className="video-note">{current.note ?? current.meta}</p>
             </div>
-            <a className="btn" href={watchUrl(current.id)} target="_blank" rel="noreferrer noopener">
-              {t('openOnYoutube')}
-            </a>
+            <div className="video-under-actions">
+              <button
+                type="button"
+                className="btn is-cinema-btn"
+                onClick={() => setCinema(true)}
+                data-cursor="view"
+              >
+                {t('cinemaEnter')}
+              </button>
+              <a className="btn" href={watchUrl(current.id)} target="_blank" rel="noreferrer noopener">
+                {t('openOnYoutube')}
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className="video-shelf">
+        {/* the shelf stays where it is; while the film is up it simply is not there to reach */}
+        <div className="video-shelf" inert={cinema}>
           {/* Programme titles, not tabs */}
           <div className="video-programmes" role="tablist" aria-label={t('videoProgrammes')}>
             {shelves.map((s) => (

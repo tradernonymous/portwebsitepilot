@@ -328,3 +328,84 @@
     grid-template-columns: 110px minmax(0, 1fr);
   }
 }
+
+/* ==========================================================================
+   The screening room's own full screen
+
+   Not the browser's: the point is to take the shelf, the labels and the rest
+   of the page away and leave one lit rectangle in a dark house. The browser's
+   own fullscreen would only take the chrome and leave the gallery underneath.
+   ========================================================================== */
+
+.video-under-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.video-stage.is-cinema {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  aspect-ratio: auto;
+  height: 100%;
+  background: #000;
+}
+
+.video-stage.is-cinema iframe {
+  width: 100%;
+  height: 100%;
+  inset: 0;
+}
+
+/* the way out sits over the picture, where the eye already is */
+.video-cinema-exit {
+  position: absolute;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule-dark-strong);
+  background: rgba(5, 5, 7, 0.62);
+  color: var(--light);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: opacity var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
+}
+
+.video-cinema-exit:hover,
+.video-cinema-exit:focus-visible,
+.video-stage:hover .video-cinema-exit {
+  opacity: 1;
+  border-color: var(--light-2);
+}
+
+.video-cinema-exit i {
+  font-style: normal;
+  color: var(--light-3);
+}
+
+/*
+ * The page under the picture must not scroll away while the film is on — and the bar must not
+ * stay reachable behind it either. It is already covered by the stage; leaving it in the tab
+ * order would mean tabbing into controls nobody can see, so it leaves the page outright.
+ */
+body.is-cinema {
+  overflow: hidden;
+}
+
+body.is-cinema .topbar {
+  display: none;
+}
