@@ -7,7 +7,7 @@ import { CorridorRail, Hint } from './Hud';
 import { ErrorBoundary } from '../lib/errors';
 import { GalleryCanvas } from '../experience/r3f/GalleryCanvas';
 import { useGalleryStore } from '../experience/r3f/galleryStore';
-import { FreeWalkControls, FreeWalkToggle } from './FreeWalkControls';
+import { FreeWalkControls, FreeWalkToggle, QualityPicker } from './FreeWalkControls';
 import { freeWalkBus } from '../experience/r3f/input';
 
 type Props = {
@@ -166,6 +166,7 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
       <Hint retiring={taught}>{t(coarse ? 'hintWalkCoarse' : 'hintWalkFine')}</Hint>
       <FreeWalkToggle coarse={coarse} />
       <FreeWalkControls coarse={coarse} />
+      <QualityPicker />
       {reading !== null ? (
         <ExhibitReader
           station={station}

@@ -14,6 +14,8 @@ import { Court } from './Court';
 import { Entry } from './Entry';
 import { LightPaintings } from './LightPaintings';
 import { GalleryCamera } from './GalleryCamera';
+import { Governor } from './Governor';
+import { WingDust } from './WingDust';
 import { useGalleryStore } from './galleryStore';
 import type { Station } from '../../content';
 
@@ -100,6 +102,8 @@ export function GalleryCanvas({
         <pointLight position={[0, 7, 0]} intensity={10} distance={60} decay={2} />
 
         <GalleryCamera reducedMotion={reducedMotion} />
+        <Governor />
+        <WingDust reducedMotion={reducedMotion} />
 
         {!corridorOnly && (
           <>
@@ -159,7 +163,9 @@ export function GalleryCanvas({
  * paintings earn and a breath of grain.
  */
 function PostProcessing({ reducedMotion }: { reducedMotion: boolean }) {
-  if (reducedMotion) return null;
+  const quality = useGalleryStore((s) => s.quality);
+  /* The ladder's first rung is post-processing: a low-power device gets the plain room back. */
+  if (reducedMotion || quality === 'low') return null;
 
   return (
     <EffectComposer

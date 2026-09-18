@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import type { Station } from '../../content';
+import type { QualityPref, QualityLevel } from './quality';
 
 type Phase = 'entry' | 'hub' | 'warp' | 'corridor';
 
@@ -38,6 +39,13 @@ interface GalleryState {
   freeWalk: boolean;
   /** Whether the device tilts to look. Off until the visitor asks for it. */
   gyroLook: boolean;
+  /**
+   * The visitor's quality preference. `auto` means the governor picks; anything else is a
+   * choice the governor stands down for.
+   */
+  qualityPref: QualityPref;
+  /** The level actually in force — the governor's answer, not the visitor's wish. */
+  quality: QualityLevel;
   reducedMotion: boolean;
 
   setPhase: (phase: Phase) => void;
@@ -49,6 +57,8 @@ interface GalleryState {
   setCorridorBounds: (bounds: GalleryState['bounds']) => void;
   setFreeWalk: (free: boolean) => void;
   setGyroLook: (on: boolean) => void;
+  setQualityPref: (pref: QualityPref) => void;
+  setQuality: (level: QualityLevel) => void;
   setReducedMotion: (reduced: boolean) => void;
 
   openCorridor: (station: Station) => void;
@@ -67,6 +77,8 @@ export const useGalleryStore = create<GalleryState>()(
     bounds: null,
     freeWalk: false,
     gyroLook: false,
+    qualityPref: 'auto',
+    quality: 'high',
     reducedMotion: false,
 
     setPhase: (phase) => set({ phase }),
@@ -78,6 +90,8 @@ export const useGalleryStore = create<GalleryState>()(
     setCorridorBounds: (bounds) => set({ bounds }),
     setFreeWalk: (free) => set({ freeWalk: free }),
     setGyroLook: (on) => set({ gyroLook: on }),
+    setQualityPref: (pref) => set({ qualityPref: pref, quality: pref === 'auto' ? 'high' : pref }),
+    setQuality: (level) => set({ quality: level }),
     setReducedMotion: (reduced) => set({ reducedMotion: reduced }),
 
     openCorridor: (station) => set({

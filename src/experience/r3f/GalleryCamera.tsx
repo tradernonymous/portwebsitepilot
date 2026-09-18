@@ -70,6 +70,15 @@ export function GalleryCamera({ reducedMotion }: { reducedMotion: boolean }) {
     yaw.add(pitch);
     pitch.add(camera);
     scene.add(rig);
+    /*
+     * The camera joins the rig as a child, so its own position stops meaning "where the camera
+     * is" and starts meaning "where it sits inside the body". The Canvas hands it a standoff
+     * of 66 units for the very first frame — left alone it rides along forever, and every
+     * room is filmed from outside itself: the corridor a small box across an empty field. The
+     * rig owns the distance now; the eye height stays local, which is what the rail and the
+     * hub positions are written against.
+     */
+    camera.position.set(0, 1.72, 0);
 
     if (reducedMotion) {
       rig.position.copy(HUB_CAMERA_POS);

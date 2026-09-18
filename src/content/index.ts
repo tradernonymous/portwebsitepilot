@@ -262,7 +262,7 @@ const rawStations: Station[] = [
     tagline: 'Siapa kami, dan mengapa kami ada.',
     kind: 'about',
     intro: [
-      'PORT (People Of Remarkable Talents) merupakan jenama bagi Kampung Karyawan Amanjaya, sebuah agensi kebudayaan yang didanai sepenuhnya oleh Kerajaan Negeri Perak.',
+      'PORT (People Of Remarkable Talents) ialah jenama bagi Kampung Karyawan Amanjaya, sebuah agensi kebudayaan yang dibiayai sepenuhnya oleh Kerajaan Negeri Perak.',
       'Diasaskan pada tahun 2011, objektif utama PORT adalah untuk mengetengahkan bidang seni ke mata masyarakat melalui program yang melibatkan personaliti seni dan budaya dari dalam dan luar negara.',
     ],
     exhibits: [],

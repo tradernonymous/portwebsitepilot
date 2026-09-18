@@ -53,6 +53,38 @@ export function FreeWalkToggle({ coarse }: { coarse: boolean }) {
 }
 
 /**
+ * The walk's quality setting. `auto` hands the decision to the governor's sampler; any other
+ * pick stands it down — a choice overrides its own suggestion. Four labelled buttons because
+ * a select nobody can see is a setting nobody uses.
+ */
+export function QualityPicker() {
+  const { t } = useLang();
+  const qualityPref = useGalleryStore((s) => s.qualityPref);
+  const setQualityPref = useGalleryStore((s) => s.setQualityPref);
+  const options: Array<{ key: 'auto' | 'low' | 'mid' | 'high'; label: string }> = [
+    { key: 'auto', label: t('qualityAuto') },
+    { key: 'low', label: t('qualityLow') },
+    { key: 'mid', label: t('qualityMid') },
+    { key: 'high', label: t('qualityHigh') },
+  ];
+  return (
+    <div className="quality-picker" role="group" aria-label={t('qualityLabel')}>
+      {options.map((option) => (
+        <button
+          key={option.key}
+          type="button"
+          className={`quality-option${qualityPref === option.key ? ' is-on' : ''}`}
+          aria-pressed={qualityPref === option.key}
+          onClick={() => setQualityPref(option.key)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
  * The free walk's handheld controls: a thumb stick to move by, and a toggle that lets the
  * device itself turn the head. Both exist only while a body is active — on the rail, a phone
  * visitor has the swipe gestures they already had.

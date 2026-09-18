@@ -255,6 +255,50 @@
   line-height: 1.45;
 }
 
+/*
+ * The quality setting, kept out of the way: a quiet strip of pills in the walk view's empty
+ * top-left corner on desktop, and the top-right on a phone, where the bottom edge belongs to
+ * the rail's foot and the top-left to the tilt toggle. The active pick gets the spectrum
+ * edge, nothing more.
+ */
+.quality-picker {
+  position: fixed;
+  left: max(1.2rem, env(safe-area-inset-left));
+  top: max(1.2rem, env(safe-area-inset-top));
+  z-index: 6;
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.28rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule-dark);
+  background: rgba(5, 5, 7, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.quality-option {
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--light-2);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition: color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+
+.quality-option:hover {
+  color: var(--white);
+}
+
+.quality-option.is-on {
+  border-color: var(--spectrum);
+  color: var(--white);
+}
+
 /* The handheld stick, and the tilt toggle beside it. Phone only — a mouse has the lock. */
 .joystick {
   position: fixed;
@@ -330,6 +374,12 @@
 }
 
 @media (max-width: 760px) {
+  .quality-picker {
+    left: auto;
+    right: max(1rem, env(safe-area-inset-right));
+    top: max(1rem, env(safe-area-inset-top));
+  }
+
   .freewalk-toggle {
     right: auto;
     left: max(1.1rem, env(safe-area-inset-left));
