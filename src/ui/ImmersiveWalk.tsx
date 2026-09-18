@@ -79,6 +79,16 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
     [step],
   );
 
+  /*
+   * A step taken at either end of the wing writes the same progress back, so the store does not
+   * change, React does not render, and the control reads as broken rather than as finished —
+   * the visitor who has reached the last work presses MAJU and nothing ever happens. The rail
+   * disables the step it cannot honour instead. The epsilon absorbs the rounding left by adding
+   * a fraction n times, so the end is reached exactly rather than one press short of it.
+   */
+  const atStart = progress <= 1e-6;
+  const atEnd = progress >= 1 - 1e-6;
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (reading !== null) {
@@ -131,6 +141,8 @@ export function ImmersiveWalk({ station, reducedMotion, onExit }: Props) {
           setActive(index);
         }}
         onWalk={walkBy}
+        canWalkBack={!atStart}
+        canWalkForward={!atEnd}
         onOpen={(index) => setReading(index)}
         onExit={onExit}
       />

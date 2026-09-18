@@ -217,6 +217,10 @@ type RailProps = {
   station: Station;
   activeIndex: number;
   progress: number;
+  /** False at the near end of the wing, where a step back cannot change anything. */
+  canWalkBack: boolean;
+  /** False at the far end of the wing, where a step forward cannot change anything. */
+  canWalkForward: boolean;
   onSelect: (index: number) => void;
   /** A signed count of works to walk past — one step is one frame of the wing. */
   onWalk: (steps: number) => void;
@@ -225,7 +229,17 @@ type RailProps = {
 };
 
 /** The 3D wing's index rail: where you are, and every work in the wing. */
-export function CorridorRail({ station, activeIndex, progress, onSelect, onWalk, onExit, onOpen }: RailProps) {
+export function CorridorRail({
+  station,
+  activeIndex,
+  progress,
+  onSelect,
+  onWalk,
+  onExit,
+  onOpen,
+  canWalkBack,
+  canWalkForward,
+}: RailProps) {
   const { t } = useLang();
   return (
     <aside className="rail lit" aria-label={`${t('worksIn')} ${station.label}`}>
@@ -255,7 +269,13 @@ export function CorridorRail({ station, activeIndex, progress, onSelect, onWalk,
         ))}
       </div>
       <div className="rail-foot">
-        <button type="button" className="btn" onClick={() => onWalk(-1)} data-cursor="walk">
+        <button
+          type="button"
+          className="btn"
+          onClick={() => onWalk(-1)}
+          disabled={!canWalkBack}
+          data-cursor="walk"
+        >
           {t('walkBack')}
         </button>
         <button
@@ -266,7 +286,13 @@ export function CorridorRail({ station, activeIndex, progress, onSelect, onWalk,
         >
           {t('openWork')}
         </button>
-        <button type="button" className="btn" onClick={() => onWalk(1)} data-cursor="walk">
+        <button
+          type="button"
+          className="btn"
+          onClick={() => onWalk(1)}
+          disabled={!canWalkForward}
+          data-cursor="walk"
+        >
           {t('walkFwd')}
         </button>
       </div>

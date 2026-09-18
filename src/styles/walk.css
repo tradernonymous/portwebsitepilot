@@ -213,6 +213,11 @@
  */
 .hint {
   position: fixed;
+  /*
+   * A note, never a control. It fades out once read but keeps its box, and a box that is still
+   * hit-testable while invisible quietly eats clicks aimed at whatever is behind it.
+   */
+  pointer-events: none;
   left: max(1.2rem, env(safe-area-inset-left));
   bottom: max(1.2rem, env(safe-area-inset-bottom));
   margin: 0;
