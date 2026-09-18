@@ -1,0 +1,186 @@
+import { useEffect, useMemo, useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import { useGalleryStore } from './galleryStore';
+import { CorridorExit } from './CorridorExit';
+import { SCULPTURE_FORMS, Sculpture, isSculptureForm, type SculptureForm } from './Sculpture';
+import * as THREE from 'three';
+import type { Station } from '../../content';
+
+type CourtProps = {
+  station: Station;
+  reducedMotion: boolean;
+  onExhibitSelect?: (index: number) => void;
+  onExhibitFocus?: (index: number) => void;
+  onExit: () => void;
+};
+
+/**
+ * The court's pitch is longer than the corridor's: an object has to be walked round, and a
+ * visitor needs room to stand back from one before they reach the next.
+ */
+const SPACING = 9;
+/** How far the camera starts before the first plinth. */
+const ENTRY_Z = 6;
+/** The court is a hall, not a passage — the walls stand well apart. */
+const HALF_WIDTH = 8.5;
+
+/**
+ * The work a piece is made in.
+ *
+ * A work that names its own always keeps it. A work that does not gets one derived from its
+ * id — stable, so a piece never changes language between visits, and unaffected by reordering
+ * the court, which a position-based choice would not survive. The same rule the rooms use for
+ * their wall motifs, applied to the objects standing on the floor.
+ */
+function formFor(exhibit: { id: string; form?: string }): SculptureForm {
+  if (isSculptureForm(exhibit.form)) return exhibit.form;
+  let hash = 0;
+  for (let i = 0; i < exhibit.id.length; i += 1) hash = (hash * 31 + exhibit.id.charCodeAt(i)) >>> 0;
+  return SCULPTURE_FORMS[hash % SCULPTURE_FORMS.length];
+}
+
+/**
+ * A sculpture court: the wing that shows objects rather than photographs.
+ *
+ * It walks along the same axis as a corridor, publishes the same length and reports the same
+ * nearest work, which is what lets the camera, the wheel, the arrow keys and the index rail
+ * serve it without knowing it is a different kind of room. What changes is the hanging: the
+ * pieces stand in the middle of the floor on plinths, at a height you can walk around, and
+ * the room is lit from a slot in the roof instead of from the walls.
+ */
+export function Court({ station, reducedMotion, onExhibitSelect, onExhibitFocus, onExit }: CourtProps) {
+  const { phase, setCorridorLength } = useGalleryStore();
+  const { camera, raycaster } = useThree();
+  const groupRef = useRef<THREE.Group>(null);
+  const camPos = useRef(new THREE.Vector3());
+  const exhibits = station.exhibits;
+  const length = Math.max(28, exhibits.length * SPACING + 16);
+
+  /* The camera and the wheel need the length to know how far a walk goes. */
+  useEffect(() => {
+    setCorridorLength(length);
+    return () => setCorridorLength(0);
+  }, [length, setCorridorLength]);
+
+  /*
+   * A room's colour, walked a little further round the wheel for each piece, so the court has
+   * colour in it without becoming a rack of swatches.
+   */
+  const accents = useMemo(() => {
+    const base = new THREE.Color(station.accent);
+    return exhibits.map((_, i) => {
+      const c = base.clone();
+      const hsl = { h: 0, s: 0, l: 0 };
+      c.getHSL(hsl);
+      c.setHSL((hsl.h + i * 0.085) % 1, Math.min(1, hsl.s * 1.15), Math.min(0.72, hsl.l * 1.05));
+      return `#${c.getHexString()}`;
+    });
+  }, [exhibits, station.accent]);
+
+  useFrame(() => {
+    if (phase !== 'corridor') return;
+    const group = groupRef.current;
+    if (!group) return;
+
+    /* Where the visitor actually is lives in the world matrix — the camera rides in the rig. */
+    camera.getWorldPosition(camPos.current);
+    const ahead = camPos.current.z - 7;
+    let nearest = -1;
+    let bestDist = Infinity;
+
+    for (let i = 0; i < exhibits.length; i++) {
+      const d = Math.abs(-ENTRY_Z - i * SPACING - ahead);
+      if (d < bestDist) {
+        bestDist = d;
+        nearest = i;
+      }
+    }
+
+    if (nearest !== -1 && bestDist < 5.2) onExhibitFocus?.(nearest);
+  });
+
+  const onClick = () => {
+    const targets: THREE.Object3D[] = [];
+    groupRef.current?.traverse((obj) => {
+      if (obj.userData.exhibitIndex !== undefined) targets.push(obj);
+    });
+    const intersects = raycaster.intersectObjects(targets, false);
+    if (intersects.length) {
+      onExhibitSelect?.(intersects[0].object.userData.exhibitIndex);
+      return;
+    }
+
+    const exitMesh = groupRef.current?.getObjectByName('exit-door');
+    if (exitMesh && raycaster.intersectObject(exitMesh, false).length) onExit();
+  };
+
+  const ceiling = 5.6;
+
+  return (
+    <group ref={groupRef} visible={phase === 'corridor'} onClick={onClick}>
+      {/* the floor: polished enough to carry the light, so the room reads as depth not a box */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[HALF_WIDTH * 2, length + 24]} />
+        <meshStandardMaterial color={0xe9e8e3} roughness={0.14} metalness={0.62} />
+      </mesh>
+
+      <mesh position={[0, ceiling, -length / 2 + 8]} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[HALF_WIDTH * 2, length + 24]} />
+        <meshStandardMaterial color={0xf7f6f2} roughness={0.86} metalness={0.06} />
+      </mesh>
+
+      {/* the slot in the roof the court is lit by, and the shaft it throws */}
+      <mesh position={[0, ceiling - 0.04, -length / 2 + 8]} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.5, length + 16]} />
+        <meshBasicMaterial color={0xfff8e8} toneMapped={false} />
+      </mesh>
+      <directionalLight position={[0, 14, -length / 2]} intensity={1.1} color={0xfff6e6} />
+
+      <mesh position={[-HALF_WIDTH, ceiling / 2, -length / 2 + 8]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[length + 24, ceiling]} />
+        <meshStandardMaterial color={0xf2f1ec} roughness={0.9} metalness={0.05} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[HALF_WIDTH, ceiling / 2, -length / 2 + 8]} rotation={[0, -Math.PI / 2, 0]}>
+        <planeGeometry args={[length + 24, ceiling]} />
+        <meshStandardMaterial color={0xf2f1ec} roughness={0.9} metalness={0.05} side={THREE.DoubleSide} />
+      </mesh>
+
+      {exhibits.map((ex, i) => {
+        const side = i % 2 === 0 ? -1 : 1;
+        const x = side * 3.1;
+        const z = -ENTRY_Z - i * SPACING;
+        const accent = accents[i] ?? station.accent;
+
+        return (
+          <group key={ex.id} position={[x, 0, z]} userData={{ exhibitIndex: i }}>
+            {/* the plinth the piece stands on */}
+            <mesh position={[0, 0.45, 0]}>
+              <boxGeometry args={[1.7, 0.9, 1.7]} />
+              <meshStandardMaterial color={0x1c1c22} roughness={0.4} metalness={0.34} />
+            </mesh>
+
+            <group position={[0, 0.9, 0]}>
+              <Sculpture form={formFor(ex)} accent={accent} seed={i * 97 + 13} reducedMotion={reducedMotion} />
+            </group>
+
+            {/* the light the piece is shown in, from above and a little to the front */}
+            <pointLight position={[0, 4.2, 1.1]} intensity={7} distance={9} decay={2} color={accent} />
+            {/* and the pool it puts on the floor, which is what makes the object sit on it */}
+            <mesh position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <circleGeometry args={[1.5, 40]} />
+              <meshBasicMaterial
+                color={accent}
+                transparent
+                opacity={0.09}
+                blending={THREE.AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+          </group>
+        );
+      })}
+
+      <CorridorExit length={length} stationLabel={station.label} onExit={onExit} />
+    </group>
+  );
+}

@@ -179,6 +179,7 @@ export type GlyphKey =
   | 'wave'
   | 'beacon'
   | 'pin'
+  | 'plinth'
   | 'video';
 
 export type Exhibit = {
@@ -189,6 +190,12 @@ export type Exhibit = {
   body: string[];
   bullets?: string[];
   images: GalleryImage[];
+  /**
+   * The sculptural language this work is made in, for rooms that show objects rather than
+   * photographs — see `Sculpture.tsx` for the vocabulary. Leave it off and a stable language
+   * is derived from the work's id. Rooms that hang photographs ignore it.
+   */
+  form?: string;
   /** Original page on portipoh.com, kept for "sumber asal" links. */
   source?: string;
 };
@@ -224,6 +231,12 @@ export type Station = {
    * off and a stable choice is derived from the room's id.
    */
   motif?: MotifKind;
+  /**
+   * Which kind of wing this room is walked as. Leave it off for a corridor — photographs hung
+   * along a passage — and set `court` for a room whose works stand on the floor to be walked
+   * around. Both wings walk the same way; only the hanging changes.
+   */
+  wing?: 'corridor' | 'court';
   partners?: GalleryImage[];
   /**
    * A video station's shelf. Its works are films rather than photographs, so they are
@@ -530,7 +543,96 @@ const rawStations: Station[] = [
     ],
   },
 
-  /* ---------------------------------------------------------------- 5. ARKIB & MEDIA */
+  /* ---------------------------------------------------------------- 5. ARCA */
+  {
+    id: 'arca',
+    label: 'ARCA',
+    short: 'Arca',
+    glyph: 'plinth',
+    accent: '#b9a0dc',
+    // Light-and-space: this room's work is the lit cut in a standing form.
+    motif: 'aperture',
+    /*
+     * The one room whose works stand on the floor. Same walk, same rail, same reader — what
+     * changes is the hanging: objects in the round instead of photographs on a wall.
+     */
+    wing: 'court',
+    tagline: 'Bentuk yang berdiri sendiri, untuk dikelilingi — bukan digantung.',
+    kind: 'corridor',
+    intro: [
+      'Dewan arca PORT. Setiap karya berdiri di atas pelapiknya sendiri, dibina daripada bentuk asas dan cahaya — bukan salinan mana-mana karya, tetapi bahasa yang dipinjam daripada tujuh puluh tahun arca moden.',
+    ],
+    exhibits: [
+      {
+        id: 'tindanan',
+        title: 'Tindanan',
+        form: 'stack',
+        meta: 'Minimalisme · Bentuk Primer',
+        tagline: 'Papak yang ditindan sehingga keseimbangan itu sendiri menjadi bentuknya.',
+        body: [
+          'Karya ini bertanya berapa banyak yang boleh dibuang sebelum sesuatu berhenti menjadi arca. Jawapannya ialah lapisan: setiap papak lebih kecil daripada yang di bawahnya, dan seluruhnya bergantung pada titik di mana berat bertemu kedudukan.',
+        ],
+        images: [],
+      },
+      {
+        id: 'celah',
+        title: 'Celah',
+        form: 'column',
+        meta: 'Seni Cahaya & Ruang · Cahaya sebagai Bahan',
+        tagline: 'Potongan bercahaya pada monolit gelap — ruang yang dibuat oleh cahaya.',
+        body: [
+          'Cahaya di sini bukan alat untuk menerangkan bentuk, ia bahannya. Tanpa cahaya yang menembusi celah itu, tiada arca — hanya bongkah. Ini yang menjadikan bilik ini sendiri sebahagian daripada karya.',
+        ],
+        images: [],
+      },
+      {
+        id: 'pintal',
+        title: 'Pintal',
+        form: 'ribbon',
+        meta: 'Seni Kinetik · Pergerakan Berterusan',
+        tagline: 'Reben yang berpusing pada paksinya sendiri, tanpa pernah berhenti di tempat yang sama.',
+        body: [
+          'Bentuk yang berputar tidak boleh dilihat sekali sahaja. Anda perlu berdiri di situ sebentar — dan keputusan untuk berhenti itu sebahagian daripada karya.',
+        ],
+        images: [],
+      },
+      {
+        id: 'tabir',
+        title: 'Tabir',
+        form: 'veil',
+        meta: 'Pemasangan · Cahaya Tergantung',
+        tagline: 'Lapisan benang bercahaya yang boleh anda masuki dan berdiri di dalamnya.',
+        body: [
+          'Sebuah bilik di dalam bilik. Apabila anda berdiri di tengahnya, dinding dewan hilang di sebalik tabir cahaya — dan yang tinggal hanyalah cahaya yang bergerak perlahan di sekeliling anda.',
+        ],
+        images: [],
+      },
+      {
+        id: 'serpih',
+        title: 'Serpih',
+        form: 'shards',
+        meta: 'Bentuk Pecah · Bahan Biasa',
+        tagline: 'Kepingan yang bersandar antara satu sama lain tanpa dilekatkan.',
+        body: [
+          'Kepingan-kepingan ini hanya berdiri kerana satu sama lain. Tarik mana-mana satu, seluruhnya jatuh. Ia dibina daripada bahan yang tidak berharga dan tidak menjadi lebih berharga selepas dibentuk — itulah keseluruhan hujahnya.',
+        ],
+        images: [],
+      },
+      {
+        id: 'pusaran',
+        title: 'Pusaran',
+        form: 'orbit',
+        meta: 'Seni Optik · Lingkaran Berputar',
+        tagline: 'Lingkaran berputar pada kadar berbeza, dan mata anda cuba menyatukannya.',
+        body: [
+          'Setiap cincin berpusing pada kelajuan berbeza, jadi bentuk yang anda lihat tidak pernah sama dengan bentuk pada detik sebelumnya. Arca ini berlaku pada masa, bukan pada ruang.',
+        ],
+        images: [],
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------- 6. ARKIB & MEDIA */
   {
     id: 'arkib',
     label: 'ARKIB & MEDIA',
@@ -595,7 +697,7 @@ const rawStations: Station[] = [
     ],
   },
 
-  /* ---------------------------------------------------------------- 6. PORTCAST & VIDEO */
+  /* ---------------------------------------------------------------- 7. PORTCAST & VIDEO */
   {
     id: 'video',
     label: 'PORTCAST & VIDEO',
@@ -621,7 +723,7 @@ const rawStations: Station[] = [
     videoShelves: videoPlaylists,
   },
 
-  /* ---------------------------------------------------------------- 7. PROGRAM TERKINI */
+  /* ---------------------------------------------------------------- 8. PROGRAM TERKINI */
   {
     id: 'terkini',
     label: 'PROGRAM TERKINI',
@@ -678,7 +780,7 @@ const rawStations: Station[] = [
     ],
   },
 
-  /* ---------------------------------------------------------------- 7. HUBUNGI & KUNJUNGI */
+  /* ---------------------------------------------------------------- 9. HUBUNGI & KUNJUNGI */
   {
     id: 'hubungi',
     label: 'HUBUNGI & KUNJUNGI',

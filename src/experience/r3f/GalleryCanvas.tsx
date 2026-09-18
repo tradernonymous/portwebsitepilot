@@ -10,6 +10,7 @@ import { BlendFunction, RenderPass } from 'postprocessing';
 import * as THREE from 'three';
 import { Deck } from './Deck';
 import { Corridor } from './Corridor';
+import { Court } from './Court';
 import { Entry } from './Entry';
 import { LightPaintings } from './LightPaintings';
 import { GalleryCamera } from './GalleryCamera';
@@ -59,6 +60,12 @@ export function GalleryCanvas({
   useEffect(() => {
     onPhaseChange?.(phase);
   }, [phase, onPhaseChange]);
+
+  const leaveStation = () => {
+    setCurrentStation(null);
+    setPhase('hub');
+    onExit?.();
+  };
 
   const gl = useMemo(() => ({
     antialias: !reducedMotion,
@@ -110,19 +117,24 @@ export function GalleryCanvas({
           </>
         )}
 
-        {currentStation && (
-          <Corridor
-            station={currentStation}
-            reducedMotion={reducedMotion}
-            onExhibitSelect={onExhibitSelect}
-            onExhibitFocus={onExhibitFocus}
-            onExit={() => {
-              setCurrentStation(null);
-              setPhase('hub');
-              onExit?.();
-            }}
-          />
-        )}
+        {currentStation &&
+          (currentStation.wing === 'court' ? (
+            <Court
+              station={currentStation}
+              reducedMotion={reducedMotion}
+              onExhibitSelect={onExhibitSelect}
+              onExhibitFocus={onExhibitFocus}
+              onExit={leaveStation}
+            />
+          ) : (
+            <Corridor
+              station={currentStation}
+              reducedMotion={reducedMotion}
+              onExhibitSelect={onExhibitSelect}
+              onExhibitFocus={onExhibitFocus}
+              onExit={leaveStation}
+            />
+          ))}
 
         <LightPaintings
           tone="dark"

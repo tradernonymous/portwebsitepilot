@@ -89,6 +89,14 @@ const stationsEn: Record<string, StationEn> = {
       'Every PORT exhibition is documented as a digital book, so it can be revisited at any time.',
     ],
   },
+  arca: {
+    label: 'SCULPTURE',
+    short: 'Sculpture',
+    tagline: 'Forms that stand on their own, to be walked around rather than looked at.',
+    intro: [
+      'PORT\u2019s sculpture court. Each work stands on its own plinth, built out of basic form and light \u2014 not a copy of anyone\u2019s piece, but a language borrowed from seventy years of modern sculpture.',
+    ],
+  },
   arkib: {
     label: 'ARCHIVE & MEDIA',
     short: 'Archive',
@@ -215,6 +223,56 @@ const exhibitsEn: Record<string, ExhibitEn> = {
     tagline: 'Registration is required for every state arts nomination and programme.',
     body: [
       'Registration in the Perak Creative Arts Database is required for all nominations to programmes PORT runs on behalf of the Perak State Government.',
+    ],
+  },
+
+  // Sculpture court
+  tindanan: {
+    title: 'Stack',
+    meta: 'Minimalism · Primary Form',
+    tagline: 'Slabs piled until balance itself becomes the form.',
+    body: [
+      'How much can be taken away before a thing stops being sculpture? The answer here is layers: each slab smaller than the one below it, the whole held by the single point where weight meets position.',
+    ],
+  },
+  celah: {
+    title: 'Slit',
+    meta: 'Light and Space · Light as Material',
+    tagline: 'A lit cut in a dark monolith — space made by light.',
+    body: [
+      'Light here is not a way of explaining the form, it is the material. Without the light through that cut there is no sculpture, only a block. Which is what makes this room part of the work.',
+    ],
+  },
+  pintal: {
+    title: 'Twist',
+    meta: 'Kinetic Art · Continuous Movement',
+    tagline: 'A ribbon turning on its own axis, never stopping in the same place twice.',
+    body: [
+      'A turning form cannot be seen in one look. You have to stand there a while — and the decision to stand there is part of the work.',
+    ],
+  },
+  tabir: {
+    title: 'Veil',
+    meta: 'Installation · Suspended Light',
+    tagline: 'A curtain of lit strands you can walk into and stand inside.',
+    body: [
+      'A room inside a room. Standing at its centre, the walls of the hall disappear behind the veil of light, and what is left is light moving slowly around you.',
+    ],
+  },
+  serpih: {
+    title: 'Shard',
+    meta: 'Broken Form · Ordinary Materials',
+    tagline: 'Plates leaning against one another, glued to nothing.',
+    body: [
+      'These plates stand only because of each other. Pull any one away and the whole thing comes down. It is built from materials worth nothing, and worth no more once shaped — which is the entire argument.',
+    ],
+  },
+  pusaran: {
+    title: 'Vortex',
+    meta: 'Op Art · Turning Rings',
+    tagline: 'Rings turning at different rates, and your eye trying to join them up.',
+    body: [
+      'Each ring turns at its own speed, so the form you are looking at is never the form of a moment ago. This sculpture happens in time, not in space.',
     ],
   },
 
