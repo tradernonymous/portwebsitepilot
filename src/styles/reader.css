@@ -117,6 +117,32 @@
   max-width: min(100%, 560px);
   max-height: 100%;
   margin: 0;
+  /* the piece leans toward the pointing hand; the hook writes these per-frame */
+  --rx: 0deg;
+  --ry: 0deg;
+  transform: perspective(1100px) rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.35s var(--ease, ease-out);
+  transform-style: preserve-3d;
+}
+
+/* varnish: a sheen that rides the surface under the pointer, only while the hand is on it */
+.reader-piece::before {
+  content: '';
+  position: absolute;
+  inset: -0.5rem;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    320px circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(255, 255, 255, 0.14),
+    transparent 65%
+  );
+  transition: opacity 0.35s var(--ease, ease-out);
+}
+
+.reader-stage:hover .reader-piece::before {
+  opacity: 1;
 }
 
 /* the floor where the piece throws its shadow, as it would under a real spotlight */
@@ -131,6 +157,8 @@
   background: radial-gradient(50% 100% at 50% 50%, rgba(0, 0, 0, 0.65), transparent 70%);
   filter: blur(7px);
   z-index: -1;
+  /* the lean shifts the light: the shadow slides a little with the tilt */
+  translate: calc(var(--ry, 0deg) * -1.6) 0;
 }
 
 /* light gathering on the frame's far edge — spectrum spill, pinned to where the torch points */

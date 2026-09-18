@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { TextureLoader } from 'three';
 import { Artwork } from './Artwork';
@@ -20,6 +20,7 @@ type MonolithProps = {
   rotationY: number;
   accent: string;
   isFocused: boolean;
+  reducedMotion: boolean;
   onClick: () => void;
 };
 
@@ -33,11 +34,20 @@ export function Monolith({
   rotationY,
   accent,
   isFocused,
+  reducedMotion,
   onClick,
 }: MonolithProps) {
   void isFocused;
   const groupRef = useRef<THREE.Group>(null);
   const ringRef = useRef<THREE.Mesh>(null);
+  const haloRef = useRef<THREE.Mesh>(null);
+  const bodyRef = useRef<THREE.Mesh>(null);
+  /* Each monolith breathes on its own clock, so the ring sways as a whole, not in lockstep. */
+  const phase = useMemo(() => {
+    let h = 0;
+    for (let i = 0; i < station.id.length; i += 1) h = (h * 31 + station.id.charCodeAt(i)) % 628;
+    return h / 100;
+  }, [station.id]);
 
   const cover = station.deckCover;
   const coverUrl = cover?.small || station.heroImage?.small;
@@ -52,20 +62,35 @@ export function Monolith({
 
   const hoverRef = useRef(false);
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     const group = groupRef.current;
     const ring = ringRef.current;
+    const halo = haloRef.current;
+    const body = bodyRef.current;
     if (!group) return;
+    const t = clock.getElapsedTime();
 
-    if (hoverRef.current) {
-      group.position.y = THREE.MathUtils.lerp(group.position.y, 0.38, 0.1);
-    } else {
-      group.position.y = THREE.MathUtils.lerp(group.position.y, 0, 0.1);
-    }
+    /*
+     * The deck breathes: each monolith bobs a few millimetres on its own phase, and leaning
+     * in lifts it the rest of the way. Damped either way, so focus changes glide.
+     */
+    const bob = reducedMotion ? 0 : 0.05 + 0.04 * Math.sin(t * 0.5 + phase);
+    const targetY = hoverRef.current ? 0.38 : bob;
+    group.position.y = THREE.MathUtils.lerp(group.position.y, targetY, 0.1);
 
     if (ring) {
       const mat = ring.material as THREE.MeshBasicMaterial;
       mat.opacity = THREE.MathUtils.lerp(mat.opacity, hoverRef.current ? 0.9 : 0, 0.1);
+    }
+
+    /* Hover answers with light, not just height: the halo and the plate glow brighter. */
+    if (halo) {
+      const mat = halo.material as THREE.MeshBasicMaterial;
+      mat.opacity = THREE.MathUtils.lerp(mat.opacity, hoverRef.current ? 0.34 : 0.15, 0.1);
+    }
+    if (body) {
+      const mat = body.material as THREE.MeshStandardMaterial;
+      mat.emissiveIntensity = THREE.MathUtils.lerp(mat.emissiveIntensity, hoverRef.current ? 0.09 : 0.03, 0.1);
     }
   });
 
@@ -78,7 +103,7 @@ export function Monolith({
       onPointerOut={() => { hoverRef.current = false; }}
       onClick={onClick}
     >
-      <mesh name="body" position={[0, 2.05, 0]} castShadow receiveShadow>
+      <mesh ref={bodyRef} name="body" position={[0, 2.05, 0]} castShadow receiveShadow>
         <boxGeometry args={[4.9, 3.65, 0.26]} />
         <meshStandardMaterial
           color={ACCENT_DIM}
@@ -129,7 +154,7 @@ export function Monolith({
           <ArtCanvas seed={`deck:${station.id}`} accent={accent} width={3.4} height={2.3} position={[0, 2.05, 0.23]} />
         )}
 
-        <mesh name="halo" position={[0, 2.05, 0.16]} scale={[5.7, 4.5, 1]}>
+        <mesh ref={haloRef} name="halo" position={[0, 2.05, 0.16]} scale={[5.7, 4.5, 1]}>
           <planeGeometry args={[1, 1]} />
           <meshBasicMaterial
             color={GOLD}

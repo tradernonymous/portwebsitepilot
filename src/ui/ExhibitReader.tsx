@@ -29,6 +29,7 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext, suspend
   const exhibit = station.exhibits[index];
   const scroller = useDialogFocus<HTMLDivElement>(exhibit?.id ?? '');
   const mediaRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const { t, lang } = useLang();
   const [shown, setShown] = useState(0);
   const { has, toggle } = useCollected();
@@ -46,6 +47,40 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext, suspend
 
   /* the reader's side is a room: the pointer carries a soft torch over the wall */
   usePointerLight(mediaRef);
+
+  /*
+   * The piece leans toward the hand that points at it. A flat file is read; a held painting
+   * is handled — tilt follows the pointer across the stage and a sheen rides the surface,
+   * the way varnish catches the room's light. Fine pointers only; reduced motion holds still.
+   */
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || typeof window.matchMedia !== 'function') return;
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const piece = stage.querySelector<HTMLElement>('.reader-piece');
+    if (!piece) return;
+    const move = (e: PointerEvent) => {
+      const r = stage.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      const nx = (e.clientX - r.left) / r.width - 0.5;
+      const ny = (e.clientY - r.top) / r.height - 0.5;
+      piece.style.setProperty('--ry', `${(nx * 7).toFixed(2)}deg`);
+      piece.style.setProperty('--rx', `${(-ny * 6).toFixed(2)}deg`);
+      piece.style.setProperty('--gx', `${(((e.clientX - r.left) / r.width) * 100).toFixed(1)}%`);
+      piece.style.setProperty('--gy', `${(((e.clientY - r.top) / r.height) * 100).toFixed(1)}%`);
+    };
+    const leave = () => {
+      piece.style.setProperty('--rx', '0deg');
+      piece.style.setProperty('--ry', '0deg');
+    };
+    stage.addEventListener('pointermove', move);
+    stage.addEventListener('pointerleave', leave);
+    return () => {
+      stage.removeEventListener('pointermove', move);
+      stage.removeEventListener('pointerleave', leave);
+    };
+  }, []);
 
   if (!exhibit) return null;
 
@@ -69,7 +104,7 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext, suspend
         <div className="reader-media" ref={mediaRef}>
           {/* atmosphere behind the piece, so the work hangs in a room rather than on a panel */}
           <Motif kind="fog" />
-          <div className="reader-stage">
+          <div className="reader-stage" ref={stageRef}>
             <figure className="reader-piece">
               {image ? (
                 <Artwork

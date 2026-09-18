@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { useFrame } from '@react-three/fiber';
 import { useGalleryStore } from './galleryStore';
 import { DeckFloor } from './DeckFloor';
 import { DeckCenter } from './DeckCenter';
@@ -23,7 +24,6 @@ type DeckProps = {
  * walks into it.
  */
 export function Deck({ stations, reducedMotion, onStationFocus, onStationSelect }: DeckProps) {
-  void reducedMotion;
   const { phase, focusedStationId, setFocusedStationId } = useGalleryStore();
   const groupRef = useRef<THREE.Group>(null);
 
@@ -63,6 +63,30 @@ export function Deck({ stations, reducedMotion, onStationFocus, onStationSelect 
     return () => window.removeEventListener('wheel', handleWheel);
   }, [phase, focusedStationId, stations, setFocusedStationId, onStationFocus]);
 
+  /*
+   * The ring leans, it does not jump. Choosing a room starts the whole deck turning a
+   * fraction of the way toward it — eased, so the wheel feels like moving a heavy carousel
+   * that begins answering before it commits. Reduced motion stands still.
+   */
+  const angleOf = (id: string) => {
+    const n = stations.length;
+    const i = stations.findIndex((s) => s.id === id);
+    return (i / n) * Math.PI * 2 + Math.PI / n;
+  };
+  /* The front slot (where the focused monolith lands) sits at angle -π/2 on the ring. */
+  const targetSwing =
+    reducedMotion || phase !== 'hub' || !focusedStationId
+      ? 0
+      : (angleOf(focusedStationId) + Math.PI / 2) * 0.12;
+  const swingRef = useRef(0);
+
+  useFrame((_, dt) => {
+    const group = groupRef.current;
+    if (!group) return;
+    swingRef.current = THREE.MathUtils.damp(swingRef.current, targetSwing, 3.2, dt);
+    group.rotation.y = swingRef.current;
+  });
+
   return (
     <group ref={groupRef} visible={phase === 'hub' || phase === 'warp'}>
       <DeckFloor />
@@ -86,6 +110,7 @@ export function Deck({ stations, reducedMotion, onStationFocus, onStationSelect 
             rotationY={isFocused ? Math.PI : homeRot}
             accent={station.accent}
             isFocused={isFocused}
+            reducedMotion={reducedMotion}
             onClick={() => onStationSelect?.(station.id)}
           />
         );

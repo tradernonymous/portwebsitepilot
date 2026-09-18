@@ -31,6 +31,10 @@ export function CorridorExhibit({ exhibit, index, side, z, spacing, accent, redu
   const frameRef = useRef<THREE.Group>(null);
   const spotlightRef = useRef<THREE.Mesh>(null);
   const { camera, clock } = useThree();
+  const hoverRef = useRef(false);
+  const camPos = useRef(new THREE.Vector3());
+  /* A painting that has been watched keeps a touch of the lean after you step back. */
+  const leanRef = useRef(0);
 
   const image = exhibit.images[0];
   const raw = useLoader(TextureLoader, image?.small ?? PLACEHOLDER);
@@ -40,14 +44,14 @@ export function CorridorExhibit({ exhibit, index, side, z, spacing, accent, redu
     texture.anisotropy = 4;
   }
 
-  useFrame(() => {
+  useFrame((_, dt) => {
     const frame = frameRef.current;
     const spotlight = spotlightRef.current;
     if (!frame) return;
 
-    const camPos = camera.getWorldPosition(new THREE.Vector3());
-    const dx = frame.position.x - camPos.x;
-    const dz = frame.position.z - camPos.z;
+    camera.getWorldPosition(camPos.current);
+    const dx = frame.position.x - camPos.current.x;
+    const dz = frame.position.z - camPos.current.z;
     const dist = Math.hypot(dx, dz);
 
     const intensity = THREE.MathUtils.clamp(1 - dist / 15, 0, 1);
@@ -55,14 +59,29 @@ export function CorridorExhibit({ exhibit, index, side, z, spacing, accent, redu
 
     if (spotlight) {
       const mat = spotlight.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.15 + intensity * 0.3 + Math.sin(t * 2) * 0.05 * intensity;
+      /* Near the frame the lamp breathes on a slow sine; hover feeds it. */
+      const breathe = reducedMotion ? 0 : Math.sin(t * 1.4 + index * 1.7) * 0.04 * intensity;
+      mat.opacity = 0.15 + intensity * 0.3 + breathe + (hoverRef.current ? 0.12 : 0);
     }
 
     const plate = frame.getObjectByName('plate') as THREE.Mesh | undefined;
     if (plate) {
       const mat = plate.material as THREE.MeshStandardMaterial;
-      mat.emissiveIntensity = 0.03 + intensity * 0.15;
+      mat.emissiveIntensity = 0.03 + intensity * 0.15 + (hoverRef.current ? 0.1 : 0);
     }
+
+    /*
+     * A hung frame answers being looked at: as you approach it leans a degree or two off the
+     * wall toward you — the way standing close to a painting makes it feel aware of you —
+     * and a direct point lifts it a touch. Damped, so the wall breathes rather than wobbles.
+     */
+    const target = reducedMotion
+      ? 0
+      : THREE.MathUtils.clamp(1 - dist / 7, 0, 1) * 0.022 + (hoverRef.current ? 0.016 : 0);
+    leanRef.current = THREE.MathUtils.damp(leanRef.current, target, 2.6, dt);
+    frame.rotation.x = -leanRef.current;
+    frame.rotation.z = leanRef.current * side * 0.6;
+    frame.position.y = 2.1 + leanRef.current * 1.2;
   });
 
   return (
@@ -71,6 +90,14 @@ export function CorridorExhibit({ exhibit, index, side, z, spacing, accent, redu
       position={[side * 4.5, 2.1, z]}
       rotation={[0, side * (Math.PI / 2), 0]}
       userData={{ exhibitIndex: index }}
+      onPointerOver={() => {
+        hoverRef.current = true;
+        document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => {
+        hoverRef.current = false;
+        document.body.style.cursor = '';
+      }}
     >
       <mesh name="plate" castShadow receiveShadow>
         <boxGeometry args={[3.5, 2.5, 0.14]} />
