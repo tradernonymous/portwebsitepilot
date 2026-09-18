@@ -4,6 +4,7 @@ import { motifFor } from '../content/motifs';
 import { hrefFor } from '../lib/hooks';
 import { useCollected } from '../lib/collected';
 import { useLang } from '../lib/lang';
+import { usePointerLight } from '../lib/light';
 import { pad, roomNumber, tourOrder } from '../lib/order';
 import { useDepth } from '../lib/scroll';
 import { Artwork, LightPlate } from './Artwork';
@@ -46,6 +47,8 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
   const hero = useRef<HTMLElement>(null);
   /* The room's light and its cover plate drift apart from each other as the door is passed. */
   useDepth(hero, 0.1, reducedMotion);
+  /* and the torch the visitor carries in with them, over the wall of the door */
+  usePointerLight(hero);
 
   return (
     <article className="room" style={{ ['--room-accent' as string]: station.accent }}>
@@ -84,6 +87,7 @@ export function RoomView({ station, shelf, reducedMotion, webgl }: Props) {
           seed={number * 113}
           className="depth-layer"
         />
+        <span className="spot" aria-hidden="true" />
         <div className="room-hero-scrim" aria-hidden="true" />
 
         <div className="room-hero-inner">

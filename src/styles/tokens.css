@@ -18,6 +18,33 @@
   inherits: false;
 }
 
+/*
+ * The two numbers the scroll engine publishes every frame (`src/lib/scroll.ts`).
+ *
+ * Registering them as real numbers rather than opaque strings is what lets CSS do arithmetic
+ * on them — a size, an alpha, an opacity can all be derived from how fast the visitor is
+ * moving without JavaScript touching a single style. Registration also gives them a resting
+ * value, so every rule below is valid before the first frame has run.
+ */
+@property --vigour {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: true;
+}
+
+@property --page-progress {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: true;
+}
+
+/* The torch the pointer is carrying: 0-1, written by `usePointerLight` (`src/lib/light.ts`). */
+@property --ml {
+  syntax: '<number>';
+  initial-value: 0.34;
+  inherits: false;
+}
+
 :root {
   /* the wall */
   --white: #fcfcfa;
@@ -84,7 +111,11 @@
   --radius-sm: 8px;
   --radius-lg: 22px;
 
-  /* motion — one scale, so nothing in the interface moves at a tempo of its own */
+  /*
+   * motion — one scale, so nothing in the interface moves at a tempo of its own.
+   * The same four steps are written down in `src/lib/motion.ts` for the animations that are
+   * driven from JavaScript and cannot read a custom property as a number.
+   */
   --dur-1: 180ms;
   --dur-2: 320ms;
   --dur-3: 560ms;

@@ -167,16 +167,38 @@
   }
 }
 
-/* a soft light the pointer carries across a surface */
+/*
+ * The torch the pointer carries across a surface.
+ *
+ * `usePointerLight` keeps three numbers on the section: where the hand is (`--mx`, `--my`)
+ * and how hard it is travelling (`--ml`). A light that merely teleports to the pointer reads
+ * as a CSS trick; one that swells as the hand moves and settles back when it stops reads as
+ * light. So the size of the pool and the amount of colour in it both come off `--ml`, which
+ * the hook eases down on the frame clock rather than snapping back.
+ *
+ * Three pools, laid over each other: the white core the hand is holding, a cool halo around
+ * it, and a warm fringe — which is what a moving torch actually leaves on a dark wall.
+ */
 .spot {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(
-    520px circle at var(--mx, 50%) var(--my, 32%),
-    rgba(255, 255, 255, 0.13),
-    transparent 62%
-  );
+  background:
+    radial-gradient(
+      calc(300px + var(--ml) * 460px) circle at var(--mx, 50%) var(--my, 32%),
+      rgba(255, 255, 255, calc(0.05 + var(--ml) * 0.11)),
+      transparent 64%
+    ),
+    radial-gradient(
+      calc(120px + var(--ml) * 260px) circle at var(--mx, 50%) var(--my, 32%),
+      rgba(61, 232, 255, calc(var(--ml) * 0.1)),
+      transparent 70%
+    ),
+    radial-gradient(
+      calc(80px + var(--ml) * 190px) circle at var(--mx, 50%) var(--my, 32%),
+      rgba(255, 61, 203, calc(var(--ml) * 0.075)),
+      transparent 72%
+    );
 }
 
 /* ---------------------------------------------------------------- rhythm */

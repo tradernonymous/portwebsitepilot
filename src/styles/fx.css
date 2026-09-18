@@ -12,6 +12,47 @@
   pointer-events: none;
 }
 
+/* ---------------------------------------------------------------- exposure */
+
+/*
+ * The long exposure of the page itself.
+ *
+ * A lightpainting is what a camera keeps while the light is moving: the faster the torch
+ * travels, the further the colour smears. A visitor's scroll is the same gesture, so the page
+ * wears its own exposure — a wash of spectrum that only exists while they are actually
+ * moving, and is gone the moment they stop.
+ *
+ * `--vigour` is the engine's own 0-1 measurement of that movement, published once a frame
+ * (`src/lib/scroll.ts`), so this whole effect is one opacity change and not a line of
+ * JavaScript. `screen` is what makes it read as light rather than as a film: on the gallery's
+ * black it adds colour, and on the white wall it does nothing at all.
+ */
+.exposure {
+  position: fixed;
+  inset: -12%;
+  z-index: 85;
+  pointer-events: none;
+  opacity: calc(var(--vigour) * 0.9);
+  background:
+    linear-gradient(
+      96deg,
+      transparent 8%,
+      rgba(61, 232, 255, 0.1) 38%,
+      rgba(139, 92, 255, 0.12) 55%,
+      transparent 84%
+    ),
+    linear-gradient(
+      262deg,
+      transparent 10%,
+      rgba(255, 61, 203, 0.09) 44%,
+      rgba(255, 177, 61, 0.07) 62%,
+      transparent 88%
+    );
+  filter: blur(30px);
+  mix-blend-mode: screen;
+  will-change: opacity;
+}
+
 /* ---------------------------------------------------------------- depth */
 
 /*
@@ -617,6 +658,20 @@
   .route-veil-line,
   .route-veil-wash {
     animation: none !important;
+  }
+
+  /* the exposure is the page's own movement; with no movement there is nothing to keep */
+  .exposure {
+    display: none;
+  }
+
+  /* the torch stops travelling and simply sits where the pointer is */
+  .spot {
+    background: radial-gradient(
+      520px circle at var(--mx, 50%) var(--my, 32%),
+      rgba(255, 255, 255, 0.13),
+      transparent 62%
+    );
   }
 
   /* never leave a letter parked below its mask for someone who wants no motion */

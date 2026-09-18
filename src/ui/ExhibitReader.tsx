@@ -4,6 +4,7 @@ import { bodyIsOriginal } from '../content/en';
 import { useCollected } from '../lib/collected';
 import { useDialogFocus } from '../lib/hooks';
 import { useLang } from '../lib/lang';
+import { usePointerLight } from '../lib/light';
 import { pad } from '../lib/order';
 import { Artwork, LightPlate } from './Artwork';
 import { Motif } from './fx/Motif';
@@ -43,29 +44,8 @@ export function ExhibitReader({ station, index, onClose, onPrev, onNext, suspend
     };
   }, []);
 
-  /* the reader's side is a room: the pointer carries a soft torch that follows the visitor's
-     hand over the wall. Reduced motion leaves it resting on the centre. */
-  useEffect(() => {
-    const media = mediaRef.current;
-    if (!media) return;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (reduce.matches) return;
-    let raf = 0;
-    const onMove = (event: PointerEvent) => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const rect = media.getBoundingClientRect();
-        media.style.setProperty('--mx', `${((event.clientX - rect.left) / rect.width) * 100}%`);
-        media.style.setProperty('--my', `${((event.clientY - rect.top) / rect.height) * 100}%`);
-      });
-    };
-    media.addEventListener('pointermove', onMove, { passive: true });
-    return () => {
-      if (raf) cancelAnimationFrame(raf);
-      media.removeEventListener('pointermove', onMove);
-    };
-  }, []);
+  /* the reader's side is a room: the pointer carries a soft torch over the wall */
+  usePointerLight(mediaRef);
 
   if (!exhibit) return null;
 

@@ -1,7 +1,8 @@
-import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef } from 'react';
 import { localizeFeatured } from '../content/en';
 import { channel, gateFilm, watchUrl } from '../content/videos';
 import { useLang } from '../lib/lang';
+import { usePointerLight } from '../lib/light';
 import { FilmBackdrop } from './FilmBackdrop';
 import { Decipher } from './fx/Decipher';
 import { LightPainting } from './fx/LightPainting';
@@ -29,13 +30,7 @@ export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
   }, []);
 
   /** The light the pointer drags across the room before you have chosen anything. */
-  const light = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (reducedMotion || event.pointerType === 'touch') return;
-    const el = surface.current;
-    if (!el) return;
-    el.style.setProperty('--mx', `${(event.clientX / window.innerWidth) * 100}%`);
-    el.style.setProperty('--my', `${(event.clientY / window.innerHeight) * 100}%`);
-  };
+  usePointerLight(surface);
 
   return (
     <div
@@ -44,7 +39,6 @@ export function EntryGate({ reducedMotion, onEnter, onFlat }: Props) {
       aria-modal="true"
       aria-label={t('gateLabel')}
       ref={surface}
-      onPointerMove={light}
     >
       {/* The film itself is the poster: it is up from the first frame, with no photograph under it. */}
       <FilmBackdrop videoId={gateFilm.id} title={film.title} reducedMotion={reducedMotion} />

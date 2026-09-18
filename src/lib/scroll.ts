@@ -95,6 +95,11 @@ export function startScrollEngine(reducedMotion: boolean): () => void {
 
   const maxScroll = () => Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
 
+  const root = document.documentElement;
+  /** The last values published to the stylesheet, so an unchanged frame writes nothing. */
+  let publishedVigour = -1;
+  let publishedProgress = -1;
+
   let target = window.scrollY;
   let current = target;
   /** The last value we wrote, so our own scroll events can be told from everyone else's.
@@ -178,6 +183,26 @@ export function startScrollEngine(reducedMotion: boolean): () => void {
     state.max = max;
     state.progress = max > 0 ? clamp(current / max, 0, 1) : 0;
     state.speed = clamp(Math.abs(state.velocity) / SPEED_REFERENCE, 0, 1);
+
+    /*
+     * Publish the movement for the stylesheet.
+     *
+     * The canvases read `state.speed` directly. Writing the same number onto the root element
+     * as `--vigour` puts it in reach of plain CSS as well, so the chrome answers to the same
+     * movement as the light, on the same frame, without a component subscribing to a clock of
+     * its own. `--page-progress` comes along with it: one number, written once, for every rule
+     * that wants to know how deep into the building the visitor has walked.
+     */
+    const vigour = Math.round(state.speed * 100) / 100;
+    if (vigour !== publishedVigour) {
+      publishedVigour = vigour;
+      root.style.setProperty('--vigour', String(vigour));
+    }
+    const depth = Math.round(state.progress * 1000) / 1000;
+    if (depth !== publishedProgress) {
+      publishedProgress = depth;
+      root.style.setProperty('--page-progress', String(depth));
+    }
   });
 
   const instance: Engine = {
@@ -217,6 +242,8 @@ export function startScrollEngine(reducedMotion: boolean): () => void {
     window.removeEventListener('scroll', onScroll);
     window.removeEventListener('resize', onResize);
     window.removeEventListener('wheel', onWheel);
+    root.style.removeProperty('--vigour');
+    root.style.removeProperty('--page-progress');
     if (engine === instance) engine = null;
   };
   dispose = teardown;

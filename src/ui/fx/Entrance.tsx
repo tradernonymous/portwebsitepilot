@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { entranceStages } from '../../content';
+import { DUR, easeIn, easeInOut } from '../../lib/motion';
 import { PrismShards } from './PrismShards';
 
 /**
@@ -48,15 +49,15 @@ export function Entrance({
     }
 
     const perStage = 1500;
-    const doorway = 900;
+    /* the doorway phase is one step of the shared motion scale, not a number of its own */
+    const doorway = DUR.long;
     const total = stages.length * perStage + doorway;
     const start = performance.now();
     let raf = 0;
     let swapped = false;
     let leave = 0;
 
-    const ease = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
-    const easeIn = (x: number) => x * x * x;
+    const ease = easeInOut;
 
     const tick = (now: number) => {
       const elapsed = now - start;
@@ -93,7 +94,7 @@ export function Entrance({
         swapped = true;
         midpoint.current();
         root.current?.classList.add('is-leaving');
-        leave = window.setTimeout(() => done.current(), 620);
+        leave = window.setTimeout(() => done.current(), DUR.slow + 60);
         return;
       }
       raf = requestAnimationFrame(tick);

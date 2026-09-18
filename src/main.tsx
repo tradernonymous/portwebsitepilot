@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import { registerServiceWorker } from './lib/registerSw';
 import { LangProvider } from './lib/lang';
+import { Exposure } from './ui/fx/Exposure';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -24,6 +25,8 @@ if (!container) throw new Error('#root missing from index.html');
 createRoot(container).render(
   <StrictMode>
     <LangProvider>
+      {/* the page's own long exposure — outside App, so it survives every route */}
+      <Exposure />
       <App />
     </LangProvider>
   </StrictMode>,

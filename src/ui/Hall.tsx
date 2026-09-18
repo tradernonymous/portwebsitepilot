@@ -1,16 +1,11 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
-} from 'react';
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { contact, contentMeta, deckCovers, type Station } from '../content';
 import { localizeFeatured } from '../content/en';
 import { motifFor } from '../content/motifs';
 import { featuredVideo, thumbUrl, videoCount } from '../content/videos';
 import { hrefFor } from '../lib/hooks';
 import { useLang } from '../lib/lang';
+import { usePointerLight } from '../lib/light';
 import { HERO_ROOM, pad, tourOrder } from '../lib/order';
 import { scrollToY, useDepth } from '../lib/scroll';
 import { Artwork, LightPlate } from './Artwork';
@@ -111,14 +106,7 @@ function Threshold({
   useDepth(surface, 0.1, reducedMotion);
 
   /** The light the pointer carries across the room. */
-  const light = (event: ReactPointerEvent<HTMLElement>) => {
-    if (reducedMotion || event.pointerType === 'touch') return;
-    const el = surface.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    el.style.setProperty('--mx', `${((event.clientX - r.left) / r.width) * 100}%`);
-    el.style.setProperty('--my', `${((event.clientY - r.top) / r.height) * 100}%`);
-  };
+  usePointerLight(surface);
 
   return (
     <section
@@ -131,7 +119,6 @@ function Threshold({
       ref={surface}
       className="threshold"
       aria-labelledby="threshold-title"
-      onPointerMove={light}
     >
       <FilmBackdrop
         videoId={featuredVideo.id}

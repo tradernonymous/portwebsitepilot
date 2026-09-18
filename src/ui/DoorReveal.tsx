@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { DUR, EASE } from '../lib/motion';
 
 type Props = {
   /** The artwork image URL to expand. */
@@ -13,8 +14,9 @@ type Props = {
 
 /**
  * A gallery-door reveal: the clicked cover image expands from its current position to fill
- * the viewport, then the destination page loads behind it.  600 ms total — long enough to
- * read, short enough not to bore.
+ * the viewport, then the destination page loads behind it. The expand runs on the shared
+ * motion scale — the same curve and the same step the route veil uses — so opening a room and
+ * arriving in one are two halves of one movement rather than two animations in a row.
  */
 export function DoorReveal({ src, from, label, onDone }: Props) {
   const [phase, setPhase] = useState<'hold' | 'open' | 'flash' | 'done'>('hold');
@@ -49,18 +51,18 @@ export function DoorReveal({ src, from, label, onDone }: Props) {
         width: '100vw',
         height: '100vh',
         borderRadius: '0px',
-        transition: 'all 520ms cubic-bezier(0.4, 0, 0.15, 1)',
+        transition: `all ${DUR.slow}ms ${EASE.out}`,
       });
     });
 
-    // Step 3: flash white after the expand
-    const flashTimer = setTimeout(() => setPhase('flash'), 540);
+    // Step 3: flash white once the expand has almost landed
+    const flashTimer = setTimeout(() => setPhase('flash'), DUR.slow - 20);
 
-    // Step 4: done
+    // Step 4: done — a beat after the flash, so the label is read rather than glimpsed
     const doneTimer = setTimeout(() => {
       setPhase('done');
       onDone();
-    }, 780);
+    }, DUR.slow + 240);
 
     return () => {
       cancelAnimationFrame(raf);
