@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { hrefFor } from './hooks';
 
 type Props = {
   children: ReactNode;
@@ -52,8 +53,14 @@ export class ErrorBoundary extends Component<Props, State> {
           <button className="crash-retry" type="button" onClick={() => window.location.reload()}>
             Reload · Muat semula
           </button>
+          {/*
+           * The route is taken from the router rather than written out. It used to be a
+           * hard-coded `#/flat`, which the parser does not know — it resolves to the hall —
+           * so the one escape hatch guaranteed to work quietly sent the visitor back to the
+           * page that had just failed.
+           */}
           {this.props.flat ? (
-            <a className="crash-flat" href="#/flat">
+            <a className="crash-flat" href={hrefFor({ kind: 'flat' })}>
               Plain list · Senarai biasa
             </a>
           ) : null}

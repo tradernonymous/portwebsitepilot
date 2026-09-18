@@ -449,37 +449,65 @@
   color: var(--light);
 }
 
-/*
- * Walking past a room.
- *
- * `usePassage` puts two numbers on the panel while it is near the screen: how far it has been
- * walked past (`--pass`) and the same value unsigned (`--pass-abs`). The room answers by
- * standing further back the further it is from the reading line, turning a little away from the
- * visitor as it goes, and letting go of its light at the edges of the room.
- *
- * The perspective goes on the panel rather than on the corridor because a vanishing point is
- * measured from its own element's box. The corridor is a dozen screens tall, so a perspective
- * on it would put the viewer somewhere near the middle of the whole wall and leave the panel
- * actually in front of the visitor looking almost flat. One panel is one screen tall, so its
- * perspective lands where the visitor's eye is.
- *
- * It is gated three ways, because eight panels each holding two live canvases is not something
- * to transform casually: the class only applies while the panel is in the corridor, the whole
- * effect is off below 900px and for anyone who asked for no motion, and the magnitudes are
- * small enough that nothing ever clips. What it buys is the one thing a flat list cannot give
- * — the sense of physically passing the work.
- */
+/* ==========================================================================
+   The camera path
+
+   The whole hall is one move. The threshold, the works on view, every room in
+   turn, the collection and the way out are not seven sections that each animate
+   as they arrive — they are one continuous forward travel, and each chapter is
+   simply where the visitor happens to be looking as they pass it.
+
+   `usePassage` publishes how far a chapter has been walked past (`--pass`) and
+   the same value unsigned (`--pass-abs`). A chapter answers by standing further
+   back the further it is from the reading line, turning a little away from the
+   visitor as it goes, and letting go of its light at the edges of the room. Two
+   neighbours are both at full presence at the moment the line crosses between
+   them, which is what makes the passage continuous rather than a series of cuts.
+
+   The perspective goes on each chapter rather than on the hall, for two reasons.
+   A vanishing point is measured from its own element's box, and the hall is a
+   dozen screens tall — a perspective on it would put the viewer near the middle
+   of the whole wall and leave the chapter actually in front of them looking flat.
+   And `perspective`, like `transform`, makes an element a containing block for
+   `position: fixed` descendants, which is exactly what the chapter rail is.
+
+   It is gated three ways, because these chapters hold live canvases and eight of
+   them is not something to transform casually: the class only applies while a
+   chapter is in the corridor, the whole effect is off below 900px and for anyone
+   who asked for no motion, and the magnitudes are small enough that nothing ever
+   clips.
+   ========================================================================== */
+
 @media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
-  .room-panel.is-passing {
+  .threshold.is-passing,
+  .exhibition.is-passing,
+  .room-panel.is-passing,
+  .figures.is-passing,
+  .visit.is-passing {
     perspective: 1400px;
   }
 
-  .room-panel.is-passing .room-panel-inner {
+  .threshold.is-passing .threshold-inner,
+  .exhibition.is-passing .exhibition-grid,
+  .room-panel.is-passing .room-panel-inner,
+  .figures.is-passing .figures-inner,
+  .visit.is-passing .visit-inner {
     transform:
       translate3d(0, calc(var(--pass, 0) * 34px), calc(var(--pass-abs, 0) * -95px))
       rotateY(calc(var(--pass, 0) * -4.5deg));
     opacity: calc(1 - var(--pass-abs, 0) * 0.42);
     will-change: transform, opacity;
+  }
+
+  /*
+   * The chapter that is behind the visitor has released its light entirely, and the one coming
+   * up is still gathering. Held at full opacity they read as separate pages stacked in a list;
+   * letting them go is what makes the hall feel like it continues past the eye.
+   */
+  .threshold.is-passing .threshold-veil,
+  .exhibition.is-passing .exhibition-head,
+  .figures.is-passing .marquee {
+    opacity: calc(1 - var(--pass-abs, 0) * 0.6);
   }
 }
 

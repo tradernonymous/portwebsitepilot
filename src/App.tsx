@@ -19,6 +19,7 @@ import { GalleryHud } from './ui/GalleryHud';
 import { Opening } from './ui/Opening';
 import { AmbientVeil } from './ui/fx/AmbientVeil';
 import { CuratorPanel } from './ui/CuratorPanel';
+import { FIRST_RUN_KEY, FirstRun } from './ui/FirstRun';
 import { Cursor } from './ui/fx/Cursor';
 import { Entrance } from './ui/fx/Entrance';
 import { Hall } from './ui/Hall';
@@ -72,6 +73,14 @@ function alreadyEntered(): boolean {
   }
 }
 
+function tourAlreadySeen(): boolean {
+  try {
+    return window.localStorage.getItem(FIRST_RUN_KEY) === '1';
+  } catch {
+    return true;
+  }
+}
+
 export default function App() {
   const reducedMotion = useReducedMotion();
   const webgl = useMemo(() => detectWebGL(), []);
@@ -84,6 +93,7 @@ export default function App() {
    */
   const [entered, setEntered] = useState(() => route.kind !== 'hub' || alreadyEntered());
   const [entering, setEntering] = useState(false);
+  const [tourSeen, setTourSeen] = useState(tourAlreadySeen);
   const [helpOpen, setHelpOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notebookOpen, setNotebookOpen] = useState(false);
@@ -247,10 +257,19 @@ export default function App() {
     if (!gallery) setCurator(false);
   }, [gallery]);
 
+  /*
+   * The gallery's mode, published for the stylesheet and the pointer.
+   *
+   * Both were reading `body.is-gallery` — the rail stands down so the readout has the bottom
+   * of the screen to itself, and the cursor changes what its ring is made of — and nothing was
+   * ever setting it, so the rail sat underneath the readout and the cursor's gallery styling
+   * never once appeared. It is published on exactly the condition that renders the readout, so
+   * the two can never both be claiming the same corner.
+   */
   useEffect(() => {
-    document.body.classList.toggle('is-curator', curatorOn);
-    return () => document.body.classList.remove('is-curator');
-  }, [curatorOn]);
+    document.body.classList.toggle('is-gallery', galleryOn);
+    return () => document.body.classList.remove('is-gallery');
+  }, [galleryOn]);
 
   const curatorDwellMs = reducedMotion ? 5200 : 6400;
   /*
@@ -326,6 +345,7 @@ export default function App() {
   }, [gallery]);
 
   const chrome: ChromeActions = {
+    onTour: () => setTourSeen(false),
     flat: route.kind === 'flat',
     onToggleFlat: () => navigate(route.kind === 'flat' ? { kind: 'hub' } : { kind: 'flat' }),
     onHelp: () => setHelpOpen(true),
@@ -338,11 +358,29 @@ export default function App() {
     curator: galleryToggleable ? { active: curator, onToggle: toggleCurator } : null,
   };
 
+  /**
+   * The guide has been read, or the visitor walked on. Either way it is remembered, so the
+   * next visit opens in the gallery rather than in an explanation of the gallery.
+   */
+  const finishTour = useCallback(() => {
+    setTourSeen(true);
+    try {
+      window.localStorage.setItem(FIRST_RUN_KEY, '1');
+    } catch {
+      /* it simply shows again next time */
+    }
+  }, []);
+
   /* ---------------------------------------------------------------- render */
 
   const help = helpOpen ? <HelpPanel onClose={() => setHelpOpen(false)} reducedMotion={reducedMotion} /> : null;
   /* A dialog owns the screen and the keys, so the readout stands down with them. */
   const reading = helpOpen || menuOpen || notebookOpen || trailOpen || route.kind === 'exhibit';
+  /*
+   * Said once, after the gate, in the hall, and only when nothing else is on screen. It never
+   * appears before the entrance — two full-screen introductions in a row is one too many.
+   */
+  const firstRun = entered && !tourSeen && !entering && !reading && route.kind === 'hub';
   const notebook = notebookOpen ? (
     <Suspense fallback={null}>
       <NotebookPanel onClose={() => setNotebookOpen(false)} />
@@ -467,6 +505,7 @@ export default function App() {
         </ErrorBoundary>
       ) : null}
       {readout}
+      {firstRun ? <FirstRun onDone={finishTour} /> : null}
       <MenuPanel
         {...chrome}
         open={menuOpen}

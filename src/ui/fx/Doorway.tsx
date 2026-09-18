@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { announceDoorway, bindDoorway, type DoorwayPhase } from '../../lib/doorway';
 import { useLang } from '../../lib/lang';
-import { bindDoorway } from '../../lib/doorway';
 import { DUR } from '../../lib/motion';
 
 /**
@@ -15,35 +15,60 @@ import { DUR } from '../../lib/motion';
  * gallery's light caught on their inner edges, the address changes while they are shut, and
  * they open onto the room that was asked for. The visitor passes through a door.
  *
- * Three rules keep it from becoming a tax on navigation:
+ * Four rules keep it from becoming a tax on navigation:
  *
- *  - It only exists where a fine pointer is in use. On a touch screen an extra third of a
- *    second before a tap does anything reads as a broken tap, not as a door.
+ *  - A touch screen gets a door too, but a shorter one. A phone had none at all before, which
+ *    left the smaller screen with a plainer gallery than the larger one — the wrong way round.
+ *    What makes a delayed tap feel broken is silence, not the delay, so the doors start moving
+ *    on the tap itself and only the destination waits.
  *  - It only takes links that stay inside the gallery (`#/…`). Off-site links, modifier
  *    clicks, middle clicks and downloads are the browser's business and are left alone.
  *  - A room panel grows its own cover across the screen. That is already a door, so those
  *    links are skipped rather than being given two in a row.
+ *  - Reduced motion gets none of it: the address changes at once.
  */
-type Phase = 'idle' | 'closing' | 'opening';
 
 /** Long enough for the swapped page to have rendered behind the closed doors. */
 const HOLD = Math.round(DUR.quick * 0.8);
+
+type Timing = { close: number; hold: number; open: number };
+
+/** A mouse can wait for a door; a thumb should not. */
+function timingFor(touch: boolean): Timing {
+  return touch
+    ? { close: Math.round(DUR.quick * 1.1), hold: 60, open: Math.round(DUR.quick * 1.2) }
+    : { close: DUR.base, hold: HOLD, open: DUR.base };
+}
+
+function motionAllowed(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
 
 function fitsFinePointer(): boolean {
   return (
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
-    window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
-    !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches
   );
 }
 
 export function Doorway() {
   const { t } = useLang();
-  const [phase, setPhase] = useState<Phase>('idle');
-  const [enabled] = useState(fitsFinePointer);
+  const [phase, setPhase] = useState<DoorwayPhase>('idle');
+  const [enabled] = useState(motionAllowed);
+  const [fine] = useState(fitsFinePointer);
   const busy = useRef(false);
+  const touch = useRef(false);
   const timers = useRef<number[]>([]);
+
+  const go = useCallback((next: DoorwayPhase) => {
+    setPhase(next);
+    announceDoorway(next);
+  }, []);
 
   /**
    * Take the visitor through. The action runs while the doors are shut, so whatever it does —
@@ -55,26 +80,27 @@ export function Doorway() {
         action();
         return;
       }
+      const beat = timingFor(touch.current);
       busy.current = true;
-      setPhase('closing');
+      go('closing');
       timers.current.push(
         window.setTimeout(() => {
           action();
           timers.current.push(
             window.setTimeout(() => {
-              setPhase('opening');
+              go('opening');
               timers.current.push(
                 window.setTimeout(() => {
-                  setPhase('idle');
+                  go('idle');
                   busy.current = false;
-                }, DUR.base),
+                }, beat.open),
               );
-            }, HOLD),
+            }, beat.hold),
           );
-        }, DUR.base),
+        }, beat.close),
       );
     },
-    [enabled],
+    [enabled, go],
   );
 
   useEffect(() => {
@@ -99,6 +125,8 @@ export function Doorway() {
       const href = anchor.getAttribute('href') ?? '';
       if (!href.startsWith('#/') || href === window.location.hash) return;
       if (anchor.closest('.room-panel')) return;
+      /* A tap carries no pointer type on the click event, so the last input wins. */
+      touch.current = !fine || window.matchMedia('(pointer: coarse)').matches;
       event.preventDefault();
       open(() => {
         window.location.hash = href;
@@ -106,7 +134,7 @@ export function Doorway() {
     };
     document.addEventListener('click', onClick, true);
     return () => document.removeEventListener('click', onClick, true);
-  }, [enabled, open]);
+  }, [enabled, fine, open]);
 
   if (!enabled) return null;
 

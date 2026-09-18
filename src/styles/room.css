@@ -579,3 +579,29 @@
 .work.is-kept .work-plaque .work-title {
   color: #3de8ff;
 }
+
+/* ==========================================================================
+   A phone held sideways
+
+   The room's door is a full-height panel with 8rem of top padding to clear
+   the bar. Sideways there is only 390px of height to clear it in, so the
+   padding comes down and the cover plate stands aside — the name, the line
+   and the way in are what the door is for, and they have to fit.
+   ========================================================================== */
+
+@media (max-height: 560px) {
+  .room-hero {
+    padding-top: 4.75rem;
+    padding-bottom: 2.25rem;
+  }
+
+  .room-title {
+    font-size: clamp(1.9rem, 5vw, 3rem);
+  }
+
+  .room-intro {
+    /* the full introduction is in the room below; the door says hello, not everything */
+    max-height: 4.6em;
+    overflow: hidden;
+  }
+}

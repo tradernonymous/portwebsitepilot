@@ -104,6 +104,8 @@ function Threshold({
   const surface = useRef<HTMLElement>(null);
   /* The room's light drifts against the page as the hero passes, so the hall starts deep. */
   useDepth(surface, 0.1, reducedMotion);
+  /* The walk starts at the door: the threshold is the first panel of the same move. */
+  usePassage(surface, reducedMotion);
 
   /** The light the pointer carries across the room. */
   usePointerLight(surface);
@@ -371,6 +373,7 @@ function Figures({
   const titles = Array.from(new Set(stations.flatMap((s) => s.exhibits.map((e) => e.title))));
   const section = useRef<HTMLElement>(null);
   useDepth(section, 0.09, reducedMotion);
+  usePassage(section, reducedMotion);
 
   return (
     <section
@@ -436,6 +439,7 @@ function Visit({ reducedMotion }: { reducedMotion: boolean }) {
   const mapsQuery = encodeURIComponent('PORT Ipoh, Jalan Sultan Azlan Shah, 31400 Ipoh, Perak');
   const section = useRef<HTMLElement>(null);
   useDepth(section, 0.09, reducedMotion);
+  usePassage(section, reducedMotion);
 
   return (
     <>

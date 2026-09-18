@@ -201,21 +201,31 @@
   color: var(--ink);
 }
 
+/*
+ * The one-line gesture lesson.
+ *
+ * It used to sit at the bottom centre as a single unbroken line, which is exactly where the
+ * index rail's bottom-left corner is: below roughly 1230px of viewport the two overlapped, so
+ * on most laptops the lesson printed straight across the index. The rail is a fixed column on
+ * the right, so the lesson now takes the space that is actually left over — anchored to the
+ * left margin, no wider than the room beside the rail, and allowed to wrap onto a second line
+ * rather than run underneath it.
+ */
 .hint {
   position: fixed;
-  left: 50%;
+  left: max(1.2rem, env(safe-area-inset-left));
   bottom: max(1.2rem, env(safe-area-inset-bottom));
-  translate: -50% 0;
   margin: 0;
+  max-width: calc(100% - min(360px, 100vw - 2rem) - 3.6rem);
   padding: 0.65rem 1.15rem;
-  border-radius: 999px;
+  border-radius: var(--radius);
   border: 1px solid var(--rule-dark);
   background: rgba(5, 5, 7, 0.76);
   color: var(--light);
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.06em;
-  white-space: nowrap;
+  line-height: 1.5;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   transition: opacity var(--dur-3) var(--ease);
@@ -245,5 +255,28 @@
     width: max-content;
     max-width: calc(100vw - 2rem);
     text-align: center;
+  }
+}
+
+/*
+ * A phone held sideways.
+ *
+ * Sideways the rail keeps its desktop position down the right, but there is only 390px of
+ * height for it — the head, the progress bar, the list, the walk controls and the way out. It
+ * narrows so the 3D view keeps most of the screen, and the hint takes the top-left corner,
+ * where there is nothing but empty space.
+ */
+/* Only above 760px: below it the rail is a sheet along the bottom, not a column on the right. */
+@media (max-height: 620px) and (min-width: 761px) {
+  .rail {
+    width: 280px;
+    gap: 0.6rem;
+    padding: 0.85rem;
+  }
+
+  .hint {
+    top: max(1rem, env(safe-area-inset-top));
+    bottom: auto;
+    max-width: calc(100% - 280px - 3.6rem);
   }
 }

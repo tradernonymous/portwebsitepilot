@@ -83,6 +83,23 @@ const ms = {
   // ---------------------------------------------------------------- screening room
   cinemaEnter: 'Panggung penuh',
   cinemaExit: 'Keluar',
+
+  // ---------------------------------------------------------------- first visit
+  firstRunKicker: 'Nota kurator',
+  firstRunStep: 'Langkah',
+  firstRunA: 'Ini ruang utama PORT',
+  firstRunABody:
+    'Tatal ke bawah dan anda berjalan melalui lapan ruang — setiap satu dibuka seperti melangkah masuk ke dewan pameran, bukan seperti menukar halaman.',
+  firstRunB: 'Setiap ruang ada pintunya',
+  firstRunBBody:
+    'Buka pintu mana-mana ruang untuk masuk, atau tekan Peta Bangunan di bar atas untuk melihat seluruh rumah ini sekali gus — dengan kedudukan anda ditanda.',
+  firstRunC: 'Berjalan dengan papan kekunci',
+  firstRunCBody:
+    'Hidupkan Mod Galeri di bar atas untuk berjalan dengan anak panah, atau pilih Mata Kurator untuk tur berpandu yang membawa anda sendiri.',
+  firstRunNext: 'Seterusnya',
+  firstRunGo: 'Mula meneroka',
+  firstRunSkip: 'Langkau',
+  tourReplay: 'Panduan pertama',
   corridorKicker: 'Koridor Utama',
   corridorTitle: 'Lapan ruang, satu perjalanan',
   corridorLede: 'Setiap ruang menyimpan satu bahagian kisah PORT. Pilih pintu, dan melangkah masuk.',
@@ -331,6 +348,23 @@ const en: Dict = {
   // ---------------------------------------------------------------- screening room
   cinemaEnter: 'Full screen',
   cinemaExit: 'Leave',
+
+  // ---------------------------------------------------------------- first visit
+  firstRunKicker: 'A note from the curator',
+  firstRunStep: 'Step',
+  firstRunA: 'This is PORT\u2019s main hall',
+  firstRunABody:
+    'Scroll down and you walk through eight rooms — each one opening the way you would step into a gallery, rather than swapping pages.',
+  firstRunB: 'Every room has a door',
+  firstRunBBody:
+    'Open any room\u2019s door to go in, or press Building map in the top bar to see the whole house at once, with your own place marked on it.',
+  firstRunC: 'Walking with the keyboard',
+  firstRunCBody:
+    'Turn on Gallery mode in the top bar to walk with the arrow keys, or choose Curator\u2019s Eye for a guided tour that carries you along itself.',
+  firstRunNext: 'Next',
+  firstRunGo: 'Start exploring',
+  firstRunSkip: 'Skip',
+  tourReplay: 'First-time guide',
   corridorKicker: 'The Main Corridor',
   corridorTitle: 'Eight rooms, one journey',
   corridorLede: "Each room holds one chapter of PORT's story. Choose a door and step inside.",

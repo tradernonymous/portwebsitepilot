@@ -68,6 +68,7 @@ export function MenuPanel({ open, onClose, here, reducedMotion, ...actions }: Pr
       active: false,
       run: actions.notebook.onToggle,
     },
+    { key: 'tour', label: t('tourReplay'), active: false, run: actions.onTour },
     { key: 'flat', label: actions.flat ? t('toGallery') : t('toList'), active: actions.flat, run: actions.onToggleFlat },
     { key: 'help', label: t('helpTitle'), active: false, run: actions.onHelp },
   ].filter((entry): entry is NonNullable<typeof entry> => entry !== null);

@@ -13,6 +13,11 @@ type Toggle = { active: boolean; onToggle: () => void };
  * this page, instead of the control having to ask which page it is on.
  */
 export type ChromeActions = {
+  /**
+   * Brings the first-visit guide back. It retires itself once read, which is right — but a
+   * thing that can only ever be seen once is a thing that cannot be shown to anyone else.
+   */
+  onTour: () => void;
   flat: boolean;
   onToggleFlat: () => void;
   onHelp: () => void;

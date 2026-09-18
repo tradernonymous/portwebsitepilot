@@ -1,6 +1,8 @@
+import { useRef } from 'react';
 import { hrefFor } from '../lib/hooks';
 import { useLang } from '../lib/lang';
 import { pad, tourOrder } from '../lib/order';
+import { usePassage } from '../lib/scroll';
 import { Artwork } from './Artwork';
 
 type Props = {
@@ -22,7 +24,9 @@ type Props = {
  */
 export function Exhibition({ reducedMotion, id }: Props) {
   const { t, stations } = useLang();
-  void reducedMotion;
+  const section = useRef<HTMLElement>(null);
+  /* The works on view are a chapter of the same walk, not a grid beside it. */
+  usePassage(section, reducedMotion);
 
   const featured = tourOrder(stations)
     .map((station) => {
@@ -44,6 +48,7 @@ export function Exhibition({ reducedMotion, id }: Props) {
       data-stop-note={t('curatorOnview')}
       className="exhibition"
       aria-labelledby="exhibition-title"
+      ref={section}
     >
       <header className="exhibition-head">
         <p className="kicker">{t('exhibitionKicker')}</p>

@@ -5,6 +5,7 @@ import { registerServiceWorker } from './lib/registerSw';
 import { LangProvider } from './lib/lang';
 import { Ambient } from './ui/fx/Ambient';
 import { Doorway } from './ui/fx/Doorway';
+import { LightTrail } from './ui/fx/LightTrail';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -28,6 +29,8 @@ createRoot(container).render(
     <LangProvider>
       {/* the air of the page — outside App, so it survives every route */}
       <Ambient />
+      {/* the light that travels with the visitor, through the door and across the room */}
+      <LightTrail />
       {/* and the door every room change passes through */}
       <Doorway />
       <App />
