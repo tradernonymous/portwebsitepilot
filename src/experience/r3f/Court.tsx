@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useGalleryStore } from './galleryStore';
 import { CorridorExit } from './CorridorExit';
 import { SCULPTURE_FORMS, Sculpture, isSculptureForm, type SculptureForm } from './Sculpture';
+import { CourtLight } from './CourtLight';
 import * as THREE from 'three';
 import type { Station } from '../../content';
 
@@ -23,6 +24,12 @@ const SPACING = 9;
 const ENTRY_Z = 6;
 /** The court is a hall, not a passage — the walls stand well apart. */
 const HALF_WIDTH = 8.5;
+/** How far off the centre line the plinths stand, how wide their tops are, how high they rise. */
+const PLINTH_X = 3.1;
+const PLINTH_HALF = 0.85;
+const PLINTH_TOP = 0.9;
+/** How far into the aisle a thread of light leaves a plinth, clear of the piece standing on it. */
+const THREAD_INSET = 0.45;
 
 /**
  * The work a piece is made in.
@@ -76,6 +83,34 @@ export function Court({ station, reducedMotion, onExhibitSelect, onExhibitFocus,
       return `#${c.getHexString()}`;
     });
   }, [exhibits, station.accent]);
+
+  /*
+   * The room's furniture, worked out once: where each plinth stands and the colour its work
+   * carries. The plinths and the light threaded between them are both built from this, so the
+   * two cannot drift apart.
+   */
+  const plinths = useMemo(
+    () =>
+      exhibits.map((ex, i) => ({
+        id: ex.id,
+        x: (i % 2 === 0 ? -1 : 1) * PLINTH_X,
+        z: -ENTRY_Z - i * SPACING,
+        accent: accents[i] ?? station.accent,
+      })),
+    [exhibits, accents, station.accent],
+  );
+
+  /* Where the light leaves each plinth: the aisle side of its top, at the piece's feet. */
+  const anchors = useMemo(
+    () =>
+      plinths.map((plinth) => ({
+        x: plinth.x - Math.sign(plinth.x) * (PLINTH_HALF + THREAD_INSET),
+        y: PLINTH_TOP + 0.12,
+        z: plinth.z,
+        accent: plinth.accent,
+      })),
+    [plinths],
+  );
 
   useFrame(() => {
     if (phase !== 'corridor') return;
@@ -145,22 +180,24 @@ export function Court({ station, reducedMotion, onExhibitSelect, onExhibitFocus,
         <meshStandardMaterial color={0xf2f1ec} roughness={0.9} metalness={0.05} side={THREE.DoubleSide} />
       </mesh>
 
-      {exhibits.map((ex, i) => {
-        const side = i % 2 === 0 ? -1 : 1;
-        const x = side * 3.1;
-        const z = -ENTRY_Z - i * SPACING;
-        const accent = accents[i] ?? station.accent;
+      {plinths.map((plinth, i) => {
+        const { id, x, z, accent } = plinth;
 
         return (
-          <group key={ex.id} position={[x, 0, z]} userData={{ exhibitIndex: i }}>
+          <group key={id} position={[x, 0, z]} userData={{ exhibitIndex: i }}>
             {/* the plinth the piece stands on */}
-            <mesh position={[0, 0.45, 0]}>
-              <boxGeometry args={[1.7, 0.9, 1.7]} />
+            <mesh position={[0, PLINTH_TOP / 2, 0]}>
+              <boxGeometry args={[PLINTH_HALF * 2, PLINTH_TOP, PLINTH_HALF * 2]} />
               <meshStandardMaterial color={0x1c1c22} roughness={0.4} metalness={0.34} />
             </mesh>
 
-            <group position={[0, 0.9, 0]}>
-              <Sculpture form={formFor(ex)} accent={accent} seed={i * 97 + 13} reducedMotion={reducedMotion} />
+            <group position={[0, PLINTH_TOP, 0]}>
+              <Sculpture
+                form={formFor(exhibits[i])}
+                accent={accent}
+                seed={i * 97 + 13}
+                reducedMotion={reducedMotion}
+              />
             </group>
 
             {/* the light the piece is shown in, from above and a little to the front */}
@@ -179,6 +216,9 @@ export function Court({ station, reducedMotion, onExhibitSelect, onExhibitFocus,
           </group>
         );
       })}
+
+      {/* the light the court is shown by, threading the aisle from plinth to plinth */}
+      <CourtLight anchors={anchors} reducedMotion={reducedMotion} />
 
       <CorridorExit length={length} stationLabel={station.label} onExit={onExit} />
     </group>
