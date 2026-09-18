@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { useFrame, useThree, useLoader } from '@react-three/fiber';
+import { useFrame, useLoader } from '@react-three/fiber';
 import { TextureLoader } from 'three';
 import * as THREE from 'three';
 import { entranceStages } from '../../content';
@@ -19,7 +19,6 @@ const MIDPOINT = 0.5;
  * midpoint the gate opens; at the end the deck is revealed.
  */
 export function Entry({ reducedMotion, onMidpoint, onDone }: EntryProps) {
-  const { camera } = useThree();
   const groupRef = useRef<THREE.Group>(null);
   const planeRefs = useRef<THREE.Mesh[]>([]);
   const startedRef = useRef(false);
@@ -70,9 +69,12 @@ export function Entry({ reducedMotion, onMidpoint, onDone }: EntryProps) {
 
     const eased = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
 
-    camera.position.z = 66 - eased * 66;
-    camera.position.y = Math.sin(p * Math.PI * 1.6) * 0.9 * (1 - p) + 0.1;
-
+    /*
+     * The camera is not moved here. `GalleryCamera` owns it and flies the same approach on the
+     * rig, so animating it in both places applied the whole eight-second move twice over and
+     * put the visitor through the door at double speed. The photographs below are this
+     * component's job: they are what the approach is made of.
+     */
     const layers = planeRefs.current;
     for (let i = 0; i < layers.length; i++) {
       const layer = layers[i];

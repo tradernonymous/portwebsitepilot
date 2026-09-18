@@ -33,11 +33,13 @@ import { TrailPanel } from './ui/TrailPanel';
  * The three surfaces a visitor only reaches by asking for them. Keeping them out of the
  * opening bundle means the first paint is the gate and the hall, and nothing else.
  *
+ *   Atrium        the hub's front door — the deck of rooms, with the words over it
  *   FlatView      the whole plain document — a reader who chose it is reading, not waiting
  *                 on the spatial site
  *   ImmersiveWalk the 3D wing; its own three.js chunk only loads when the walk begins
  *   ExhibitReader the work dialog, shared with the walk
  */
+const Atrium = lazy(() => import('./ui/Atrium').then((m) => ({ default: m.Atrium })));
 const FlatView = lazy(() => import('./ui/FlatView').then((m) => ({ default: m.FlatView })));
 const ImmersiveWalk = lazy(() => import('./ui/ImmersiveWalk').then((m) => ({ default: m.ImmersiveWalk })));
 const ExhibitReader = lazy(() => import('./ui/ExhibitReader').then((m) => ({ default: m.ExhibitReader })));
@@ -479,6 +481,13 @@ export default function App() {
                 reducedMotion={reducedMotion}
                 webgl={webgl}
               />
+            ) : webgl ? (
+              /*
+               * The front door is the building. Without WebGL it stays the written hall, so a
+               * visitor whose browser cannot draw the deck is still shown what PORT is and
+               * still has every room within a click.
+               */
+              <Atrium reducedMotion={reducedMotion} webgl={webgl} />
             ) : (
               <Hall reducedMotion={reducedMotion} />
             )}

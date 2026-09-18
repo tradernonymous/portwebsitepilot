@@ -1,0 +1,205 @@
+/* ==========================================================================
+   The atrium — the hub's front door
+   ==========================================================================
+   The deck fills the window and the words sit over it. The sheet is a flex
+   column so the wordmark reads at the top, the rooms at the bottom, and the
+   space between is left to the light: on a phone in landscape the same three
+   rows have to fit a very short box, so nothing is positioned absolutely.
+   ========================================================================== */
+
+.atrium {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+/* The canvas is the room; it takes no pointer events of its own beyond its own picking. */
+.atrium-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.atrium-stage canvas {
+  display: block;
+}
+
+/* The words. Only the things that are actually interactive opt back in. */
+.atrium-sheet {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(12px, 3vh, 32px);
+  padding: clamp(16px, 4vw, 44px);
+  pointer-events: none;
+}
+
+.atrium-sheet a,
+.atrium-sheet button {
+  pointer-events: auto;
+}
+
+/* ---------------------------------------------------------------- the wordmark */
+
+/*
+ * The words sit over a lit scene, and the light paintings are vivid: the hero carries its own
+ * soft scrim so it reads against whatever the deck happens to be doing behind it. A radial
+ * wash rather than a panel, so there is no visible box on the gallery wall.
+ */
+.atrium-hero {
+  max-width: 42ch;
+  padding: clamp(14px, 2.4vw, 26px);
+  margin: 0;
+  background: radial-gradient(
+    118% 108% at 4% 6%,
+    color-mix(in srgb, var(--paper) 88%, transparent) 0%,
+    color-mix(in srgb, var(--paper) 62%, transparent) 46%,
+    transparent 76%
+  );
+}
+
+.atrium-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(38px, 6vw, 92px);
+  font-weight: 600;
+  line-height: 0.92;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.atrium-sub {
+  margin: 6px 0 0;
+  font-size: clamp(11px, 1.2vw, 13px);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.atrium-welcome {
+  margin: clamp(10px, 2vh, 18px) 0 0;
+  font-size: clamp(18px, 2.4vw, 30px);
+  color: var(--ink);
+}
+
+.atrium-line {
+  margin: 8px 0 0;
+  font-size: clamp(12px, 1.4vw, 15px);
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- the rooms */
+
+.atrium-rooms ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.atrium-rooms {
+  max-width: 100%;
+}
+
+.atrium-room {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 74%, transparent);
+  backdrop-filter: blur(7px);
+  font-size: clamp(11px, 1.15vw, 13px);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 260ms ease, color 260ms ease, background-color 260ms ease;
+}
+
+.atrium-room i {
+  font-style: normal;
+  font-size: 0.82em;
+  opacity: 0.5;
+}
+
+/* The focused room is the one the deck has brought forward, so the two agree. */
+.atrium-room.is-here,
+.atrium-room:hover,
+.atrium-room:focus-visible {
+  border-color: var(--rule-strong);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+}
+
+/* ---------------------------------------------------------------- the way in */
+
+/* The rooms and the hint, gathered at the foot of the window — the centre is the artwork's. */
+.atrium-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.atrium-hint {
+  margin: 0;
+  font-size: clamp(10px, 1.05vw, 12px);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ---------------------------------------------------------------- short and narrow boxes */
+
+/*
+ * Landscape on a phone leaves very little height. The wordmark stands down to make room for
+ * the rooms and the way in, which are the parts a visitor actually needs.
+ */
+@media (max-height: 520px) {
+  .atrium-sheet {
+    gap: 8px;
+    padding: 12px clamp(12px, 3vw, 24px);
+  }
+
+  .atrium-title {
+    font-size: clamp(26px, 5vh, 44px);
+  }
+
+  .atrium-welcome {
+    margin-top: 4px;
+    font-size: clamp(14px, 3.2vh, 20px);
+  }
+
+  .atrium-line,
+  .atrium-sub {
+    display: none;
+  }
+
+  .atrium-rooms ul {
+    gap: 6px;
+  }
+
+  .atrium-room {
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 560px) {
+  .atrium-hero {
+    max-width: 100%;
+  }
+
+  .atrium-hint {
+    letter-spacing: 0.1em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atrium-room {
+    transition: none;
+  }
+}

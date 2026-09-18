@@ -22,6 +22,8 @@ type GalleryCanvasProps = {
   stations: Station[];
   reducedMotion: boolean;
   onPhaseChange?: (phase: Phase) => void;
+  /** The deck's ring turned: which room is brought forward, not which one is entered. */
+  onStationFocus?: (stationId: string) => void;
   onStationSelect?: (stationId: string) => void;
   onExhibitSelect?: (index: number) => void;
   onExhibitFocus?: (index: number) => void;
@@ -36,6 +38,7 @@ export function GalleryCanvas({
   stations,
   reducedMotion,
   onPhaseChange,
+  onStationFocus,
   onStationSelect,
   onExhibitSelect,
   onExhibitFocus,
@@ -101,6 +104,7 @@ export function GalleryCanvas({
             <Deck
               stations={stations}
               reducedMotion={reducedMotion}
+              onStationFocus={onStationFocus}
               onStationSelect={onStationSelect}
             />
           </>

@@ -13,6 +13,7 @@ import './styles/motifs.css';
 import './styles/fx.css';
 import './styles/gate.css';
 import './styles/hall.css';
+import './styles/atrium.css';
 import './styles/room.css';
 import './styles/reader.css';
 import './styles/video.css';

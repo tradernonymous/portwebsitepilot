@@ -30,7 +30,9 @@ const ms = {
   welcomeBefore: 'Sedia nak terokai dunia',
   welcomeArt: 'SENI',
   welcomeAfter: '?',
-  line: 'Jemput masuk, pintu kami sentiasa terbuka...',
+  line: 'Pintu kami sentiasa terbuka.',
+  atriumWelcome: 'Selamat datang — mari berjalan.',
+  atriumHint: 'Tatal atau ↑ ↓ untuk memilih ruang · Klik untuk masuk',
   enter: 'Masuk ke PORT',
   listView: 'Senarai biasa',
   watchWithSound: 'tonton dengan bunyi',
@@ -87,12 +89,12 @@ const ms = {
   // ---------------------------------------------------------------- first visit
   firstRunKicker: 'Nota kurator',
   firstRunStep: 'Langkah',
-  firstRunA: 'Ini ruang utama PORT',
+  firstRunA: 'Anda berada di dek PORT',
   firstRunABody:
-    'Tatal ke bawah dan anda berjalan melalui lapan ruang — setiap satu dibuka seperti melangkah masuk ke dewan pameran, bukan seperti menukar halaman.',
+    'Setiap ruang berdiri sebagai satu papak di sekeliling anda. Tatal atau guna anak panah untuk memilih — ruang yang anda pilih akan maju ke hadapan.',
   firstRunB: 'Setiap ruang ada pintunya',
   firstRunBBody:
-    'Buka pintu mana-mana ruang untuk masuk, atau tekan Peta Bangunan di bar atas untuk melihat seluruh rumah ini sekali gus — dengan kedudukan anda ditanda.',
+    'Klik ruang itu untuk masuk dan berjalan di dalamnya, atau tekan Peta Bangunan di bar atas untuk melihat seluruh rumah ini sekali gus — dengan kedudukan anda ditanda.',
   firstRunC: 'Berjalan dengan papan kekunci',
   firstRunCBody:
     'Hidupkan Mod Galeri di bar atas untuk berjalan dengan anak panah, atau pilih Mata Kurator untuk tur berpandu yang membawa anda sendiri.',
@@ -284,7 +286,9 @@ const en: Dict = {
   welcomeBefore: 'Ready to explore the world of',
   welcomeArt: 'ART',
   welcomeAfter: '?',
-  line: 'Come on in, our doors are always open...',
+  line: 'Our doors are always open.',
+  atriumWelcome: "Welcome — let's walk.",
+  atriumHint: 'Scroll or ↑ ↓ to choose a room · Click to walk in',
   enter: 'Enter PORT',
   listView: 'Text-only view',
   watchWithSound: 'watch with sound',
@@ -352,12 +356,12 @@ const en: Dict = {
   // ---------------------------------------------------------------- first visit
   firstRunKicker: 'A note from the curator',
   firstRunStep: 'Step',
-  firstRunA: 'This is PORT\u2019s main hall',
+  firstRunA: 'You are standing on PORT\u2019s deck',
   firstRunABody:
-    'Scroll down and you walk through eight rooms — each one opening the way you would step into a gallery, rather than swapping pages.',
+    'Every room stands as a plate around you. Scroll or use the arrow keys to choose one — the room you choose comes forward to meet you.',
   firstRunB: 'Every room has a door',
   firstRunBBody:
-    'Open any room\u2019s door to go in, or press Building map in the top bar to see the whole house at once, with your own place marked on it.',
+    'Click the room to walk inside it, or press Building map in the top bar to see the whole house at once, with your own place marked on it.',
   firstRunC: 'Walking with the keyboard',
   firstRunCBody:
     'Turn on Gallery mode in the top bar to walk with the arrow keys, or choose Curator\u2019s Eye for a guided tour that carries you along itself.',
